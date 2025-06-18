@@ -1,0 +1,20 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = __importDefault(require("express"));
+const partner_1 = require("../controller/partner");
+const parnterRouter = express_1.default.Router();
+parnterRouter.get("/getAllvendors", partner_1.getAllVendors);
+parnterRouter.post("/createVendor", partner_1.createVendor);
+parnterRouter.post("/createVehicle", partner_1.createVehicle);
+parnterRouter.get("/getVehicles", partner_1.getAllVehicles);
+parnterRouter.patch("/updateVendor/:id", partner_1.updateVendorDetails);
+parnterRouter.delete("/deleteVendor/:id", partner_1.deleteVendor);
+parnterRouter.patch("/updateVehicle/:id", partner_1.updateVehicleDetails);
+parnterRouter.delete("/deleteVehicle/:id", partner_1.deleteVehicle);
+parnterRouter.post("/getVehicleById/:id", partner_1.getVehicleById);
+parnterRouter.post("/filterBillByClient", partner_1.filterBillByClient);
+parnterRouter.post("/filterFMByVendor", partner_1.filterFMByVendor);
+exports.default = parnterRouter;

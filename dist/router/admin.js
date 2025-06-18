@@ -1,0 +1,21 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = __importDefault(require("express"));
+const admin_1 = require("../controller/admin");
+const adminRouter = express_1.default.Router();
+adminRouter.post("/admin/login", admin_1.adminLogin);
+adminRouter.post("/admin/createBranch", admin_1.createBranch);
+adminRouter.get("/admin/getBranches", admin_1.getBrachersNames);
+adminRouter.post("/admin/changeBranchPassword", admin_1.changeBranchPassword);
+adminRouter.post("/admin/createClient", admin_1.createClient);
+adminRouter.get("/admin/getClients", admin_1.getAllClients);
+adminRouter.get("/admin/getAdminData", admin_1.fectchAdminData);
+adminRouter.get("/admin/getAllNotifications", admin_1.getAllAdminNotifications);
+adminRouter.delete("/admin/deleteNotification/:id", admin_1.deleteNotification);
+adminRouter.patch("/admin/updateNotification/:id/:status", admin_1.updateNotification);
+adminRouter.get("/admin/getExpenseId", admin_1.getExpenseId);
+adminRouter.get("/admin/getBillId", admin_1.getBillId);
+exports.default = adminRouter;

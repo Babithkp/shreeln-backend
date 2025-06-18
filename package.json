@@ -1,0 +1,40 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "build": "prisma generate && rimraf dist && tsc",
+    "start": "nodemon src/index.ts",
+    "dev": "nodemon src/index.ts",
+    "ts.check": "tsc --project tsconfig.json",
+    "add-build": "git add dist",
+    "postinstall": "prisma generate"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@types/express": "^5.0.1",
+    "@types/node": "^22.14.0",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "nodemon": "^3.1.9",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.825.0",
+    "@aws-sdk/lib-storage": "^3.825.0",
+    "@prisma/client": "^6.6.0",
+    "@types/cors": "^2.8.17",
+    "@types/multer": "^1.4.12",
+    "@types/nodemailer": "^6.4.17",
+    "dotenv": "^16.5.0",
+    "multer": "^2.0.1",
+    "node-cron": "^4.1.0",
+    "nodemailer": "^7.0.2",
+    "prisma": "^6.6.0",
+    "rimraf": "^6.0.1",
+    "ts-node": "^10.9.2"
+  }
+}

@@ -1,0 +1,371 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+type LRList {
+  lrNumber String
+  date     String
+  status   String @default("unPaid")
+}
+
+model PaymentRecord {
+  id                String    @id @default(auto()) @map("_id") @db.ObjectId
+  IDNumber          String
+  date              String
+  customerName      String
+  amount            String
+  amountInWords     String
+  pendingAmount     Float
+  transactionNumber String
+  paymentMode       String
+  remarks           String
+  Admin             Admin?    @relation(fields: [adminId], references: [id])
+  adminId           String?   @db.ObjectId
+  Branches          Branches? @relation(fields: [branchesId], references: [id])
+  branchesId        String?   @db.ObjectId
+  FM                FM?       @relation(fields: [fMId], references: [id], onDelete: Cascade)
+  fMId              String?   @db.ObjectId
+  Bill              Bill?     @relation(fields: [billId], references: [id], onDelete: Cascade)
+  billId            String?   @db.ObjectId
+  client            Client?   @relation(fields: [clientId], references: [id])
+  clientId          String?   @db.ObjectId
+}
+
+model Admin {
+  id             String          @id @default(auto()) @map("_id") @db.ObjectId
+  userName       String          @unique
+  password       String
+  branchName     String          @unique
+  branchManager  String
+  contactNumber  String
+  address        String
+  city           String
+  state          String
+  pincode        String
+  email          String
+  expenseId      String?         @default("0000")
+  billId         String?         @default("2800")
+  PaymentRecords PaymentRecord[]
+  branches       Branches[]
+  clients        Client[]
+  vendors        Vendors[]
+  lrs            LR[]
+  FM             FM[]
+  bill           Bill[]
+  notifications  Notification[]
+  expenses       Expense[]
+  pod            POD[]
+}
+
+model Branches {
+  id             String          @id @default(auto()) @map("_id") @db.ObjectId
+  branchName     String          @unique
+  branchManager  String
+  contactNumber  String
+  address        String
+  city           String
+  state          String
+  pincode        String
+  username       String
+  password       String
+  employeeCount  String
+  email          String
+  adminId        String          @db.ObjectId
+  admin          Admin           @relation(fields: [adminId], references: [id])
+  PaymentRecords PaymentRecord[]
+  lrs            LR[]
+  FM             FM[]
+  bill           Bill[]
+  notifications  Notification[]
+  expenses       Expense[]
+  pod            POD[]
+}
+
+model Client {
+  id             String          @id @default(auto()) @map("_id") @db.ObjectId
+  name           String          @unique
+  GSTIN          String
+  contactPerson  String
+  email          String
+  contactNumber  String
+  address        String
+  city           String
+  state          String
+  pincode        String
+  panNumber      String
+  creditLimit    Float
+  pendingPayment Float           @default(0)
+  createdAt      DateTime        @default(now())
+  adminId        String          @db.ObjectId
+  admin          Admin           @relation(fields: [adminId], references: [id])
+  bill           Bill[]
+  PaymentRecord  PaymentRecord[]
+}
+
+model Vendors {
+  id                 String    @id @default(auto()) @map("_id") @db.ObjectId
+  name               String    @unique
+  GSTIN              String
+  contactPerson      String
+  contactNumber      String
+  pincode            String
+  address            String
+  TDS                String
+  email              String
+  city               String
+  state              String
+  outstandingLimit   Float
+  currentOutStanding Float     @default(0)
+  createdAt          DateTime  @default(now())
+  vehicles           Vehicle[]
+  adminId            String    @db.ObjectId
+  admin              Admin     @relation(fields: [adminId], references: [id])
+  FM                 FM[]
+}
+
+model Vehicle {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  vendorName    String   @unique
+  vehicletypes  String
+  vehicleNumber String
+  ownerName     String?
+  ownerPhone    String?
+  driverName    String?
+  driverPhone   String?
+  insurance     String
+  RC            String
+  panNumber     String
+  vendorId      String?  @db.ObjectId
+  vendor        Vendors? @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  LR            LR[]
+}
+
+model LR {
+  id               String    @id @default(auto()) @map("_id") @db.ObjectId
+  branchId         String?   @db.ObjectId
+  branch           Branches? @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  adminId          String?   @db.ObjectId
+  admin            Admin?    @relation(fields: [adminId], references: [id])
+  lrNumber         String    @unique
+  date             String
+  from             String
+  to               String
+  insurance        String
+  consignorName    String
+  consignorGSTIN   String
+  consignorPincode String
+  consignorAddress String
+  consigneeName    String
+  consigneeGSTIN   String
+  consigneePincode String
+  consigneeAddress String
+  noOfPackages     String
+  methodOfPacking  String
+  description      String
+  invoiceNo        String?
+  invoiceDate      String?
+  value            String?
+  weight           String
+  sizeL            String?
+  sizeW            String?
+  sizeH            String?
+  ftl              String?
+  paymentType      String
+  freightCharges   String?
+  hamali           String?
+  surcharge        String?
+  stCh             String?
+  riskCh           String?
+  unLoading        String?
+  extraKms         String?
+  detention        String?
+  weightment       String?
+  others           String?
+  ewbNumber        String?
+  ewbExpiryDate    String?
+  pod              POD[]
+  totalAmt         Float     @default(0)
+  createdAt        DateTime  @default(now())
+  client           String?
+  emails           String[]
+  Bill             Bill?     @relation(fields: [billId], references: [id])
+  billId           String?   @db.ObjectId
+  Vehicle          Vehicle?  @relation(fields: [vehicleId], references: [id])
+  vehicleId        String?   @db.ObjectId
+}
+
+model FM {
+  id                 String          @id @default(auto()) @map("_id") @db.ObjectId
+  branchId           String?         @db.ObjectId
+  branch             Branches?       @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  adminId            String?         @db.ObjectId
+  admin              Admin?          @relation(fields: [adminId], references: [id])
+  fmNumber           String          @unique
+  date               String
+  from               String
+  to                 String
+  vehicleNo          String
+  vehicleType        String
+  weight             String
+  package            String
+  vendorName         String
+  vendorEmail        String
+  ContactPerson      String
+  DriverName         String
+  contactNumber      String
+  ownerName          String
+  TDS                String
+  insturance         String
+  Rc                 String
+  LRDetails          LRList[]
+  PaymentRecords     PaymentRecord[]
+  hire               String
+  advance            String
+  balance            String
+  otherCharges       String
+  detentionCharges   String
+  rtoCharges         String
+  tds                String
+  netBalance         String
+  outStandingBalance String
+  outStandingAdvance Float
+  amountInwords      String
+  dlNumber           String?
+  status             String?         @default("open")
+  driverSignature    String?
+  zeroToThirty       Float?          @default(0)
+  thirtyToSixty      Float?          @default(0)
+  sixtyToNinety      Float?          @default(0)
+  ninetyPlus         Float?          @default(0)
+  createdAt          DateTime        @default(now())
+  Vendors            Vendors?        @relation(fields: [vendorsId], references: [id])
+  vendorsId          String?         @db.ObjectId
+}
+
+model Bill {
+  id             String          @id @default(auto()) @map("_id") @db.ObjectId
+  billNumber     String          @unique
+  date           String
+  dueDate        String?
+  hsnSacCode     String
+  placeOfSupply  String
+  state          String
+  statecode      String
+  PaymentRecords PaymentRecord[]
+  lrData         LR[]
+  igstRate       Float
+  cgstRate       Float
+  sgstRate       Float
+  subTotal       Float
+  total          Float
+  totalInWords   String
+  pendingAmount  Float
+  unloading      Json?
+  hamali         Json?
+  extraKmWeight  Json?
+  detention      Json?
+  weightment     Json?
+  others         Json?
+  otherCharges   Json?
+  zeroToThirty   Float?          @default(0)
+  thirtyToSixty  Float?          @default(0)
+  sixtyPlus      Float?          @default(0)
+  Client         Client?         @relation(fields: [clientId], references: [id])
+  clientId       String?         @db.ObjectId
+  createdAt      DateTime        @default(now())
+  Branches       Branches?       @relation(fields: [branchesId], references: [id], onDelete: Cascade)
+  branchesId     String?         @db.ObjectId
+  Admin          Admin?          @relation(fields: [adminId], references: [id])
+  adminId        String?         @db.ObjectId
+}
+
+model CompanyProfile {
+  id                     String @id @default(auto()) @map("_id") @db.ObjectId
+  email                  String
+  contactNumber          String
+  alternateContactNumber String
+  GSTIN                  String
+  HSN                    String
+  websiteURL             String
+  address                String
+}
+
+model BankDetails {
+  id            String @id @default(auto()) @map("_id") @db.ObjectId
+  name          String
+  accountNumber String
+  ifscCode      String
+}
+
+model GeneralSettings {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  expenseTypes String[]
+  vehicleTypes String[]
+}
+
+model POD {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  lrNumber        String
+  date            String
+  from            String
+  to              String
+  clientName      String
+  clientGSTIN     String
+  receivingDate   String
+  receivingBranch String
+  documentLink    String
+  Branches        Branches? @relation(fields: [branchesId], references: [id])
+  branchesId      String?   @db.ObjectId
+  Admin           Admin?    @relation(fields: [adminId], references: [id])
+  adminId         String?   @db.ObjectId
+  LR              LR?       @relation(fields: [lRId], references: [id])
+  lRId            String?   @db.ObjectId
+}
+
+model Expense {
+  id                String    @id @default(auto()) @map("_id") @db.ObjectId
+  expenseId         String    @unique
+  description       String
+  date              String
+  category          String
+  customerName      String?
+  linkTo            String?
+  billNumber        String?
+  fmNumber          String?
+  amount            String
+  amountInWords     String
+  paymentType       String
+  transactionNumber String
+  title             String
+  Branches          Branches? @relation(fields: [branchesId], references: [id])
+  branchesId        String?   @db.ObjectId
+  Admin             Admin?    @relation(fields: [adminId], references: [id])
+  adminId           String?   @db.ObjectId
+}
+
+model Notification {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  requestId   String
+  title       String
+  message     String?
+  description String?
+  data        Json?
+  status      String
+  fileId      String?
+  createdAt   DateTime  @default(now())
+  Admin       Admin?    @relation(fields: [adminId], references: [id])
+  adminId     String?   @db.ObjectId
+  Branches    Branches? @relation(fields: [branchesId], references: [id], onDelete: Cascade)
+  branchesId  String?   @db.ObjectId
+}

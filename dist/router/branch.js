@@ -1,0 +1,21 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = __importDefault(require("express"));
+const branch_1 = require("../controller/branch");
+const branchRouter = express_1.default.Router();
+branchRouter.post("/branch/login", branch_1.branchLogin);
+branchRouter.get("/branch", branch_1.getAllBranchDetails);
+branchRouter.post("/updateBranch", branch_1.updateBranchDetails);
+branchRouter.delete("/deleteBranch/:id", branch_1.deleteBranch);
+branchRouter.patch("/updateClient/:id", branch_1.updateclientDetails);
+branchRouter.delete("/deleteClient/:id", branch_1.deleteClient);
+branchRouter.get("/getAllRecordPayment", branch_1.getAllRecortPayment);
+branchRouter.post("/filterRecordPayment", branch_1.filterRecordPayment);
+branchRouter.post("/filterBranchBymonth", branch_1.filterBranchBymonth);
+branchRouter.post("/createNotification", branch_1.createNotification);
+branchRouter.get("/getBranchNotifications/:branchId", branch_1.getBranchNotifications);
+branchRouter.post("/createNotificationForBranch", branch_1.createNotificationForBranch);
+exports.default = branchRouter;

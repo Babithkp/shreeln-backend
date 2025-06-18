@@ -1,0 +1,22 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = __importDefault(require("express"));
+const billing_1 = require("../controller/billing");
+const billingRouter = express_1.default.Router();
+billingRouter.post("/billing/createBill", billing_1.createBill);
+billingRouter.get("/billing/getBillDetails", billing_1.getBillDetails);
+billingRouter.delete("/billing/deleteBill/:id", billing_1.deleteBill);
+billingRouter.patch("/billing/updateBillDetails/:id", billing_1.updateBillDetails);
+billingRouter.post("/billing/addPaymentRecordToBill", billing_1.addPaymentRecordToBill);
+billingRouter.delete("/billing/deletePaymentRecordFromBill/:id", billing_1.deletePaymentRecordFromBill);
+billingRouter.post("/billing/checkBillExists", billing_1.checkBillExists);
+billingRouter.post("/billing/sendBillEmail", billing_1.filterBillBymonth);
+billingRouter.get("/billing/getBillByBranchId/:branchId", billing_1.getBillByBranchId);
+billingRouter.patch("/billing/updateBillByNotification", billing_1.updateBillByNotification);
+billingRouter.post("/billing/deleteBillByNotification", billing_1.deleteBillByNotification);
+billingRouter.patch("/billing/updateBillRecordByNotification", billing_1.updateBillRecordByNotification);
+billingRouter.delete("/billing/deleteBillRecordByNotification/:id", billing_1.deleteBillRecordByNotification);
+exports.default = billingRouter;
