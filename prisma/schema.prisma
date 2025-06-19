@@ -54,7 +54,7 @@ model Admin {
   state          String
   pincode        String
   email          String
-  expenseId      String?         @default("0000")
+  expenseId      String?         @default("1000")
   billId         String?         @default("2800")
   PaymentRecords PaymentRecord[]
   branches       Branches[]

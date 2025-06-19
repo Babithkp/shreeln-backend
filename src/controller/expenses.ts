@@ -86,7 +86,7 @@ export const createExpense = async (req: Request, res: Response) => {
         id: admin.id,
       },
       data: {
-        expenseId: (parseFloat(admin.expenseId || "0000") + 1).toString().padStart(5, "0"),
+        expenseId: (parseFloat(admin.expenseId || "1000") + 1).toString(),
       },
     });
 

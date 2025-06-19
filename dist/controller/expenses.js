@@ -72,7 +72,7 @@ const createExpense = (req, res) => __awaiter(void 0, void 0, void 0, function* 
                 id: admin.id,
             },
             data: {
-                expenseId: (parseFloat(admin.expenseId || "0000") + 1).toString().padStart(5, "0"),
+                expenseId: (parseFloat(admin.expenseId || "1000") + 1).toString(),
             },
         });
         res.status(200).json({
