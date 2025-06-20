@@ -201,6 +201,8 @@ export const getBillDetails = async (req: Request, res: Response) => {
           },
         },
         Client: true,
+        Branches:true,
+        Admin:true
       },
       orderBy: {
         createdAt: "asc",

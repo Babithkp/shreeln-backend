@@ -165,6 +165,8 @@ const getBillDetails = (req, res) => __awaiter(void 0, void 0, void 0, function*
                     },
                 },
                 Client: true,
+                Branches: true,
+                Admin: true
             },
             orderBy: {
                 createdAt: "asc",
