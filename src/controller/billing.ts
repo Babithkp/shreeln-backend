@@ -134,30 +134,14 @@ export const createBill = async (req: Request, res: Response) => {
         pendingPayment: client.pendingPayment + subTotal,
       },
     });
-    if (updatedClient?.pendingPayment > updatedClient?.creditLimit) {
-      const admin = await prisma.admin.findFirst();
-      if (!admin) {
-        res.status(400).json({
-          message: "Invalid Admin Id",
-        });
-        return;
-      }
-
-      const billId = await prisma.admin.findFirst({
-        select: {
-          billId: true,
-        },
+    const admin = await prisma.admin.findFirst();
+    if (!admin) {
+      res.status(400).json({
+        message: "Invalid Admin Id",
       });
-      if (billId) {
-        await prisma.admin.update({
-          where: {
-            id: admin.id,
-          },
-          data: {
-            billId: (parseFloat(billId.billId || "2800") + 1).toString(),
-          },
-        });
-      }
+      return;
+    }
+    if (updatedClient?.pendingPayment > updatedClient?.creditLimit) {
       await prisma.notification.create({
         data: {
           adminId: admin.id,
@@ -172,6 +156,22 @@ export const createBill = async (req: Request, res: Response) => {
           )}`,
           message: "",
           status: "one-time",
+        },
+      });
+    }
+    const billId = await prisma.admin.findFirst({
+      select: {
+        billId: true,
+      },
+    });
+
+    if (billId) {
+      await prisma.admin.update({
+        where: {
+          id: admin.id,
+        },
+        data: {
+          billId: (parseFloat(billId.billId || "2800") + 1).toString(),
         },
       });
     }
@@ -202,9 +202,9 @@ export const getBillDetails = async (req: Request, res: Response) => {
         },
         Client: true,
       },
-      orderBy:{
-        date: "asc"
-      }
+      orderBy: {
+        createdAt: "asc",
+      },
     });
     if (billingData) {
       res.status(200).json({
@@ -759,9 +759,9 @@ export const getBillByBranchId = async (req: Request, res: Response) => {
       include: {
         PaymentRecords: true,
       },
-      orderBy:{
-        date: "asc"
-      }
+      orderBy: {
+        date: "asc",
+      },
     });
     if (bills) {
       res.status(200).json({
@@ -1077,7 +1077,6 @@ export const updateBillRecordByNotification = async (
     console.log(error);
   }
 };
-
 
 export const deleteBillRecordByNotification = async (
   req: Request,

@@ -564,7 +564,11 @@ export const createFM = async (req: Request, res: Response) => {
       });
       return;
     }
-    const value = hire + otherCharges + detentionCharges + rtoCharges;
+    const value =
+      parseFloat(hire) +
+      parseFloat(otherCharges) +
+      parseFloat(detentionCharges) +
+      parseFloat(rtoCharges);
     const finalValue = value - parseFloat(tds);
     const fm = await prisma.fM.create({
       data: {
@@ -775,7 +779,11 @@ export const updateFM = async (req: Request, res: Response) => {
       return;
     }
     if (fm) {
-      const value = hire + otherCharges + detentionCharges + rtoCharges;
+      const value =
+        parseFloat(hire) +
+        parseFloat(otherCharges) +
+        parseFloat(detentionCharges) +
+        parseFloat(rtoCharges);
       const finalValue = value - parseFloat(tds);
       const newOutstanding =
         finalValue -

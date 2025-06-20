@@ -437,7 +437,10 @@ const createFM = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             });
             return;
         }
-        const value = hire + otherCharges + detentionCharges + rtoCharges;
+        const value = parseFloat(hire) +
+            parseFloat(otherCharges) +
+            parseFloat(detentionCharges) +
+            parseFloat(rtoCharges);
         const finalValue = value - parseFloat(tds);
         const fm = yield prisma.fM.create({
             data: Object.assign(Object.assign({ fmNumber,
@@ -606,7 +609,10 @@ const updateFM = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             return;
         }
         if (fm) {
-            const value = hire + otherCharges + detentionCharges + rtoCharges;
+            const value = parseFloat(hire) +
+                parseFloat(otherCharges) +
+                parseFloat(detentionCharges) +
+                parseFloat(rtoCharges);
             const finalValue = value - parseFloat(tds);
             const newOutstanding = finalValue -
                 ((fm.zeroToThirty || 0) +

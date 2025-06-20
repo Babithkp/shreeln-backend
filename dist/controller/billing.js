@@ -104,29 +104,14 @@ const createBill = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                 pendingPayment: client.pendingPayment + subTotal,
             },
         });
-        if ((updatedClient === null || updatedClient === void 0 ? void 0 : updatedClient.pendingPayment) > (updatedClient === null || updatedClient === void 0 ? void 0 : updatedClient.creditLimit)) {
-            const admin = yield prisma.admin.findFirst();
-            if (!admin) {
-                res.status(400).json({
-                    message: "Invalid Admin Id",
-                });
-                return;
-            }
-            const billId = yield prisma.admin.findFirst({
-                select: {
-                    billId: true,
-                },
+        const admin = yield prisma.admin.findFirst();
+        if (!admin) {
+            res.status(400).json({
+                message: "Invalid Admin Id",
             });
-            if (billId) {
-                yield prisma.admin.update({
-                    where: {
-                        id: admin.id,
-                    },
-                    data: {
-                        billId: (parseFloat(billId.billId || "2800") + 1).toString(),
-                    },
-                });
-            }
+            return;
+        }
+        if ((updatedClient === null || updatedClient === void 0 ? void 0 : updatedClient.pendingPayment) > (updatedClient === null || updatedClient === void 0 ? void 0 : updatedClient.creditLimit)) {
             yield prisma.notification.create({
                 data: {
                     adminId: admin.id,
@@ -135,6 +120,21 @@ const createBill = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                     description: `The credit limit of INR ${updatedClient.creditLimit} for the client ${updatedClient.name} has reached. The current outstanding is INR ${updatedClient.pendingPayment.toFixed(2)}`,
                     message: "",
                     status: "one-time",
+                },
+            });
+        }
+        const billId = yield prisma.admin.findFirst({
+            select: {
+                billId: true,
+            },
+        });
+        if (billId) {
+            yield prisma.admin.update({
+                where: {
+                    id: admin.id,
+                },
+                data: {
+                    billId: (parseFloat(billId.billId || "2800") + 1).toString(),
                 },
             });
         }
@@ -167,8 +167,8 @@ const getBillDetails = (req, res) => __awaiter(void 0, void 0, void 0, function*
                 Client: true,
             },
             orderBy: {
-                date: "asc"
-            }
+                createdAt: "asc",
+            },
         });
         if (billingData) {
             res.status(200).json({
@@ -647,8 +647,8 @@ const getBillByBranchId = (req, res) => __awaiter(void 0, void 0, void 0, functi
                 PaymentRecords: true,
             },
             orderBy: {
-                date: "asc"
-            }
+                date: "asc",
+            },
         });
         if (bills) {
             res.status(200).json({
