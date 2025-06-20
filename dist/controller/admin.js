@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getBillId = exports.getExpenseId = exports.updateNotification = exports.deleteNotification = exports.getAllAdminNotifications = exports.fectchAdminData = exports.getAllClients = exports.createClient = exports.changeBranchPassword = exports.getBrachersNames = exports.createBranch = exports.adminLogin = exports.createAdmin = void 0;
+exports.updateOtherSettings = exports.getOtherSettings = exports.getBillId = exports.getExpenseId = exports.updateNotification = exports.deleteNotification = exports.getAllAdminNotifications = exports.fectchAdminData = exports.getAllClients = exports.createClient = exports.changeBranchPassword = exports.getBrachersNames = exports.createBranch = exports.adminLogin = exports.createAdmin = void 0;
 const client_1 = require("@prisma/client");
 const prisma = new client_1.PrismaClient();
 const createAdmin = () => __awaiter(void 0, void 0, void 0, function* () {
@@ -281,8 +281,8 @@ const getAllClients = (req, res) => __awaiter(void 0, void 0, void 0, function* 
                 bill: true,
             },
             orderBy: {
-                createdAt: "asc"
-            }
+                createdAt: "asc",
+            },
         });
         res.status(200).json({ data: clients });
     }
@@ -299,8 +299,8 @@ const fectchAdminData = (req, res) => __awaiter(void 0, void 0, void 0, function
         const admin = yield prisma.admin.findFirst({
             include: {
                 bill: true,
-                FM: true
-            }
+                FM: true,
+            },
         });
         if (admin) {
             res.status(200).json({
@@ -322,11 +322,11 @@ const getAllAdminNotifications = (req, res) => __awaiter(void 0, void 0, void 0,
                 adminId: admin === null || admin === void 0 ? void 0 : admin.id,
             },
             include: {
-                Branches: true
+                Branches: true,
             },
             orderBy: {
-                createdAt: "asc"
-            }
+                createdAt: "asc",
+            },
         });
         res.status(200).json({ data: notifications });
     }
@@ -411,12 +411,12 @@ const getExpenseId = (req, res) => __awaiter(void 0, void 0, void 0, function* (
     try {
         const expenseId = yield prisma.admin.findFirst({
             select: {
-                expenseId: true
-            }
+                expenseId: true,
+            },
         });
         res.status(200).json({
             message: "Expense Id",
-            data: expenseId
+            data: expenseId,
         });
     }
     catch (error) {
@@ -447,3 +447,57 @@ const getBillId = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.getBillId = getBillId;
+const getOtherSettings = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const admin = yield prisma.admin.findFirst({
+            select: {
+                billId: true,
+                expenseId: true,
+            },
+        });
+        res.status(200).json({
+            message: "Other Settings",
+            data: admin,
+        });
+    }
+    catch (error) {
+        res.status(500).json({
+            message: "Internal Server Error",
+        });
+        console.log(error);
+    }
+});
+exports.getOtherSettings = getOtherSettings;
+const updateOtherSettings = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { billId, expenseId } = req.body;
+    if (!billId || !expenseId) {
+        res.status(400).json({
+            message: "Invalid Other Settings",
+        });
+        return;
+    }
+    try {
+        const admin = yield prisma.admin.findFirst();
+        if (admin) {
+            yield prisma.admin.update({
+                where: {
+                    id: admin.id,
+                },
+                data: {
+                    billId,
+                    expenseId,
+                },
+            });
+            res.status(200).json({
+                message: "Other Settings Updated",
+            });
+        }
+    }
+    catch (error) {
+        res.status(500).json({
+            message: "Internal Server Error",
+        });
+        console.log(error);
+    }
+});
+exports.updateOtherSettings = updateOtherSettings;

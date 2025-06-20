@@ -46,7 +46,7 @@ app.post("/api/v1/sendLREmail/:email", upload.any(), sendLREmail);
 app.post("/api/v1/sendFMEmail/:email", upload.any(), sendFMEmail);
 app.post("/api/v1/sendBillEmail/:email", upload.any(), sendBillEmail);
 app.post("/api/v1/lorryReceiptsUpload", upload.any(), lorryReceiptsFileUpload);
-createAdmin()
+// createAdmin()
 
 app.post('tauri-update', async (req, res) => {
   res.status(204)

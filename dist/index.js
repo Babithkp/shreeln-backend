@@ -29,7 +29,6 @@ const pod_1 = __importDefault(require("./router/pod"));
 const expenses_1 = __importDefault(require("./router/expenses"));
 const node_cron_1 = __importDefault(require("node-cron"));
 const pod_2 = require("./controller/pod");
-const admin_2 = require("./controller/admin");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)());
@@ -52,7 +51,10 @@ app.post("/api/v1/sendLREmail/:email", upload.any(), shipment_1.sendLREmail);
 app.post("/api/v1/sendFMEmail/:email", upload.any(), shipment_1.sendFMEmail);
 app.post("/api/v1/sendBillEmail/:email", upload.any(), billing_2.sendBillEmail);
 app.post("/api/v1/lorryReceiptsUpload", upload.any(), fileUpload_1.lorryReceiptsFileUpload);
-(0, admin_2.createAdmin)();
+// createAdmin()
+app.post('tauri-update', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    res.status(204);
+}));
 node_cron_1.default.schedule("0 0 * * *", () => __awaiter(void 0, void 0, void 0, function* () {
     console.log("🔄 Running FM status checker at midnight...");
     yield (0, pod_2.checkPaymentForStatusChange)();

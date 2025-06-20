@@ -692,6 +692,29 @@ export const deleteFM = async (req: Request, res: Response) => {
       res.status(200).json({
         message: "FM Deleted",
       });
+
+      if (!fm.vendorsId) {
+        res.status(202).json({
+          message: "Invalid Vendor Id",
+        });
+        return;
+      }
+      const vendor = await prisma.vendors.findUnique({
+        where: {
+          id: fm.vendorsId,
+        },
+      });
+      if (!vendor) return;
+      await prisma.vendors.update({
+        where: {
+          id: vendor.id,
+        },
+        data: {
+          currentOutStanding:
+            vendor.currentOutStanding -
+            parseFloat(fm.outStandingBalance || "0"),
+        },
+      });
     }
   } catch (error) {
     res.status(500).json({

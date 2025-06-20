@@ -13,9 +13,8 @@ exports.filterFMByVendor = exports.filterBillByClient = exports.deleteVehicle = 
 const client_1 = require("@prisma/client");
 const prisma = new client_1.PrismaClient();
 const createVendor = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { name, GSTIN, contactPerson, contactNumber, address, TDS, city, state, pincode, email, outstandingLimit, } = req.body;
+    const { name, GSTIN, contactPerson, contactNumber, address, TDS, city, state, pincode, email, pan, outstandingLimit, } = req.body;
     if (!name ||
-        !GSTIN ||
         !contactPerson ||
         !contactNumber ||
         !address ||
@@ -23,7 +22,7 @@ const createVendor = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         !city ||
         !state ||
         !pincode ||
-        !email ||
+        !pan ||
         !outstandingLimit) {
         res.status(400).json({
             message: "Invalid Vendor Details",
@@ -56,6 +55,7 @@ const createVendor = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                     state,
                     pincode,
                     email,
+                    pan,
                     outstandingLimit: parseFloat(outstandingLimit),
                     adminId: admin === null || admin === void 0 ? void 0 : admin.id,
                 },
@@ -100,11 +100,10 @@ const getAllVendors = (req, res) => __awaiter(void 0, void 0, void 0, function* 
 });
 exports.getAllVendors = getAllVendors;
 const updateVendorDetails = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { name, GSTIN, contactPerson, contactNumber, address, TDS, city, state, pincode, email, outstandingLimit, } = req.body;
+    const { name, GSTIN, contactPerson, contactNumber, address, TDS, city, state, pincode, email, pan, outstandingLimit, } = req.body;
     const { id } = req.params;
     if (!id ||
         !name ||
-        !GSTIN ||
         !contactPerson ||
         !contactNumber ||
         !address ||
@@ -113,6 +112,7 @@ const updateVendorDetails = (req, res) => __awaiter(void 0, void 0, void 0, func
         !state ||
         !pincode ||
         !email ||
+        !pan ||
         !outstandingLimit) {
         res.status(400).json({
             message: "Invalid Vendor Details",
@@ -151,6 +151,7 @@ const updateVendorDetails = (req, res) => __awaiter(void 0, void 0, void 0, func
                     address,
                     TDS,
                     city,
+                    pan,
                     state,
                     pincode,
                     email,
@@ -302,7 +303,6 @@ const updateVehicleDetails = (req, res) => __awaiter(void 0, void 0, void 0, fun
         !vehicleNumber ||
         !ownerName ||
         !ownerPhone ||
-        !driverName ||
         !driverPhone ||
         !insurance ||
         !RC) {

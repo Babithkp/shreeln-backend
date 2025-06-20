@@ -11,7 +11,9 @@ import {
   getBillId,
   getBrachersNames,
   getExpenseId,
+  getOtherSettings,
   updateNotification,
+  updateOtherSettings,
 } from "../controller/admin";
 
 const adminRouter = express.Router();
@@ -28,5 +30,7 @@ adminRouter.delete("/admin/deleteNotification/:id", deleteNotification);
 adminRouter.patch("/admin/updateNotification/:id/:status", updateNotification);
 adminRouter.get("/admin/getExpenseId", getExpenseId);
 adminRouter.get("/admin/getBillId", getBillId);
+adminRouter.get("/admin/getOtherSettings", getOtherSettings);
+adminRouter.patch("/admin/updateOtherSettings", updateOtherSettings);
 
 export default adminRouter;

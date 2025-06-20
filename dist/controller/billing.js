@@ -85,7 +85,7 @@ const createBill = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                 sgstRate,
                 subTotal,
                 total,
-                totalInWords, pendingAmount: total, unloading,
+                totalInWords, pendingAmount: subTotal, unloading,
                 hamali,
                 extraKmWeight,
                 detention,
@@ -101,7 +101,7 @@ const createBill = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                 id: clientId,
             },
             data: {
-                pendingPayment: client.pendingPayment + total,
+                pendingPayment: client.pendingPayment + subTotal,
             },
         });
         if ((updatedClient === null || updatedClient === void 0 ? void 0 : updatedClient.pendingPayment) > (updatedClient === null || updatedClient === void 0 ? void 0 : updatedClient.creditLimit)) {
@@ -302,7 +302,7 @@ const updateBillDetails = (req, res) => __awaiter(void 0, void 0, void 0, functi
                 subTotal,
                 total,
                 totalInWords,
-                pendingAmount: total,
+                pendingAmount: subTotal,
                 unloading,
                 hamali,
                 extraKmWeight,
@@ -334,13 +334,13 @@ const updateBillDetails = (req, res) => __awaiter(void 0, void 0, void 0, functi
             });
             return;
         }
-        const oldPendingAmount = client.pendingPayment - oldBill.total;
+        const oldPendingAmount = client.pendingPayment - oldBill.subTotal;
         const updatedClient = yield prisma.client.update({
             where: {
                 id: client.id,
             },
             data: {
-                pendingPayment: oldPendingAmount + parseFloat(total || "0"),
+                pendingPayment: oldPendingAmount + parseFloat(subTotal || "0"),
             },
         });
         if ((updatedClient === null || updatedClient === void 0 ? void 0 : updatedClient.pendingPayment) > (updatedClient === null || updatedClient === void 0 ? void 0 : updatedClient.creditLimit)) {

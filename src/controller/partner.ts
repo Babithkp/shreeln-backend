@@ -24,7 +24,6 @@ export const createVendor = async (req: Request, res: Response) => {
     !city ||
     !state ||
     !pincode ||
-    !email ||
     !pan ||
     !outstandingLimit
   ) {

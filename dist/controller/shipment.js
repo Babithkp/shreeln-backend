@@ -437,6 +437,8 @@ const createFM = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             });
             return;
         }
+        const value = hire + otherCharges + detentionCharges + rtoCharges;
+        const finalValue = value - parseFloat(tds);
         const fm = yield prisma.fM.create({
             data: Object.assign(Object.assign({ fmNumber,
                 date,
@@ -459,7 +461,7 @@ const createFM = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 detentionCharges,
                 rtoCharges,
                 tds,
-                netBalance, outStandingBalance: netBalance, outStandingAdvance: advance ? parseFloat(advance || "0") : 0, amountInwords,
+                netBalance, outStandingBalance: finalValue.toString(), outStandingAdvance: advance ? parseFloat(advance || "0") : 0, amountInwords,
                 dlNumber,
                 driverSignature, LRDetails: LRDetails, Vendors: {
                     connect: { id: vendorsId },
@@ -470,7 +472,7 @@ const createFM = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 id: vendorsId,
             },
             data: {
-                currentOutStanding: vendor.currentOutStanding + parseFloat(netBalance || "0"),
+                currentOutStanding: vendor.currentOutStanding + finalValue,
             },
         });
         if ((updatedVendor === null || updatedVendor === void 0 ? void 0 : updatedVendor.currentOutStanding) > (updatedVendor === null || updatedVendor === void 0 ? void 0 : updatedVendor.outstandingLimit)) {
@@ -516,8 +518,8 @@ const getFMData = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 branch: true,
             },
             orderBy: {
-                createdAt: "desc"
-            }
+                createdAt: "desc",
+            },
         });
         res.status(200).json({ data: data });
     }
@@ -552,6 +554,28 @@ const deleteFM = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             res.status(200).json({
                 message: "FM Deleted",
             });
+            if (!fm.vendorsId) {
+                res.status(202).json({
+                    message: "Invalid Vendor Id",
+                });
+                return;
+            }
+            const vendor = yield prisma.vendors.findUnique({
+                where: {
+                    id: fm.vendorsId,
+                },
+            });
+            if (!vendor)
+                return;
+            yield prisma.vendors.update({
+                where: {
+                    id: vendor.id,
+                },
+                data: {
+                    currentOutStanding: vendor.currentOutStanding -
+                        parseFloat(fm.outStandingBalance || "0"),
+                },
+            });
         }
     }
     catch (error) {
@@ -582,7 +606,9 @@ const updateFM = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             return;
         }
         if (fm) {
-            const newOutstanding = parseFloat(netBalance || "0") -
+            const value = hire + otherCharges + detentionCharges + rtoCharges;
+            const finalValue = value - parseFloat(tds);
+            const newOutstanding = finalValue -
                 ((fm.zeroToThirty || 0) +
                     (fm.thirtyToSixty || 0) +
                     (fm.sixtyToNinety || 0) +
@@ -624,13 +650,18 @@ const updateFM = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                     LRDetails,
                 },
             });
-            const oldOutstanding = vendor.currentOutStanding - parseFloat(fm.netBalance || "0");
+            const oldValue = parseFloat(fm.hire) +
+                parseFloat(fm.otherCharges) +
+                parseFloat(fm.detentionCharges) +
+                parseFloat(fm.rtoCharges);
+            const finalOldValue = oldValue - parseFloat(fm.tds);
+            const oldOutstanding = vendor.currentOutStanding - finalOldValue;
             const updatedVendor = yield prisma.vendors.update({
                 where: {
                     id: vendorsId,
                 },
                 data: {
-                    currentOutStanding: oldOutstanding + parseFloat(netBalance || "0"),
+                    currentOutStanding: oldOutstanding + finalValue,
                 },
             });
             if ((updatedVendor === null || updatedVendor === void 0 ? void 0 : updatedVendor.currentOutStanding) > (updatedVendor === null || updatedVendor === void 0 ? void 0 : updatedVendor.outstandingLimit)) {

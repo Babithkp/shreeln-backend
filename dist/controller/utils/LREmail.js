@@ -222,7 +222,7 @@ const LREmailBody = (LRData) => `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 St
                                     <p
                                         style="padding: 0px; margin: 0px 0px 0px; font-family: Helvetica, Arial, sans-serif; color: #000000; font-size: 14px; line-height: 21px;">
                                         Website: www.shreelnlogistics.com </p>
-                                    <img src="https://shreelnlogistics-bucket.s3.ap-south-1.amazonaws.com/logo.png" alt="shreelnlogistics Logo"
+                                    <img src="https://shreeln-bucket.s3.ap-south-1.amazonaws.com/logo.png" alt="shreelnlogistics Logo"
                                         style="max-width: 300x; width: 300px; margin: 20px 0px 20px;">
                                     <p
                                         style="padding: 0px; margin: 0px 0px 0px; font-family: Helvetica, Arial, sans-serif; color: #000000; font-size: 14px; line-height: 21px;">
@@ -259,7 +259,7 @@ const sendLREmailToClient = (email, subject, body, attachments) => __awaiter(voi
             to: email,
             subject: subject,
             html: body,
-            attachments: attachments
+            attachments: attachments,
         });
         console.log("Email sent successfully:", info.messageId);
     }

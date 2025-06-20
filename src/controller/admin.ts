@@ -1,5 +1,4 @@
-import { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
+import { Request, Response } from "express";import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -273,7 +272,7 @@ export const createClient = async (req: Request, res: Response) => {
           pincode,
           email,
           panNumber,
-          creditLimit:parseFloat(creditLimit),
+          creditLimit: parseFloat(creditLimit),
           adminId: admin?.id,
         },
       });
@@ -301,9 +300,9 @@ export const getAllClients = async (req: Request, res: Response) => {
         PaymentRecord: true,
         bill: true,
       },
-      orderBy:{
-        createdAt: "asc"
-      }
+      orderBy: {
+        createdAt: "asc",
+      },
     });
     res.status(200).json({ data: clients });
   } catch (error) {
@@ -314,14 +313,13 @@ export const getAllClients = async (req: Request, res: Response) => {
   }
 };
 
-
 export const fectchAdminData = async (req: Request, res: Response) => {
   try {
     const admin = await prisma.admin.findFirst({
-      include:{
-        bill:true,
-        FM:true
-      }
+      include: {
+        bill: true,
+        FM: true,
+      },
     });
     if (admin) {
       res.status(200).json({
@@ -341,12 +339,12 @@ export const getAllAdminNotifications = async (req: Request, res: Response) => {
       where: {
         adminId: admin?.id,
       },
-      include:{
-        Branches: true
+      include: {
+        Branches: true,
       },
-      orderBy:{
-        createdAt:"asc"
-      }
+      orderBy: {
+        createdAt: "asc",
+      },
     });
     res.status(200).json({ data: notifications });
   } catch (error) {
@@ -391,7 +389,7 @@ export const deleteNotification = async (req: Request, res: Response) => {
 
 export const updateNotification = async (req: Request, res: Response) => {
   const { id, status } = req.params;
-  if (!id || !status ) {
+  if (!id || !status) {
     res.status(400).json({
       message: "Invalid Notification Id",
     });
@@ -424,18 +422,16 @@ export const updateNotification = async (req: Request, res: Response) => {
   }
 };
 
-
-export const getExpenseId  = async (req: Request, res: Response) => {
-
+export const getExpenseId = async (req: Request, res: Response) => {
   try {
     const expenseId = await prisma.admin.findFirst({
-      select:{
-        expenseId:true
-      }
-    })
+      select: {
+        expenseId: true,
+      },
+    });
     res.status(200).json({
       message: "Expense Id",
-      data: expenseId
+      data: expenseId,
     });
   } catch (error) {
     res.status(500).json({
@@ -443,7 +439,7 @@ export const getExpenseId  = async (req: Request, res: Response) => {
     });
     console.log(error);
   }
-}
+};
 
 export const getBillId = async (req: Request, res: Response) => {
   try {
@@ -462,4 +458,57 @@ export const getBillId = async (req: Request, res: Response) => {
     });
     console.log(error);
   }
-}
+};
+
+export const getOtherSettings = async (req: Request, res: Response) => {
+  try {
+    const admin = await prisma.admin.findFirst({
+      select: {
+        billId: true,
+        expenseId: true,
+      },
+    });
+    res.status(200).json({
+      message: "Other Settings",
+      data: admin,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+    console.log(error);
+  }
+};
+
+
+export const updateOtherSettings = async (req: Request, res: Response) => {
+  const { billId, expenseId } = req.body;
+  if (!billId || !expenseId) {
+    res.status(400).json({
+      message: "Invalid Other Settings",
+    });
+    return;
+  }
+  try {
+    const admin = await prisma.admin.findFirst();
+    if (admin) {
+      await prisma.admin.update({
+        where: {
+          id: admin.id,
+        },
+        data: {
+          billId,
+          expenseId,
+        },
+      });
+      res.status(200).json({
+        message: "Other Settings Updated",
+      });
+    }
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+    console.log(error);
+  }
+};
