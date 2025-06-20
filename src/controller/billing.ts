@@ -201,8 +201,8 @@ export const getBillDetails = async (req: Request, res: Response) => {
           },
         },
         Client: true,
-        Branches:true,
-        Admin:true
+        Branches: true,
+        Admin: true,
       },
       orderBy: {
         createdAt: "asc",
@@ -240,6 +240,26 @@ export const deleteBill = async (req: Request, res: Response) => {
       await prisma.bill.delete({
         where: {
           id: bill.id,
+        },
+      });
+      const client = await prisma.client.findUnique({
+        where: {
+          id: bill.clientId!,
+        },
+      });
+      if (!client) {
+        res.status(400).json({
+          message: "Invalid Client Id",
+        });
+        return;
+      }
+      const oldPendingAmount = client.pendingPayment - bill.subTotal;
+      await prisma.client.update({
+        where: {
+          id: client.id,
+        },
+        data: {
+          pendingPayment: oldPendingAmount,
         },
       });
       res.status(200).json({

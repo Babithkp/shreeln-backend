@@ -166,7 +166,7 @@ const getBillDetails = (req, res) => __awaiter(void 0, void 0, void 0, function*
                 },
                 Client: true,
                 Branches: true,
-                Admin: true
+                Admin: true,
             },
             orderBy: {
                 createdAt: "asc",
@@ -205,6 +205,26 @@ const deleteBill = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             yield prisma.bill.delete({
                 where: {
                     id: bill.id,
+                },
+            });
+            const client = yield prisma.client.findUnique({
+                where: {
+                    id: bill.clientId,
+                },
+            });
+            if (!client) {
+                res.status(400).json({
+                    message: "Invalid Client Id",
+                });
+                return;
+            }
+            const oldPendingAmount = client.pendingPayment - bill.subTotal;
+            yield prisma.client.update({
+                where: {
+                    id: client.id,
+                },
+                data: {
+                    pendingPayment: oldPendingAmount,
                 },
             });
             res.status(200).json({
