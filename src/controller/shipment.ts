@@ -1,5 +1,4 @@
-import { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
+import { Request, Response } from "express";import { PrismaClient } from "@prisma/client";
 import { LRData, LREmailBody, sendLREmailToClient } from "./utils/LREmail";
 import { FMData, FMEmailBody, sendFMEmailToClient } from "./utils/FMEmail";
 const prisma = new PrismaClient();
@@ -565,11 +564,12 @@ export const createFM = async (req: Request, res: Response) => {
       return;
     }
     const value =
-      parseFloat(hire) +
-      parseFloat(otherCharges) +
-      parseFloat(detentionCharges) +
-      parseFloat(rtoCharges);
-    const finalValue = value - parseFloat(tds);
+      parseFloat(hire || "0") +
+      parseFloat(otherCharges || "0") +
+      parseFloat(detentionCharges || "0") +
+      parseFloat(rtoCharges || "0");
+
+    const finalValue = value - parseFloat(tds || "0");
     const fm = await prisma.fM.create({
       data: {
         fmNumber,
@@ -780,11 +780,12 @@ export const updateFM = async (req: Request, res: Response) => {
     }
     if (fm) {
       const value =
-        parseFloat(hire) +
-        parseFloat(otherCharges) +
-        parseFloat(detentionCharges) +
-        parseFloat(rtoCharges);
-      const finalValue = value - parseFloat(tds);
+        parseFloat(hire || "0") +
+        parseFloat(otherCharges || "0") +
+        parseFloat(detentionCharges || "0") +
+        parseFloat(rtoCharges || "0");
+
+      const finalValue = value - parseFloat(tds || "0");
       const newOutstanding =
         finalValue -
         ((fm.zeroToThirty || 0) +
