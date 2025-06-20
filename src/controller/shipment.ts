@@ -1,4 +1,5 @@
-import { Request, Response } from "express";import { PrismaClient } from "@prisma/client";
+import { Request, Response } from "express";
+import { PrismaClient } from "@prisma/client";
 import { LRData, LREmailBody, sendLREmailToClient } from "./utils/LREmail";
 import { FMData, FMEmailBody, sendFMEmailToClient } from "./utils/FMEmail";
 const prisma = new PrismaClient();
@@ -563,6 +564,8 @@ export const createFM = async (req: Request, res: Response) => {
       });
       return;
     }
+    const value = hire + otherCharges + detentionCharges + rtoCharges;
+    const finalValue = value - parseFloat(tds);
     const fm = await prisma.fM.create({
       data: {
         fmNumber,
@@ -590,7 +593,7 @@ export const createFM = async (req: Request, res: Response) => {
         rtoCharges,
         tds,
         netBalance,
-        outStandingBalance: netBalance,
+        outStandingBalance: finalValue.toString(),
         outStandingAdvance: advance ? parseFloat(advance || "0") : 0,
         amountInwords,
         dlNumber,
@@ -609,8 +612,7 @@ export const createFM = async (req: Request, res: Response) => {
         id: vendorsId,
       },
       data: {
-        currentOutStanding:
-          vendor.currentOutStanding + parseFloat(netBalance || "0"),
+        currentOutStanding: vendor.currentOutStanding + finalValue,
       },
     });
     if (updatedVendor?.currentOutStanding > updatedVendor?.outstandingLimit) {
@@ -654,9 +656,9 @@ export const getFMData = async (req: Request, res: Response) => {
         },
         branch: true,
       },
-      orderBy:{
-        createdAt: "desc"
-      }
+      orderBy: {
+        createdAt: "desc",
+      },
     });
     res.status(200).json({ data: data });
   } catch (error) {
@@ -750,8 +752,10 @@ export const updateFM = async (req: Request, res: Response) => {
       return;
     }
     if (fm) {
+      const value = hire + otherCharges + detentionCharges + rtoCharges;
+      const finalValue = value - parseFloat(tds);
       const newOutstanding =
-        parseFloat(netBalance || "0") -
+        finalValue -
         ((fm.zeroToThirty || 0) +
           (fm.thirtyToSixty || 0) +
           (fm.sixtyToNinety || 0) +
@@ -794,14 +798,19 @@ export const updateFM = async (req: Request, res: Response) => {
           LRDetails,
         },
       });
-      const oldOutstanding =
-        vendor.currentOutStanding - parseFloat(fm.netBalance || "0");
+      const oldValue =
+        parseFloat(fm.hire) +
+        parseFloat(fm.otherCharges) +
+        parseFloat(fm.detentionCharges) +
+        parseFloat(fm.rtoCharges);
+      const finalOldValue = oldValue - parseFloat(fm.tds);
+      const oldOutstanding = vendor.currentOutStanding - finalOldValue;
       const updatedVendor = await prisma.vendors.update({
         where: {
           id: vendorsId,
         },
         data: {
-          currentOutStanding: oldOutstanding + parseFloat(netBalance || "0"),
+          currentOutStanding: oldOutstanding + finalValue,
         },
       });
       if (updatedVendor?.currentOutStanding > updatedVendor?.outstandingLimit) {

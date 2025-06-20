@@ -12,11 +12,11 @@ export const createVendor = async (req: Request, res: Response) => {
     state,
     pincode,
     email,
+    pan,
     outstandingLimit,
   } = req.body;
   if (
     !name ||
-    !GSTIN ||
     !contactPerson ||
     !contactNumber ||
     !address ||
@@ -25,6 +25,7 @@ export const createVendor = async (req: Request, res: Response) => {
     !state ||
     !pincode ||
     !email ||
+    !pan ||
     !outstandingLimit
   ) {
     res.status(400).json({
@@ -58,6 +59,7 @@ export const createVendor = async (req: Request, res: Response) => {
           state,
           pincode,
           email,
+          pan,
           outstandingLimit: parseFloat(outstandingLimit),
           adminId: admin?.id,
         },
@@ -112,13 +114,13 @@ export const updateVendorDetails = async (req: Request, res: Response) => {
     state,
     pincode,
     email,
+    pan,
     outstandingLimit,
   } = req.body;
   const { id } = req.params;
   if (
     !id ||
     !name ||
-    !GSTIN ||
     !contactPerson ||
     !contactNumber ||
     !address ||
@@ -127,6 +129,7 @@ export const updateVendorDetails = async (req: Request, res: Response) => {
     !state ||
     !pincode ||
     !email ||
+    !pan ||
     !outstandingLimit
   ) {
     res.status(400).json({
@@ -166,6 +169,7 @@ export const updateVendorDetails = async (req: Request, res: Response) => {
           address,
           TDS,
           city,
+          pan,
           state,
           pincode,
           email,
@@ -334,7 +338,6 @@ export const updateVehicleDetails = async (req: Request, res: Response) => {
     !vehicleNumber ||
     !ownerName ||
     !ownerPhone ||
-    !driverName ||
     !driverPhone ||
     !insurance ||
     !RC

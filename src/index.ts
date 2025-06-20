@@ -41,11 +41,16 @@ app.use("/api/v1", podRouter);
 app.use("/api/v1", expensesRouter);
 
 
+
 app.post("/api/v1/sendLREmail/:email", upload.any(), sendLREmail);
 app.post("/api/v1/sendFMEmail/:email", upload.any(), sendFMEmail);
 app.post("/api/v1/sendBillEmail/:email", upload.any(), sendBillEmail);
 app.post("/api/v1/lorryReceiptsUpload", upload.any(), lorryReceiptsFileUpload);
 createAdmin()
+
+app.post('tauri-update', async (req, res) => {
+  res.status(204)
+})
 
 cron.schedule("0 0 * * *", async() => {
   console.log("🔄 Running FM status checker at midnight...");

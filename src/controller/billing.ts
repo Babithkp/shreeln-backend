@@ -110,7 +110,7 @@ export const createBill = async (req: Request, res: Response) => {
         subTotal,
         total,
         totalInWords,
-        pendingAmount: total,
+        pendingAmount: subTotal,
         unloading,
         hamali,
         extraKmWeight,
@@ -131,7 +131,7 @@ export const createBill = async (req: Request, res: Response) => {
         id: clientId,
       },
       data: {
-        pendingPayment: client.pendingPayment + total,
+        pendingPayment: client.pendingPayment + subTotal,
       },
     });
     if (updatedClient?.pendingPayment > updatedClient?.creditLimit) {
@@ -370,7 +370,7 @@ export const updateBillDetails = async (req: Request, res: Response) => {
         subTotal,
         total,
         totalInWords,
-        pendingAmount: total,
+        pendingAmount: subTotal,
         unloading,
         hamali,
         extraKmWeight,
@@ -404,13 +404,13 @@ export const updateBillDetails = async (req: Request, res: Response) => {
       });
       return;
     }
-    const oldPendingAmount = client.pendingPayment - oldBill.total;
+    const oldPendingAmount = client.pendingPayment - oldBill.subTotal;
     const updatedClient = await prisma.client.update({
       where: {
         id: client.id,
       },
       data: {
-        pendingPayment: oldPendingAmount + parseFloat(total || "0"),
+        pendingPayment: oldPendingAmount + parseFloat(subTotal || "0"),
       },
     });
     if (updatedClient?.pendingPayment > updatedClient?.creditLimit) {

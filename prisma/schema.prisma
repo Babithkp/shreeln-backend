@@ -122,11 +122,12 @@ model Vendors {
   pincode            String
   address            String
   TDS                String
-  email              String
+  email              String?
   city               String
   state              String
   outstandingLimit   Float
   currentOutStanding Float     @default(0)
+  pan                String
   createdAt          DateTime  @default(now())
   vehicles           Vehicle[]
   adminId            String    @db.ObjectId

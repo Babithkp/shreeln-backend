@@ -179,7 +179,7 @@ export const FMEmailBody = (
                                         style="padding: 0px; margin: 0px 0px 0px; font-family: Helvetica, Arial, sans-serif; color: #000000; font-size: 14px; line-height: 21px;">
                                         Website: www.shreelnlogistics.com </p>
 
-                                    <img class="mobile-image" src="https://shreelnlogistics-bucket.s3.ap-south-1.amazonaws.com/logo.png"
+                                    <img class="mobile-image" src="https://shreeln-bucket.s3.ap-south-1.amazonaws.com/logo.png"
                                         alt="shreelnlogistics Logo"
                                         style="max-width: 300x; width: 300px; margin: 20px 0px 20px;">
                                     <p

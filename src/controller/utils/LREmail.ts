@@ -1,26 +1,27 @@
-import nodemailer from "nodemailer";
-const myGmail = process.env.GOOGLE_APP_USER;
+import nodemailer from "nodemailer";const myGmail = process.env.GOOGLE_APP_USER;
 const pass = process.env.GOOGLE_APP_PASS;
 
 export interface LRData {
-    lrNumber: string;
-    body: string;
-    date: string;
-    from: string;
-    to: string;
-    branchContactNumber: string;
-    consignorName: string;
-    branchAddress: string;
-    branchCity: string;
-    branchPincode: string;
-    consigneeName: string;
-    noOfPackages: string;
-    description: string;
-    vehicleNo: string;
-    driverPhone: string;
-  }
+  lrNumber: string;
+  body: string;
+  date: string;
+  from: string;
+  to: string;
+  branchContactNumber: string;
+  consignorName: string;
+  branchAddress: string;
+  branchCity: string;
+  branchPincode: string;
+  consigneeName: string;
+  noOfPackages: string;
+  description: string;
+  vehicleNo: string;
+  driverPhone: string;
+}
 
-export const LREmailBody = (LRData:LRData) => `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+export const LREmailBody = (
+  LRData: LRData
+) => `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 
 <head>
@@ -226,7 +227,7 @@ export const LREmailBody = (LRData:LRData) => `<!DOCTYPE html PUBLIC "-//W3C//DT
                                     <p
                                         style="padding: 0px; margin: 0px 0px 0px; font-family: Helvetica, Arial, sans-serif; color: #000000; font-size: 14px; line-height: 21px;">
                                         Website: www.shreelnlogistics.com </p>
-                                    <img src="https://shreelnlogistics-bucket.s3.ap-south-1.amazonaws.com/logo.png" alt="shreelnlogistics Logo"
+                                    <img src="https://shreeln-bucket.s3.ap-south-1.amazonaws.com/logo.png" alt="shreelnlogistics Logo"
                                         style="max-width: 300x; width: 300px; margin: 20px 0px 20px;">
                                     <p
                                         style="padding: 0px; margin: 0px 0px 0px; font-family: Helvetica, Arial, sans-serif; color: #000000; font-size: 14px; line-height: 21px;">
@@ -245,41 +246,39 @@ export const LREmailBody = (LRData:LRData) => `<!DOCTYPE html PUBLIC "-//W3C//DT
     </table>
 </body>
 
-</html>`
-
-
+</html>`;
 
 export const sendLREmailToClient = async (
-    email: string,
-    subject: string,
-    body: string,
-    attachments: {
-      filename: string;
-      content: Buffer;
-      contentType: string;
-    }[]
-  ) => {
-    try {
-      const transporter = nodemailer.createTransport({
-        host: "smtppro.zoho.in",
-        port: 465,
-        secure: true,
-        auth: {
-          user: myGmail,
-          pass: pass,
-        },
-      });
-  
-      const info = await transporter.sendMail({
-        from: `Shree LN Logistics <${myGmail}>`,
-        to: email,
-        subject: subject,
-        html: body,
-        attachments:attachments
-      });
-  
-      console.log("Email sent successfully:", info.messageId);
-    } catch (error) {
-      console.error("Error sending email:", error);
-    }
-  };
+  email: string,
+  subject: string,
+  body: string,
+  attachments: {
+    filename: string;
+    content: Buffer;
+    contentType: string;
+  }[]
+) => {
+  try {
+    const transporter = nodemailer.createTransport({
+      host: "smtppro.zoho.in",
+      port: 465,
+      secure: true,
+      auth: {
+        user: myGmail,
+        pass: pass,
+      },
+    });
+
+    const info = await transporter.sendMail({
+      from: `Shree LN Logistics <${myGmail}>`,
+      to: email,
+      subject: subject,
+      html: body,
+      attachments: attachments,
+    });
+
+    console.log("Email sent successfully:", info.messageId);
+  } catch (error) {
+    console.error("Error sending email:", error);
+  }
+};
