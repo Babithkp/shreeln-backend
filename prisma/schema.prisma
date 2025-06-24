@@ -223,7 +223,7 @@ model FM {
   vendorName         String
   vendorEmail        String?
   ContactPerson      String
-  DriverName         String
+  DriverName         String?
   contactNumber      String
   ownerName          String
   TDS                String
