@@ -61,7 +61,6 @@ export const createLR = async (req: Request, res: Response) => {
     !consignorPincode ||
     !consignorAddress ||
     !consigneeName ||
-    !consigneeGSTIN ||
     !consigneePincode ||
     !consigneeAddress ||
     !noOfPackages ||
@@ -309,7 +308,6 @@ export const updateLR = async (req: Request, res: Response) => {
     !consignorPincode ||
     !consignorAddress ||
     !consigneeName ||
-    !consigneeGSTIN ||
     !consigneePincode ||
     !consigneeAddress ||
     !noOfPackages ||

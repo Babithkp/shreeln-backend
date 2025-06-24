@@ -90,7 +90,9 @@ export const getAllVendors = async (req: Request, res: Response) => {
           },
         },
       },
-      
+      orderBy:{
+        createdAt:'desc'  
+      }
     });
     res.status(200).json({ data: vendors });
   } catch (error) {
@@ -232,7 +234,7 @@ export const createVehicle = async (req: Request, res: Response) => {
     RC,
     panNumber,
   } = req.body;
-  if (!vehicletypes || !vehicleNumber || !insurance || !RC || !panNumber) {
+  if (!vehicletypes || !vehicleNumber || !insurance || !RC || !panNumber || !driverPhone) {
     res.status(400).json({
       message: "Invalid Vehicle Details",
     });

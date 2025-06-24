@@ -143,7 +143,7 @@ model Vehicle {
   ownerName     String?
   ownerPhone    String?
   driverName    String?
-  driverPhone   String?
+  driverPhone   String
   insurance     String
   RC            String
   panNumber     String
@@ -168,7 +168,7 @@ model LR {
   consignorPincode String
   consignorAddress String
   consigneeName    String
-  consigneeGSTIN   String
+  consigneeGSTIN   String?
   consigneePincode String
   consigneeAddress String
   noOfPackages     String
