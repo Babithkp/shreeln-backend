@@ -90,6 +90,12 @@ export const createLR = async (req: Request, res: Response) => {
       return;
     }
 
+    const vehicle = await prisma.vehicle.findFirst({
+      where: {
+        vehicleNumber: Vehicle.vehicleNumber,
+      },
+    });
+
     await prisma.lR.create({
       data: {
         ...(adminId ? { adminId } : {}),
@@ -133,7 +139,7 @@ export const createLR = async (req: Request, res: Response) => {
         ewbExpiryDate,
         totalAmt,
         emails,
-        vehicleId: Vehicle.vehicleNumber,
+        vehicleId: vehicle?.id,
         client,
       },
     });
@@ -329,6 +335,11 @@ export const updateLR = async (req: Request, res: Response) => {
         lrNumber,
       },
     });
+    const vehicle = await prisma.vehicle.findFirst({
+      where: {
+        vehicleNumber: vehicleId,
+      },
+    });
     if (lr) {
       await prisma.lR.update({
         where: {
@@ -374,7 +385,7 @@ export const updateLR = async (req: Request, res: Response) => {
           ewbExpiryDate,
           totalAmt,
           emails,
-          vehicleId: vehicleId,
+          vehicleId: vehicle?.id,
           client,
         },
       });

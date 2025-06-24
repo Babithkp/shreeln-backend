@@ -52,6 +52,11 @@ const createLR = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             });
             return;
         }
+        const vehicle = yield prisma.vehicle.findFirst({
+            where: {
+                vehicleNumber: Vehicle.vehicleNumber,
+            },
+        });
         yield prisma.lR.create({
             data: Object.assign(Object.assign(Object.assign({}, (adminId ? { adminId } : {})), (branchId ? { branchId } : {})), { lrNumber,
                 date,
@@ -91,7 +96,7 @@ const createLR = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 ewbNumber,
                 ewbExpiryDate,
                 totalAmt,
-                emails, vehicleId: Vehicle.vehicleNumber, client }),
+                emails, vehicleId: vehicle === null || vehicle === void 0 ? void 0 : vehicle.id, client }),
         });
         res.status(200).json({
             message: "LR Created",
@@ -244,6 +249,11 @@ const updateLR = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 lrNumber,
             },
         });
+        const vehicle = yield prisma.vehicle.findFirst({
+            where: {
+                vehicleNumber: vehicleId,
+            },
+        });
         if (lr) {
             yield prisma.lR.update({
                 where: {
@@ -289,7 +299,7 @@ const updateLR = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                     ewbExpiryDate,
                     totalAmt,
                     emails,
-                    vehicleId: vehicleId,
+                    vehicleId: vehicle === null || vehicle === void 0 ? void 0 : vehicle.id,
                     client,
                 },
             });
