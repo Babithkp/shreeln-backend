@@ -1,4 +1,5 @@
-import { Request, Response } from "express";import { PrismaClient } from "@prisma/client";
+import { Request, Response } from "express";
+import { PrismaClient } from "@prisma/client";
 import { LRData, LREmailBody, sendLREmailToClient } from "./utils/LREmail";
 import { FMData, FMEmailBody, sendFMEmailToClient } from "./utils/FMEmail";
 const prisma = new PrismaClient();
@@ -536,6 +537,10 @@ export const createFM = async (req: Request, res: Response) => {
     adminId,
     branchId,
     payableAt,
+    ftl,
+    sizeL,
+    sizeW,
+    sizeH,
   } = req.body;
 
   try {
@@ -596,6 +601,10 @@ export const createFM = async (req: Request, res: Response) => {
         tds,
         netBalance,
         payableAt,
+        ftl,
+        sizeL,
+        sizeW,
+        sizeH,
         outStandingBalance: finalValue.toString(),
         outStandingAdvance: advance ? parseFloat(advance || "0") : 0,
         amountInwords,
@@ -759,6 +768,10 @@ export const updateFM = async (req: Request, res: Response) => {
     LRDetails,
     vendorsId,
     payableAt,
+    ftl,
+    sizeL,
+    sizeW,
+    sizeH,
   } = req.body;
 
   try {
@@ -823,6 +836,10 @@ export const updateFM = async (req: Request, res: Response) => {
           tds,
           netBalance,
           payableAt,
+          ftl,
+          sizeL,
+          sizeW,
+          sizeH,
           outStandingBalance: newOutstanding.toString(),
           outStandingAdvance: advance ? parseFloat(advance || "0") : 0,
           amountInwords,

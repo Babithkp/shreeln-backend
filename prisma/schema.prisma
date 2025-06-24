@@ -229,6 +229,10 @@ model FM {
   TDS                String
   insturance         String
   Rc                 String
+  sizeL              String?
+  sizeW              String?
+  sizeH              String?
+  ftl                String?
   LRDetails          LRList[]
   PaymentRecords     PaymentRecord[]
   hire               String
