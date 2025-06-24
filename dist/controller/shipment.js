@@ -411,7 +411,7 @@ const sendLREmail = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
 });
 exports.sendLREmail = sendLREmail;
 const createFM = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { fmNumber, date, from, to, vehicleNo, vehicleType, weight, packages, vendorName, vendorEmail, ContactPerson, DriverName, contactNumber, ownerName, TDS, insturance, Rc, advance, hire, balance, otherCharges, detentionCharges, rtoCharges, tds, netBalance, amountInwords, dlNumber, driverSignature, LRDetails, vendorsId, adminId, branchId, payableAt, } = req.body;
+    const { fmNumber, date, from, to, vehicleNo, vehicleType, weight, packages, vendorName, vendorEmail, ContactPerson, DriverName, contactNumber, ownerName, TDS, insturance, Rc, advance, hire, balance, otherCharges, detentionCharges, rtoCharges, tds, netBalance, amountInwords, dlNumber, driverSignature, LRDetails, adminId, branchId, payableAt, } = req.body;
     try {
         const isFMNumberAvailable = yield prisma.fM.findFirst({
             where: {
@@ -426,7 +426,7 @@ const createFM = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         }
         const vendor = yield prisma.vendors.findUnique({
             where: {
-                id: vendorsId,
+                name: vendorName,
             },
         });
         if (!vendor) {
@@ -466,12 +466,12 @@ const createFM = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 payableAt, outStandingBalance: finalValue.toString(), outStandingAdvance: advance ? parseFloat(advance || "0") : 0, amountInwords,
                 dlNumber,
                 driverSignature, LRDetails: LRDetails, Vendors: {
-                    connect: { id: vendorsId },
+                    connect: { id: vendor.id },
                 } }, (adminId ? { admin: { connect: { id: adminId } } } : {})), (branchId ? { branch: { connect: { id: branchId } } } : {})),
         });
         const updatedVendor = yield prisma.vendors.update({
             where: {
-                id: vendorsId,
+                id: vendor.id,
             },
             data: {
                 currentOutStanding: vendor.currentOutStanding + finalValue,
@@ -589,7 +589,7 @@ const deleteFM = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 });
 exports.deleteFM = deleteFM;
 const updateFM = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { fmNumber, date, from, to, vehicleNo, vehicleType, weight, packages, vendorName, ContactPerson, DriverName, contactNumber, ownerName, TDS, insturance, Rc, advance, hire, balance, otherCharges, detentionCharges, rtoCharges, tds, netBalance, amountInwords, dlNumber, driverSignature, LRDetails, vendorsId, payableAt } = req.body;
+    const { fmNumber, date, from, to, vehicleNo, vehicleType, weight, packages, vendorName, ContactPerson, DriverName, contactNumber, ownerName, TDS, insturance, Rc, advance, hire, balance, otherCharges, detentionCharges, rtoCharges, tds, netBalance, amountInwords, dlNumber, driverSignature, LRDetails, vendorsId, payableAt, } = req.body;
     try {
         const fm = yield prisma.fM.findUnique({
             where: {
@@ -598,7 +598,7 @@ const updateFM = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         });
         const vendor = yield prisma.vendors.findUnique({
             where: {
-                id: vendorsId,
+                name: vendorsId,
             },
         });
         if (!vendor) {
@@ -664,7 +664,7 @@ const updateFM = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             const oldOutstanding = vendor.currentOutStanding - finalOldValue;
             const updatedVendor = yield prisma.vendors.update({
                 where: {
-                    id: vendorsId,
+                    id: vendor.id,
                 },
                 data: {
                     currentOutStanding: oldOutstanding + finalValue,

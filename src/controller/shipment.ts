@@ -1,5 +1,4 @@
-import { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
+import { Request, Response } from "express";import { PrismaClient } from "@prisma/client";
 import { LRData, LREmailBody, sendLREmailToClient } from "./utils/LREmail";
 import { FMData, FMEmailBody, sendFMEmailToClient } from "./utils/FMEmail";
 const prisma = new PrismaClient();
@@ -534,7 +533,6 @@ export const createFM = async (req: Request, res: Response) => {
     dlNumber,
     driverSignature,
     LRDetails,
-    vendorsId,
     adminId,
     branchId,
     payableAt,
@@ -554,7 +552,7 @@ export const createFM = async (req: Request, res: Response) => {
     }
     const vendor = await prisma.vendors.findUnique({
       where: {
-        id: vendorsId,
+        name: vendorName,
       },
     });
     if (!vendor) {
@@ -605,7 +603,7 @@ export const createFM = async (req: Request, res: Response) => {
         driverSignature,
         LRDetails: LRDetails,
         Vendors: {
-          connect: { id: vendorsId },
+          connect: { id: vendor.id },
         },
         ...(adminId ? { admin: { connect: { id: adminId } } } : {}),
         ...(branchId ? { branch: { connect: { id: branchId } } } : {}),
@@ -614,7 +612,7 @@ export const createFM = async (req: Request, res: Response) => {
 
     const updatedVendor = await prisma.vendors.update({
       where: {
-        id: vendorsId,
+        id: vendor.id,
       },
       data: {
         currentOutStanding: vendor.currentOutStanding + finalValue,
@@ -760,7 +758,7 @@ export const updateFM = async (req: Request, res: Response) => {
     driverSignature,
     LRDetails,
     vendorsId,
-    payableAt
+    payableAt,
   } = req.body;
 
   try {
@@ -771,7 +769,7 @@ export const updateFM = async (req: Request, res: Response) => {
     });
     const vendor = await prisma.vendors.findUnique({
       where: {
-        id: vendorsId,
+        name: vendorsId,
       },
     });
     if (!vendor) {
@@ -843,7 +841,7 @@ export const updateFM = async (req: Request, res: Response) => {
 
       const updatedVendor = await prisma.vendors.update({
         where: {
-          id: vendorsId,
+          id: vendor.id,
         },
         data: {
           currentOutStanding: oldOutstanding + finalValue,
