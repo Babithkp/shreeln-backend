@@ -242,6 +242,7 @@ model FM {
   outStandingBalance String
   outStandingAdvance Float
   amountInwords      String
+  payableAt          String
   dlNumber           String?
   status             String?         @default("open")
   driverSignature    String?

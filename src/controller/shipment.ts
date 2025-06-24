@@ -1,4 +1,5 @@
-import { Request, Response } from "express";import { PrismaClient } from "@prisma/client";
+import { Request, Response } from "express";
+import { PrismaClient } from "@prisma/client";
 import { LRData, LREmailBody, sendLREmailToClient } from "./utils/LREmail";
 import { FMData, FMEmailBody, sendFMEmailToClient } from "./utils/FMEmail";
 const prisma = new PrismaClient();
@@ -536,6 +537,7 @@ export const createFM = async (req: Request, res: Response) => {
     vendorsId,
     adminId,
     branchId,
+    payableAt,
   } = req.body;
 
   try {
@@ -595,6 +597,7 @@ export const createFM = async (req: Request, res: Response) => {
         rtoCharges,
         tds,
         netBalance,
+        payableAt,
         outStandingBalance: finalValue.toString(),
         outStandingAdvance: advance ? parseFloat(advance || "0") : 0,
         amountInwords,
@@ -757,6 +760,7 @@ export const updateFM = async (req: Request, res: Response) => {
     driverSignature,
     LRDetails,
     vendorsId,
+    payableAt
   } = req.body;
 
   try {
@@ -820,6 +824,7 @@ export const updateFM = async (req: Request, res: Response) => {
           rtoCharges,
           tds,
           netBalance,
+          payableAt,
           outStandingBalance: newOutstanding.toString(),
           outStandingAdvance: advance ? parseFloat(advance || "0") : 0,
           amountInwords,
@@ -829,12 +834,13 @@ export const updateFM = async (req: Request, res: Response) => {
         },
       });
       const oldValue =
-        parseFloat(fm.hire) +
-        parseFloat(fm.otherCharges) +
-        parseFloat(fm.detentionCharges) +
-        parseFloat(fm.rtoCharges);
-      const finalOldValue = oldValue - parseFloat(fm.tds);
+        parseFloat(fm.hire || "0") +
+        parseFloat(fm.otherCharges || "0") +
+        parseFloat(fm.detentionCharges || "0") +
+        parseFloat(fm.rtoCharges || "0");
+      const finalOldValue = oldValue - parseFloat(fm.tds || "0");
       const oldOutstanding = vendor.currentOutStanding - finalOldValue;
+
       const updatedVendor = await prisma.vendors.update({
         where: {
           id: vendorsId,
