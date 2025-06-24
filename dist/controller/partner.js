@@ -88,6 +88,9 @@ const getAllVendors = (req, res) => __awaiter(void 0, void 0, void 0, function* 
                     },
                 },
             },
+            orderBy: {
+                createdAt: 'desc'
+            }
         });
         res.status(200).json({ data: vendors });
     }
@@ -206,7 +209,7 @@ const deleteVendor = (req, res) => __awaiter(void 0, void 0, void 0, function* (
 exports.deleteVendor = deleteVendor;
 const createVehicle = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { vendorName, vehicletypes, vehicleNumber, ownerName, ownerPhone, driverName, driverPhone, insurance, RC, panNumber, } = req.body;
-    if (!vehicletypes || !vehicleNumber || !insurance || !RC || !panNumber) {
+    if (!vehicletypes || !vehicleNumber || !insurance || !RC || !panNumber || !driverPhone) {
         res.status(400).json({
             message: "Invalid Vehicle Details",
         });

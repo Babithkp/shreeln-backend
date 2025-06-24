@@ -26,7 +26,6 @@ const createLR = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         !consignorPincode ||
         !consignorAddress ||
         !consigneeName ||
-        !consigneeGSTIN ||
         !consigneePincode ||
         !consigneeAddress ||
         !noOfPackages ||
@@ -226,7 +225,6 @@ const updateLR = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         !consignorPincode ||
         !consignorAddress ||
         !consigneeName ||
-        !consigneeGSTIN ||
         !consigneePincode ||
         !consigneeAddress ||
         !noOfPackages ||
