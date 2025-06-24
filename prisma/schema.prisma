@@ -221,7 +221,7 @@ model FM {
   weight             String
   package            String
   vendorName         String
-  vendorEmail        String
+  vendorEmail        String?
   ContactPerson      String
   DriverName         String
   contactNumber      String
