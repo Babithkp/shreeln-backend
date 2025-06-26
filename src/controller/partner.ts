@@ -241,6 +241,20 @@ export const createVehicle = async (req: Request, res: Response) => {
     return;
   }
   try {
+
+    const isVehicleNumberAvailable = await prisma.vehicle.findFirst({
+      where: {
+        vehicleNumber,
+      },
+    });
+
+    if (isVehicleNumberAvailable) {
+      res.status(201).json({
+        message: "Vehicle Number already exists",
+      });
+      return;
+    }
+
     const vendor = await prisma.vendors.findUnique({
       where: {
         name: vendorName,

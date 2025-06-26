@@ -140,7 +140,7 @@ model Vehicle {
   id            String   @id @default(auto()) @map("_id") @db.ObjectId
   vendorName    String   @unique
   vehicletypes  String
-  vehicleNumber String
+  vehicleNumber String   @unique
   ownerName     String?
   ownerPhone    String?
   driverName    String?

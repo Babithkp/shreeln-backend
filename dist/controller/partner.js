@@ -216,6 +216,17 @@ const createVehicle = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         return;
     }
     try {
+        const isVehicleNumberAvailable = yield prisma.vehicle.findFirst({
+            where: {
+                vehicleNumber,
+            },
+        });
+        if (isVehicleNumberAvailable) {
+            res.status(201).json({
+                message: "Vehicle Number already exists",
+            });
+            return;
+        }
         const vendor = yield prisma.vendors.findUnique({
             where: {
                 name: vendorName,
