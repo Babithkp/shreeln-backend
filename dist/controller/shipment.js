@@ -57,6 +57,17 @@ const createLR = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 vehicleNumber: Vehicle.vehicleNumber,
             },
         });
+        const clients = yield prisma.client.findUnique({
+            where: {
+                name: client,
+            },
+        });
+        if (!clients) {
+            res.status(400).json({
+                message: "Invalid Client Id",
+            });
+            return;
+        }
         yield prisma.lR.create({
             data: Object.assign(Object.assign(Object.assign({}, (adminId ? { adminId } : {})), (branchId ? { branchId } : {})), { lrNumber,
                 date,
@@ -94,9 +105,7 @@ const createLR = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 weightment,
                 others,
                 ewbNumber,
-                ewbExpiryDate,
-                totalAmt,
-                emails, vehicleId: vehicle === null || vehicle === void 0 ? void 0 : vehicle.id, client }),
+                ewbExpiryDate, totalAmt: parseFloat(totalAmt || "0"), emails, vehicleId: vehicle === null || vehicle === void 0 ? void 0 : vehicle.id, clientId: clients.id }),
         });
         res.status(200).json({
             message: "LR Created",
@@ -138,6 +147,11 @@ const getLRData = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 pod: {
                     select: {
                         id: true,
+                    },
+                },
+                client: {
+                    select: {
+                        name: true,
                     },
                 },
             },
@@ -254,6 +268,17 @@ const updateLR = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 vehicleNumber: vehicleId,
             },
         });
+        const clients = yield prisma.client.findUnique({
+            where: {
+                name: client,
+            },
+        });
+        if (!clients) {
+            res.status(400).json({
+                message: "Invalid Client Id",
+            });
+            return;
+        }
         if (lr) {
             yield prisma.lR.update({
                 where: {
@@ -300,7 +325,7 @@ const updateLR = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                     totalAmt,
                     emails,
                     vehicleId: vehicle === null || vehicle === void 0 ? void 0 : vehicle.id,
-                    client,
+                    clientId: clients.id,
                 },
             });
             res.status(200).json({
@@ -318,7 +343,6 @@ const updateLR = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 exports.updateLR = updateLR;
 const filterLRDetails = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { text } = req.params;
-    console.log(text);
     try {
         const lrs = yield prisma.lR.findMany({
             where: {

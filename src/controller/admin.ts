@@ -299,6 +299,7 @@ export const getAllClients = async (req: Request, res: Response) => {
       include: {
         PaymentRecord: true,
         bill: true,
+        LR: true,
       },
       orderBy: {
         createdAt: "asc",

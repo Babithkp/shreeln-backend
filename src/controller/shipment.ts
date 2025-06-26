@@ -1,5 +1,4 @@
-import { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
+import { Request, Response } from "express";import { PrismaClient } from "@prisma/client";
 import { LRData, LREmailBody, sendLREmailToClient } from "./utils/LREmail";
 import { FMData, FMEmailBody, sendFMEmailToClient } from "./utils/FMEmail";
 const prisma = new PrismaClient();
@@ -96,6 +95,18 @@ export const createLR = async (req: Request, res: Response) => {
       },
     });
 
+    const clients = await prisma.client.findUnique({
+      where: {
+        name: client,
+      },
+    });
+    if (!clients) {
+      res.status(400).json({
+        message: "Invalid Client Id",
+      });
+      return;
+    }
+
     await prisma.lR.create({
       data: {
         ...(adminId ? { adminId } : {}),
@@ -137,10 +148,10 @@ export const createLR = async (req: Request, res: Response) => {
         others,
         ewbNumber,
         ewbExpiryDate,
-        totalAmt,
+        totalAmt: parseFloat(totalAmt || "0"),
         emails,
         vehicleId: vehicle?.id,
-        client,
+        clientId: clients.id,
       },
     });
     res.status(200).json({
@@ -182,6 +193,11 @@ export const getLRData = async (req: Request, res: Response) => {
         pod: {
           select: {
             id: true,
+          },
+        },
+        client: {
+          select: {
+            name: true,
           },
         },
       },
@@ -340,6 +356,17 @@ export const updateLR = async (req: Request, res: Response) => {
         vehicleNumber: vehicleId,
       },
     });
+    const clients = await prisma.client.findUnique({
+      where: {
+        name: client,
+      },
+    });
+    if (!clients) {
+      res.status(400).json({
+        message: "Invalid Client Id",
+      });
+      return;
+    }
     if (lr) {
       await prisma.lR.update({
         where: {
@@ -386,7 +413,7 @@ export const updateLR = async (req: Request, res: Response) => {
           totalAmt,
           emails,
           vehicleId: vehicle?.id,
-          client,
+          clientId: clients.id,
         },
       });
       res.status(200).json({
@@ -403,7 +430,6 @@ export const updateLR = async (req: Request, res: Response) => {
 
 export const filterLRDetails = async (req: Request, res: Response) => {
   const { text } = req.params;
-  console.log(text);
 
   try {
     const lrs = await prisma.lR.findMany({

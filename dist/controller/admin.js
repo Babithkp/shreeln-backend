@@ -279,6 +279,7 @@ const getAllClients = (req, res) => __awaiter(void 0, void 0, void 0, function* 
             include: {
                 PaymentRecord: true,
                 bill: true,
+                LR: true,
             },
             orderBy: {
                 createdAt: "asc",

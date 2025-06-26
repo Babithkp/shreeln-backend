@@ -111,6 +111,7 @@ model Client {
   admin          Admin           @relation(fields: [adminId], references: [id])
   bill           Bill[]
   PaymentRecord  PaymentRecord[]
+  LR             LR[]
 }
 
 model Vendors {
@@ -198,12 +199,13 @@ model LR {
   pod              POD[]
   totalAmt         Float     @default(0)
   createdAt        DateTime  @default(now())
-  client           String?
   emails           String[]
   Bill             Bill?     @relation(fields: [billId], references: [id])
   billId           String?   @db.ObjectId
   Vehicle          Vehicle?  @relation(fields: [vehicleId], references: [id])
   vehicleId        String?   @db.ObjectId
+  client           Client?   @relation(fields: [clientId], references: [id])
+  clientId         String?   @db.ObjectId
 }
 
 model FM {
