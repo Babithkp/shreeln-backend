@@ -1,4 +1,5 @@
-import { Request, Response } from "express";import { PrismaClient } from "@prisma/client";
+import { Request, Response } from "express";
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -299,7 +300,11 @@ export const getAllClients = async (req: Request, res: Response) => {
       include: {
         PaymentRecord: true,
         bill: true,
-        LR: true,
+        LR: {
+          include: {
+            Vehicle: true,
+          },
+        },
       },
       orderBy: {
         createdAt: "asc",
@@ -480,7 +485,6 @@ export const getOtherSettings = async (req: Request, res: Response) => {
     console.log(error);
   }
 };
-
 
 export const updateOtherSettings = async (req: Request, res: Response) => {
   const { billId, expenseId } = req.body;
