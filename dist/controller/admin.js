@@ -330,8 +330,8 @@ const getAllAdminNotifications = (req, res) => __awaiter(void 0, void 0, void 0,
                 Branches: true,
             },
             orderBy: {
-                createdAt: "asc",
-            },
+                createdAt: "desc"
+            }
         });
         res.status(200).json({ data: notifications });
     }

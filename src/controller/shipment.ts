@@ -1,4 +1,5 @@
-import { Request, Response } from "express";import { PrismaClient } from "@prisma/client";
+import { Request, Response } from "express";
+import { PrismaClient } from "@prisma/client";
 import { LRData, LREmailBody, sendLREmailToClient } from "./utils/LREmail";
 import { FMData, FMEmailBody, sendFMEmailToClient } from "./utils/FMEmail";
 const prisma = new PrismaClient();
@@ -733,6 +734,40 @@ export const deleteFM = async (req: Request, res: Response) => {
       },
     });
     if (fm) {
+      if (!fm.vendorsId) {
+        res.status(202).json({
+          message: "Invalid Vendor Id",
+        });
+        return;
+      }
+      const recordPayments = await prisma.paymentRecord.findMany({
+        where: {
+          fMId: fm.id,
+        },
+      });
+      const vendor = await prisma.vendors.findUnique({
+        where: {
+          id: fm.vendorsId,
+        },
+      });
+
+      const totalRecordPayments = recordPayments.reduce(
+        (acc, data) => acc + parseFloat(data.amount || "0"),
+        0
+      );
+
+      await prisma.vendors.update({
+        where: {
+          id: vendor?.id,
+        },
+        data: {
+          currentOutStanding:
+            (vendor?.currentOutStanding || 0) +
+            totalRecordPayments -
+            parseFloat(fm.outStandingBalance || "0"),
+        },
+      });
+
       await prisma.fM.delete({
         where: {
           id: fm.id,
@@ -740,29 +775,6 @@ export const deleteFM = async (req: Request, res: Response) => {
       });
       res.status(200).json({
         message: "FM Deleted",
-      });
-
-      if (!fm.vendorsId) {
-        res.status(202).json({
-          message: "Invalid Vendor Id",
-        });
-        return;
-      }
-      const vendor = await prisma.vendors.findUnique({
-        where: {
-          id: fm.vendorsId,
-        },
-      });
-      if (!vendor) return;
-      await prisma.vendors.update({
-        where: {
-          id: vendor.id,
-        },
-        data: {
-          currentOutStanding:
-            vendor.currentOutStanding -
-            parseFloat(fm.outStandingBalance || "0"),
-        },
       });
     }
   } catch (error) {
@@ -1107,7 +1119,7 @@ export const addPaymentRecordToFM = async (req: Request, res: Response) => {
         },
         data: {
           currentOutStanding:
-            vendor.currentOutStanding - prevAmount + newAmount,
+            vendor.currentOutStanding - correctedOldAmount,
         },
       });
     } else {
@@ -1170,7 +1182,7 @@ export const addPaymentRecordToFM = async (req: Request, res: Response) => {
         },
         data: {
           currentOutStanding:
-            vendor.currentOutStanding + parseFloat(amount || "0"),
+            vendor.currentOutStanding - parseFloat(amount || "0"),
         },
       });
     }

@@ -348,9 +348,9 @@ export const getAllAdminNotifications = async (req: Request, res: Response) => {
       include: {
         Branches: true,
       },
-      orderBy: {
-        createdAt: "asc",
-      },
+      orderBy:{
+        createdAt: "desc"
+      }
     });
     res.status(200).json({ data: notifications });
   } catch (error) {

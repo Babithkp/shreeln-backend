@@ -41,11 +41,10 @@ const checkBillExists = (req, res) => __awaiter(void 0, void 0, void 0, function
 });
 exports.checkBillExists = checkBillExists;
 const createBill = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { billNumber, date, dueDate, clientId, hsnSacCode, placeOfSupply, state, statecode, lrData, igstRate, cgstRate, sgstRate, subTotal, total, totalInWords, unloading, hamali, extraKmWeight, detention, weightment, others, otherCharges, branchId, adminId, } = req.body;
-    console.log(req.body);
+    const { billNumber, date, dueDate, clientName, hsnSacCode, placeOfSupply, state, statecode, lrData, igstRate, cgstRate, sgstRate, subTotal, total, totalInWords, unloading, hamali, extraKmWeight, detention, weightment, others, otherCharges, branchId, adminId, } = req.body;
     if (!billNumber ||
         !date ||
-        !clientId ||
+        !clientName ||
         !hsnSacCode ||
         !placeOfSupply ||
         !state ||
@@ -63,7 +62,7 @@ const createBill = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     try {
         const client = yield prisma.client.findUnique({
             where: {
-                id: clientId,
+                name: clientName,
             },
         });
         if (!client) {
@@ -91,14 +90,13 @@ const createBill = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                 detention,
                 weightment,
                 others,
-                otherCharges,
-                clientId, lrData: {
+                otherCharges, clientId: client === null || client === void 0 ? void 0 : client.id, lrData: {
                     connect: lrData.map((lr) => ({ id: lr.id })),
                 } }, (adminId ? { adminId } : {})), (branchId ? { branchesId: branchId } : {})),
         });
         const updatedClient = yield prisma.client.update({
             where: {
-                id: clientId,
+                id: client === null || client === void 0 ? void 0 : client.id,
             },
             data: {
                 pendingPayment: client.pendingPayment + subTotal,
@@ -202,9 +200,9 @@ const deleteBill = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             },
         });
         if (bill) {
-            yield prisma.bill.delete({
+            const recordPayments = yield prisma.paymentRecord.findMany({
                 where: {
-                    id: bill.id,
+                    billId: bill.id,
                 },
             });
             const client = yield prisma.client.findUnique({
@@ -218,13 +216,19 @@ const deleteBill = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                 });
                 return;
             }
-            const oldPendingAmount = client.pendingPayment - bill.subTotal;
+            const totalAmount = recordPayments.reduce((acc, data) => acc + parseFloat(data.amount || "0"), 0);
+            const oldPendingAmount = client.pendingPayment + totalAmount - bill.subTotal;
             yield prisma.client.update({
                 where: {
                     id: client.id,
                 },
                 data: {
                     pendingPayment: oldPendingAmount,
+                },
+            });
+            yield prisma.bill.delete({
+                where: {
+                    id: bill.id,
                 },
             });
             res.status(200).json({
@@ -531,7 +535,7 @@ const addPaymentRecordToBill = (req, res) => __awaiter(void 0, void 0, void 0, f
                     id: client.id,
                 },
                 data: {
-                    pendingPayment: client.pendingPayment + parseFloat(amount || "0"),
+                    pendingPayment: client.pendingPayment - parseFloat(amount || "0"),
                 },
             });
         }

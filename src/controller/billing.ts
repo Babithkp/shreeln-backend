@@ -1,5 +1,4 @@
-import { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
+import { Request, Response } from "express";import { PrismaClient } from "@prisma/client";
 import {
   billData,
   BillEmailBody,
@@ -38,7 +37,7 @@ export const createBill = async (req: Request, res: Response) => {
     billNumber,
     date,
     dueDate,
-    clientId,
+    clientName,
     hsnSacCode,
     placeOfSupply,
     state,
@@ -61,12 +60,10 @@ export const createBill = async (req: Request, res: Response) => {
     adminId,
   } = req.body;
 
-  console.log(req.body);
-
   if (
     !billNumber ||
     !date ||
-    !clientId ||
+    !clientName ||
     !hsnSacCode ||
     !placeOfSupply ||
     !state ||
@@ -86,7 +83,7 @@ export const createBill = async (req: Request, res: Response) => {
   try {
     const client = await prisma.client.findUnique({
       where: {
-        id: clientId,
+        name: clientName,
       },
     });
     if (!client) {
@@ -118,7 +115,7 @@ export const createBill = async (req: Request, res: Response) => {
         weightment,
         others,
         otherCharges,
-        clientId,
+        clientId: client?.id,
         lrData: {
           connect: lrData.map((lr: any) => ({ id: lr.id })),
         },
@@ -128,7 +125,7 @@ export const createBill = async (req: Request, res: Response) => {
     });
     const updatedClient = await prisma.client.update({
       where: {
-        id: clientId,
+        id: client?.id,
       },
       data: {
         pendingPayment: client.pendingPayment + subTotal,
@@ -237,9 +234,9 @@ export const deleteBill = async (req: Request, res: Response) => {
       },
     });
     if (bill) {
-      await prisma.bill.delete({
+      const recordPayments = await prisma.paymentRecord.findMany({
         where: {
-          id: bill.id,
+          billId: bill.id,
         },
       });
       const client = await prisma.client.findUnique({
@@ -253,7 +250,14 @@ export const deleteBill = async (req: Request, res: Response) => {
         });
         return;
       }
-      const oldPendingAmount = client.pendingPayment - bill.subTotal;
+      const totalAmount = recordPayments.reduce(
+        (acc, data) => acc + parseFloat(data.amount || "0"),
+        0
+      );
+
+      const oldPendingAmount =
+        client.pendingPayment + totalAmount - bill.subTotal;
+
       await prisma.client.update({
         where: {
           id: client.id,
@@ -262,6 +266,12 @@ export const deleteBill = async (req: Request, res: Response) => {
           pendingPayment: oldPendingAmount,
         },
       });
+      await prisma.bill.delete({
+        where: {
+          id: bill.id,
+        },
+      });
+
       res.status(200).json({
         message: "Bill Deleted",
       });
@@ -632,7 +642,7 @@ export const addPaymentRecordToBill = async (req: Request, res: Response) => {
           id: client.id,
         },
         data: {
-          pendingPayment: client.pendingPayment + parseFloat(amount || "0"),
+          pendingPayment: client.pendingPayment - parseFloat(amount || "0"),
         },
       });
     }

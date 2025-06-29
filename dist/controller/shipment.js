@@ -586,6 +586,33 @@ const deleteFM = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             },
         });
         if (fm) {
+            if (!fm.vendorsId) {
+                res.status(202).json({
+                    message: "Invalid Vendor Id",
+                });
+                return;
+            }
+            const recordPayments = yield prisma.paymentRecord.findMany({
+                where: {
+                    fMId: fm.id,
+                },
+            });
+            const vendor = yield prisma.vendors.findUnique({
+                where: {
+                    id: fm.vendorsId,
+                },
+            });
+            const totalRecordPayments = recordPayments.reduce((acc, data) => acc + parseFloat(data.amount || "0"), 0);
+            yield prisma.vendors.update({
+                where: {
+                    id: vendor === null || vendor === void 0 ? void 0 : vendor.id,
+                },
+                data: {
+                    currentOutStanding: ((vendor === null || vendor === void 0 ? void 0 : vendor.currentOutStanding) || 0) +
+                        totalRecordPayments -
+                        parseFloat(fm.outStandingBalance || "0"),
+                },
+            });
             yield prisma.fM.delete({
                 where: {
                     id: fm.id,
@@ -593,28 +620,6 @@ const deleteFM = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             });
             res.status(200).json({
                 message: "FM Deleted",
-            });
-            if (!fm.vendorsId) {
-                res.status(202).json({
-                    message: "Invalid Vendor Id",
-                });
-                return;
-            }
-            const vendor = yield prisma.vendors.findUnique({
-                where: {
-                    id: fm.vendorsId,
-                },
-            });
-            if (!vendor)
-                return;
-            yield prisma.vendors.update({
-                where: {
-                    id: vendor.id,
-                },
-                data: {
-                    currentOutStanding: vendor.currentOutStanding -
-                        parseFloat(fm.outStandingBalance || "0"),
-                },
             });
         }
     }
@@ -879,7 +884,7 @@ const addPaymentRecordToFM = (req, res) => __awaiter(void 0, void 0, void 0, fun
                     id: vendor.id,
                 },
                 data: {
-                    currentOutStanding: vendor.currentOutStanding - prevAmount + newAmount,
+                    currentOutStanding: vendor.currentOutStanding - correctedOldAmount,
                 },
             });
         }
@@ -931,7 +936,7 @@ const addPaymentRecordToFM = (req, res) => __awaiter(void 0, void 0, void 0, fun
                     id: vendor.id,
                 },
                 data: {
-                    currentOutStanding: vendor.currentOutStanding + parseFloat(amount || "0"),
+                    currentOutStanding: vendor.currentOutStanding - parseFloat(amount || "0"),
                 },
             });
         }
