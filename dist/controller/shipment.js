@@ -610,7 +610,7 @@ const deleteFM = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 data: {
                     currentOutStanding: ((vendor === null || vendor === void 0 ? void 0 : vendor.currentOutStanding) || 0) +
                         totalRecordPayments -
-                        parseFloat(fm.outStandingBalance || "0"),
+                        parseFloat(fm.balance || "0"),
                 },
             });
             yield prisma.fM.delete({
@@ -641,7 +641,7 @@ const updateFM = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         });
         const vendor = yield prisma.vendors.findUnique({
             where: {
-                name: vendorsId,
+                id: vendorsId,
             },
         });
         if (!vendor) {
@@ -742,10 +742,10 @@ const updateFM = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         }
     }
     catch (error) {
+        console.log(error);
         res.status(500).json({
             message: "Internal Server Error",
         });
-        console.log(error);
     }
 });
 exports.updateFM = updateFM;
@@ -819,7 +819,7 @@ const addPaymentRecordToFM = (req, res) => __awaiter(void 0, void 0, void 0, fun
                 where: { id },
             });
             if (!existingRecord) {
-                res.status(404).json({ message: "Existing payment record not found" });
+                res.status(404).json({ message: "Payment record not found" });
                 return;
             }
             // 2. Parse old & new amounts
@@ -870,21 +870,21 @@ const addPaymentRecordToFM = (req, res) => __awaiter(void 0, void 0, void 0, fun
                     remarks,
                 },
             });
-            if (!FM.vendorsId)
-                return;
             const vendor = yield prisma.vendors.findUnique({
                 where: {
-                    id: FM.vendorsId,
+                    id: FM === null || FM === void 0 ? void 0 : FM.vendorsId,
                 },
             });
-            if (!vendor)
-                return;
+            const vendorCurrentOutstanding = vendor === null || vendor === void 0 ? void 0 : vendor.currentOutStanding;
+            const oldPaymentAmount = parseFloat(existingRecord.amount || "0");
+            const updatedPaymentAmount = parseFloat(amount || "0");
+            const newCurrentOutStanding = vendorCurrentOutstanding + oldPaymentAmount - updatedPaymentAmount;
             yield prisma.vendors.update({
                 where: {
-                    id: vendor.id,
+                    id: vendor === null || vendor === void 0 ? void 0 : vendor.id,
                 },
                 data: {
-                    currentOutStanding: vendor.currentOutStanding - correctedOldAmount,
+                    currentOutStanding: newCurrentOutStanding,
                 },
             });
         }
@@ -922,21 +922,17 @@ const addPaymentRecordToFM = (req, res) => __awaiter(void 0, void 0, void 0, fun
                     outStandingAdvance: updatedAdvance < 0 ? 0 : updatedAdvance,
                 },
             });
-            if (!FM.vendorsId)
-                return;
             const vendor = yield prisma.vendors.findUnique({
                 where: {
-                    id: FM.vendorsId,
+                    id: FM === null || FM === void 0 ? void 0 : FM.vendorsId,
                 },
             });
-            if (!vendor)
-                return;
             yield prisma.vendors.update({
                 where: {
-                    id: vendor.id,
+                    id: vendor === null || vendor === void 0 ? void 0 : vendor.id,
                 },
                 data: {
-                    currentOutStanding: vendor.currentOutStanding - parseFloat(amount || "0"),
+                    currentOutStanding: (vendor === null || vendor === void 0 ? void 0 : vendor.currentOutStanding) - parseFloat(amount || "0"),
                 },
             });
         }

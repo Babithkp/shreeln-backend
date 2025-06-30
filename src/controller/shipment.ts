@@ -764,7 +764,7 @@ export const deleteFM = async (req: Request, res: Response) => {
           currentOutStanding:
             (vendor?.currentOutStanding || 0) +
             totalRecordPayments -
-            parseFloat(fm.outStandingBalance || "0"),
+            parseFloat(fm.balance || "0"),
         },
       });
 
@@ -831,7 +831,7 @@ export const updateFM = async (req: Request, res: Response) => {
     });
     const vendor = await prisma.vendors.findUnique({
       where: {
-        name: vendorsId,
+        id: vendorsId,
       },
     });
     if (!vendor) {
@@ -943,10 +943,10 @@ export const updateFM = async (req: Request, res: Response) => {
       });
     }
   } catch (error) {
+    console.log(error);
     res.status(500).json({
       message: "Internal Server Error",
     });
-    console.log(error);
   }
 };
 
@@ -1044,12 +1044,10 @@ export const addPaymentRecordToFM = async (req: Request, res: Response) => {
       const existingRecord = await prisma.paymentRecord.findUnique({
         where: { id },
       });
-
       if (!existingRecord) {
-        res.status(404).json({ message: "Existing payment record not found" });
+        res.status(404).json({ message: "Payment record not found" });
         return;
       }
-
       // 2. Parse old & new amounts
       const prevAmount = parseFloat(existingRecord.amount || "0");
       const newAmount = parseFloat(amount || "0");
@@ -1106,20 +1104,26 @@ export const addPaymentRecordToFM = async (req: Request, res: Response) => {
           remarks,
         },
       });
-      if (!FM.vendorsId) return;
       const vendor = await prisma.vendors.findUnique({
         where: {
-          id: FM.vendorsId,
+          id: FM?.vendorsId!,
         },
       });
-      if (!vendor) return;
+
+
+      const vendorCurrentOutstanding = vendor?.currentOutStanding!;
+      const oldPaymentAmount = parseFloat(existingRecord.amount || "0");
+      const updatedPaymentAmount = parseFloat(amount || "0");
+
+      const newCurrentOutStanding =
+        vendorCurrentOutstanding + oldPaymentAmount - updatedPaymentAmount;
+
       await prisma.vendors.update({
         where: {
-          id: vendor.id,
+          id: vendor?.id!,
         },
         data: {
-          currentOutStanding:
-            vendor.currentOutStanding - correctedOldAmount,
+          currentOutStanding: newCurrentOutStanding,
         },
       });
     } else {
@@ -1169,20 +1173,18 @@ export const addPaymentRecordToFM = async (req: Request, res: Response) => {
           outStandingAdvance: updatedAdvance < 0 ? 0 : updatedAdvance,
         },
       });
-      if (!FM.vendorsId) return;
       const vendor = await prisma.vendors.findUnique({
         where: {
-          id: FM.vendorsId,
+          id: FM?.vendorsId!,
         },
       });
-      if (!vendor) return;
       await prisma.vendors.update({
         where: {
-          id: vendor.id,
+          id: vendor?.id!,
         },
         data: {
           currentOutStanding:
-            vendor.currentOutStanding - parseFloat(amount || "0"),
+            vendor?.currentOutStanding! - parseFloat(amount || "0"),
         },
       });
     }

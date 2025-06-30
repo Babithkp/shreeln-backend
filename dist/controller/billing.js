@@ -480,8 +480,8 @@ const addPaymentRecordToBill = (req, res) => __awaiter(void 0, void 0, void 0, f
                     id: client.id,
                 },
                 data: {
-                    pendingPayment: client.pendingPayment -
-                        parseFloat(existingRecord.amount) +
+                    pendingPayment: client.pendingPayment +
+                        parseFloat(existingRecord.amount) -
                         parseFloat(amount || "0"),
                 },
             });
@@ -612,7 +612,7 @@ const deletePaymentRecordFromBill = (req, res) => __awaiter(void 0, void 0, void
                 id: client.id,
             },
             data: {
-                pendingPayment: client.pendingPayment - parseFloat(paymentRecord.amount || "0"),
+                pendingPayment: client.pendingPayment + parseFloat(paymentRecord.amount || "0"),
             },
         });
         res.status(200).json({ message: "Payment Record Deleted" });

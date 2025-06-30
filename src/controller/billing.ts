@@ -1,4 +1,5 @@
-import { Request, Response } from "express";import { PrismaClient } from "@prisma/client";
+import { Request, Response } from "express";
+import { PrismaClient } from "@prisma/client";
 import {
   billData,
   BillEmailBody,
@@ -578,8 +579,8 @@ export const addPaymentRecordToBill = async (req: Request, res: Response) => {
         },
         data: {
           pendingPayment:
-            client.pendingPayment -
-            parseFloat(existingRecord.amount) +
+            client.pendingPayment +
+            parseFloat(existingRecord.amount) -
             parseFloat(amount || "0"),
         },
       });
@@ -732,7 +733,7 @@ export const deletePaymentRecordFromBill = async (
       },
       data: {
         pendingPayment:
-          client.pendingPayment - parseFloat(paymentRecord.amount || "0"),
+          client.pendingPayment + parseFloat(paymentRecord.amount || "0"),
       },
     });
 
