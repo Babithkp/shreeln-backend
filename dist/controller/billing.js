@@ -167,7 +167,7 @@ const getBillDetails = (req, res) => __awaiter(void 0, void 0, void 0, function*
                 Admin: true,
             },
             orderBy: {
-                createdAt: "asc",
+                createdAt: "desc",
             },
         });
         if (billingData) {

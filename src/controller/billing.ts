@@ -203,7 +203,7 @@ export const getBillDetails = async (req: Request, res: Response) => {
         Admin: true,
       },
       orderBy: {
-        createdAt: "asc",
+        createdAt: "desc",
       },
     });
     if (billingData) {
