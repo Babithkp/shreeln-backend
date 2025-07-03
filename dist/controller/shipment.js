@@ -1152,6 +1152,18 @@ const updateLRByNotification = (req, res) => __awaiter(void 0, void 0, void 0, f
             },
         });
         if (lr) {
+            if (data.data.client) {
+                const client = yield prisma.client.findUnique({
+                    where: {
+                        name: data.data.client,
+                    },
+                });
+                if (client) {
+                    data.data.client = {
+                        connect: { id: client.id },
+                    };
+                }
+            }
             const updated = yield prisma.lR.update({
                 where: {
                     id: lr.id,

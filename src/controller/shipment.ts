@@ -1,5 +1,4 @@
-import { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
+import { Request, Response } from "express";import { PrismaClient } from "@prisma/client";
 import { LRData, LREmailBody, sendLREmailToClient } from "./utils/LREmail";
 import { FMData, FMEmailBody, sendFMEmailToClient } from "./utils/FMEmail";
 const prisma = new PrismaClient();
@@ -1110,7 +1109,6 @@ export const addPaymentRecordToFM = async (req: Request, res: Response) => {
         },
       });
 
-
       const vendorCurrentOutstanding = vendor?.currentOutStanding!;
       const oldPaymentAmount = parseFloat(existingRecord.amount || "0");
       const updatedPaymentAmount = parseFloat(amount || "0");
@@ -1415,6 +1413,18 @@ export const updateLRByNotification = async (req: Request, res: Response) => {
       },
     });
     if (lr) {
+      if (data.data.client) {
+        const client = await prisma.client.findUnique({
+          where: {
+            name: data.data.client,
+          },
+        });
+        if (client) {
+          data.data.client = {
+            connect: { id: client.id },
+          };
+        }
+      }
       const updated = await prisma.lR.update({
         where: {
           id: lr.id,

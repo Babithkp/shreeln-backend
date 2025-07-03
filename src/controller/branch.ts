@@ -453,6 +453,7 @@ export const createNotification = async (req: Request, res: Response) => {
 export const createNotificationForBranch = async (req: Request, res: Response) => {
   const { requestId, title, message, description,  status, branchId } = req.body;
 
+
   if (!requestId || !title || !branchId) {
     res.status(400).json({
       message: "Invalid Notification Details",
