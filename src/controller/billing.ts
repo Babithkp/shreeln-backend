@@ -1,5 +1,4 @@
-import { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
+import { Request, Response } from "express";import { PrismaClient } from "@prisma/client";
 import {
   billData,
   BillEmailBody,
@@ -296,8 +295,8 @@ export const sendBillEmail = async (req: Request, res: Response) => {
     mailBody: billData.mailBody,
     date: billData.date,
     dueDate: billData.dueDate,
-    clientName: billData.clientName,
-    clientAddress: billData.clientAddress,
+    clientName: billData.Client.name,
+    clientAddress: billData.Client.address,
     lrData: billData.lrData,
     total: billData.total,
   };

@@ -10,7 +10,7 @@ export const createAdmin = async () => {
     await prisma.admin.create({
       data: {
         userName: "admin",
-        password: "admin@1234",
+        password: "Kumar@1977",
         branchManager: "Shivam Jha",
         address:
           "Flat No.203, 3rd Floor, Sai Godavari Apartment, Kuduregere Road, Madanayakanahalli, Bangalore Rural ",

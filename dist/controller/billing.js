@@ -253,8 +253,8 @@ const sendBillEmail = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         mailBody: billData.mailBody,
         date: billData.date,
         dueDate: billData.dueDate,
-        clientName: billData.clientName,
-        clientAddress: billData.clientAddress,
+        clientName: billData.Client.name,
+        clientAddress: billData.Client.address,
         lrData: billData.lrData,
         total: billData.total,
     };

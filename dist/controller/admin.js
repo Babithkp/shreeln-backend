@@ -18,7 +18,7 @@ const createAdmin = () => __awaiter(void 0, void 0, void 0, function* () {
         yield prisma.admin.create({
             data: {
                 userName: "admin",
-                password: "admin@1234",
+                password: "Kumar@1977",
                 branchManager: "Shivam Jha",
                 address: "Flat No.203, 3rd Floor, Sai Godavari Apartment, Kuduregere Road, Madanayakanahalli, Bangalore Rural ",
                 branchName: "Bangalore - admin",
