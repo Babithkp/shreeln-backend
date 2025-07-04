@@ -119,6 +119,9 @@ export const updateVendorDetails = async (req: Request, res: Response) => {
     outstandingLimit,
   } = req.body;
   const { id } = req.params;
+
+  
+
   if (
     !id ||
     !name ||
@@ -129,7 +132,6 @@ export const updateVendorDetails = async (req: Request, res: Response) => {
     !city ||
     !state ||
     !pincode ||
-    !email ||
     !pan ||
     !outstandingLimit
   ) {

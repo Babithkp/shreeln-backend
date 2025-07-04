@@ -114,7 +114,6 @@ const updateVendorDetails = (req, res) => __awaiter(void 0, void 0, void 0, func
         !city ||
         !state ||
         !pincode ||
-        !email ||
         !pan ||
         !outstandingLimit) {
         res.status(400).json({
