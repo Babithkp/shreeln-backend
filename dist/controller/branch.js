@@ -269,7 +269,7 @@ const getAllRecortPayment = (req, res) => __awaiter(void 0, void 0, void 0, func
                 Admin: true,
             },
             orderBy: {
-                date: "asc",
+                date: "desc",
             },
         });
         res.status(200).json({ data: paymentRecord });

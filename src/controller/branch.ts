@@ -284,7 +284,7 @@ export const getAllRecortPayment = async (req: Request, res: Response) => {
         Admin: true,
       },
       orderBy: {
-        date: "asc",
+        date: "desc",
       },
     });
     res.status(200).json({ data: paymentRecord });
