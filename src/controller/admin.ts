@@ -298,8 +298,11 @@ export const getAllClients = async (req: Request, res: Response) => {
   try {
     const clients = await prisma.client.findMany({
       include: {
-        PaymentRecord: true,
-        bill: true,
+        bill: {
+          include:{
+            PaymentRecords: true
+          }
+        },
         LR: {
           include: {
             Vehicle: true,
@@ -307,7 +310,7 @@ export const getAllClients = async (req: Request, res: Response) => {
         },
       },
       orderBy: {
-        createdAt: "asc",
+        createdAt: "desc",
       },
     });
     res.status(200).json({ data: clients });

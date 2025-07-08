@@ -510,6 +510,13 @@ export const addPaymentRecordToBill = async (req: Request, res: Response) => {
   try {
     const bill = await prisma.bill.findUnique({
       where: { billNumber: IDNumber },
+      include:{
+        Client: {
+          select: {
+            id: true,
+          }
+        }
+      }
     });
 
     if (!bill) {
@@ -568,7 +575,7 @@ export const addPaymentRecordToBill = async (req: Request, res: Response) => {
 
       const client = await prisma.client.findUnique({
         where: {
-          id: bill.clientId!,
+          id: bill.Client?.id,
         },
       });
       if (!client) return;
@@ -633,7 +640,7 @@ export const addPaymentRecordToBill = async (req: Request, res: Response) => {
 
       const client = await prisma.client.findUnique({
         where: {
-          id: bill.clientId!,
+          id: bill.Client?.id, 
         },
       });
       if (!client) return;

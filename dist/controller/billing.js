@@ -401,6 +401,7 @@ const updateBillDetails = (req, res) => __awaiter(void 0, void 0, void 0, functi
 });
 exports.updateBillDetails = updateBillDetails;
 const addPaymentRecordToBill = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
     const { date, customerName, amount, amountInWords, pendingAmount, transactionNumber, paymentMode, remarks, branchId, clientId, adminId, IDNumber, id, } = req.body;
     if (!IDNumber ||
         !date ||
@@ -416,6 +417,13 @@ const addPaymentRecordToBill = (req, res) => __awaiter(void 0, void 0, void 0, f
     try {
         const bill = yield prisma.bill.findUnique({
             where: { billNumber: IDNumber },
+            include: {
+                Client: {
+                    select: {
+                        id: true,
+                    }
+                }
+            }
         });
         if (!bill) {
             res.status(404).json({ message: "FM not found" });
@@ -470,7 +478,7 @@ const addPaymentRecordToBill = (req, res) => __awaiter(void 0, void 0, void 0, f
             });
             const client = yield prisma.client.findUnique({
                 where: {
-                    id: bill.clientId,
+                    id: (_a = bill.Client) === null || _a === void 0 ? void 0 : _a.id,
                 },
             });
             if (!client)
@@ -525,7 +533,7 @@ const addPaymentRecordToBill = (req, res) => __awaiter(void 0, void 0, void 0, f
             });
             const client = yield prisma.client.findUnique({
                 where: {
-                    id: bill.clientId,
+                    id: (_b = bill.Client) === null || _b === void 0 ? void 0 : _b.id,
                 },
             });
             if (!client)

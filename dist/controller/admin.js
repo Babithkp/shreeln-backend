@@ -277,8 +277,11 @@ const getAllClients = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     try {
         const clients = yield prisma.client.findMany({
             include: {
-                PaymentRecord: true,
-                bill: true,
+                bill: {
+                    include: {
+                        PaymentRecords: true
+                    }
+                },
                 LR: {
                     include: {
                         Vehicle: true,
@@ -286,7 +289,7 @@ const getAllClients = (req, res) => __awaiter(void 0, void 0, void 0, function* 
                 },
             },
             orderBy: {
-                createdAt: "asc",
+                createdAt: "desc",
             },
         });
         res.status(200).json({ data: clients });
