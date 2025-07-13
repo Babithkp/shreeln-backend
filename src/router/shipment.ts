@@ -9,11 +9,19 @@ import express from "express";import {
   deleteLRByNotification,
   deletePaymentRecordFromFM,
   filterFMBymonth,
+  filterFMBymonthForBranch,
+  filterFMDetails,
+  filterFMDetailsForBranch,
   filterLRDetails,
+  filterLRDetailsForBranch,
   getFMByBranchId,
+  getFMByPage,
+  getFMByPageForBranch,
   getFMData,
   getLRByBranchId,
   getLRByLrNumber,
+  getLRByPage,
+  getLRByPageForBranch,
   getLRData,
   updateFM,
   updateFMByNotification,
@@ -36,6 +44,8 @@ shipmentRouter.get("/getLRByLrNumber/:lrNumber", getLRByLrNumber);
 shipmentRouter.patch("/addPaymentRecordToFM/:IDNumber", addPaymentRecordToFM);
 shipmentRouter.delete("/deletePaymentRecordFromFM/:IDNumber/:id", deletePaymentRecordFromFM);
 shipmentRouter.post("/filterFMBymonth", filterFMBymonth);
+shipmentRouter.post("/filterFMBymonthForBranch/:branchId", filterFMBymonthForBranch);
+shipmentRouter.post("/checkPaymentForStatusChange", checkPaymentForStatusChange);
 shipmentRouter.get("/getFMByBranchId/:branchId", getFMByBranchId);
 shipmentRouter.get("/getLRByBranchId/:branchId", getLRByBranchId);
 shipmentRouter.patch("/updateLRByNotification", updateLRByNotification);
@@ -45,5 +55,12 @@ shipmentRouter.post("/deleteLRByNotification", deleteLRByNotification);
 shipmentRouter.patch("/updateRecordPaymentByNotification/:id/:LRnumber", updateRecordPaymentByNotification);
 shipmentRouter.delete("/deleteFMRecordByNotification/:id/:IDNumber", deleteFMRecordByNotification);
 shipmentRouter.get("/filterLRDetails/:text", filterLRDetails);
+shipmentRouter.get("/filterLRDetailsForBranch/:branchId/:text", filterLRDetailsForBranch);
+shipmentRouter.get("/getLRByPage", getLRByPage);
+shipmentRouter.get("/getLRByPageForBranch", getLRByPageForBranch);
+shipmentRouter.get("/getFMByPage", getFMByPage);
+shipmentRouter.get("/getFMByPageForBranch", getFMByPageForBranch);
+shipmentRouter.get("/filterFMDetails/:text", filterFMDetails);
+shipmentRouter.get("/filterFMDetailsForBranch/:branchId/:text", filterFMDetailsForBranch);
 
 export default shipmentRouter;

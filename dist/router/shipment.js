@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const shipment_1 = require("../controller/shipment");
+const pod_1 = require("../controller/pod");
 const shipmentRouter = express_1.default.Router();
 shipmentRouter.post("/createLR", shipment_1.createLR);
 shipmentRouter.get("/getLR", shipment_1.getLRData);
@@ -18,6 +19,8 @@ shipmentRouter.get("/getLRByLrNumber/:lrNumber", shipment_1.getLRByLrNumber);
 shipmentRouter.patch("/addPaymentRecordToFM/:IDNumber", shipment_1.addPaymentRecordToFM);
 shipmentRouter.delete("/deletePaymentRecordFromFM/:IDNumber/:id", shipment_1.deletePaymentRecordFromFM);
 shipmentRouter.post("/filterFMBymonth", shipment_1.filterFMBymonth);
+shipmentRouter.post("/filterFMBymonthForBranch/:branchId", shipment_1.filterFMBymonthForBranch);
+shipmentRouter.post("/checkPaymentForStatusChange", pod_1.checkPaymentForStatusChange);
 shipmentRouter.get("/getFMByBranchId/:branchId", shipment_1.getFMByBranchId);
 shipmentRouter.get("/getLRByBranchId/:branchId", shipment_1.getLRByBranchId);
 shipmentRouter.patch("/updateLRByNotification", shipment_1.updateLRByNotification);
@@ -27,4 +30,11 @@ shipmentRouter.post("/deleteLRByNotification", shipment_1.deleteLRByNotification
 shipmentRouter.patch("/updateRecordPaymentByNotification/:id/:LRnumber", shipment_1.updateRecordPaymentByNotification);
 shipmentRouter.delete("/deleteFMRecordByNotification/:id/:IDNumber", shipment_1.deleteFMRecordByNotification);
 shipmentRouter.get("/filterLRDetails/:text", shipment_1.filterLRDetails);
+shipmentRouter.get("/filterLRDetailsForBranch/:branchId/:text", shipment_1.filterLRDetailsForBranch);
+shipmentRouter.get("/getLRByPage", shipment_1.getLRByPage);
+shipmentRouter.get("/getLRByPageForBranch", shipment_1.getLRByPageForBranch);
+shipmentRouter.get("/getFMByPage", shipment_1.getFMByPage);
+shipmentRouter.get("/getFMByPageForBranch", shipment_1.getFMByPageForBranch);
+shipmentRouter.get("/filterFMDetails/:text", shipment_1.filterFMDetails);
+shipmentRouter.get("/filterFMDetailsForBranch/:branchId/:text", shipment_1.filterFMDetailsForBranch);
 exports.default = shipmentRouter;

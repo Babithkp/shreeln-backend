@@ -20,4 +20,6 @@ adminRouter.get("/admin/getExpenseId", admin_1.getExpenseId);
 adminRouter.get("/admin/getBillId", admin_1.getBillId);
 adminRouter.get("/admin/getOtherSettings", admin_1.getOtherSettings);
 adminRouter.patch("/admin/updateOtherSettings", admin_1.updateOtherSettings);
+adminRouter.get("/admin/getDashboardData", admin_1.getDashboardData);
+adminRouter.get("/admin/getDashboardDataForBranch/:id", admin_1.getDashboardDataForBranch);
 exports.default = adminRouter;

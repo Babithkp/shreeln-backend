@@ -52,9 +52,6 @@ app.post("/api/v1/sendFMEmail/:email", upload.any(), shipment_1.sendFMEmail);
 app.post("/api/v1/sendBillEmail/:email", upload.any(), billing_2.sendBillEmail);
 app.post("/api/v1/lorryReceiptsUpload", upload.any(), fileUpload_1.lorryReceiptsFileUpload);
 // createAdmin()
-app.post('tauri-update', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    res.status(204);
-}));
 node_cron_1.default.schedule("0 0 * * *", () => __awaiter(void 0, void 0, void 0, function* () {
     console.log("🔄 Running FM status checker at midnight...");
     yield (0, pod_2.checkPaymentForStatusChange)();

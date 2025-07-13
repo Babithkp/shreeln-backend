@@ -12,4 +12,6 @@ podRouter.delete("/pod/deletePOD/:id", pod_1.deletePOD);
 podRouter.patch("/pod/updatePOD/:id", pod_1.updatePODDetails);
 podRouter.patch("/pod/updatePODByNotification/:id", pod_1.updatePODByNotification);
 podRouter.delete("/pod/deletePODByNotification/:id", pod_1.deletePODByNotification);
+podRouter.get("/pod/getPodByPage", pod_1.getPodByPage);
+podRouter.get("/pod/filterPODByText/:text/:branchId", pod_1.filterPODByText);
 exports.default = podRouter;

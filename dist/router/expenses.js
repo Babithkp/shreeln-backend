@@ -12,4 +12,6 @@ expensesRouter.delete("/expenses/delete/:id", expenses_1.deleteExpense);
 expensesRouter.patch("/expenses/update/:id", expenses_1.updateExpenseDetails);
 expensesRouter.patch("/expenses/updateByNotification/:id", expenses_1.updateExpenseByNotification);
 expensesRouter.delete("/expenses/deleteByNotification/:id", expenses_1.deleteExpenseByNotification);
+expensesRouter.get("/expenses/getByPage", expenses_1.getExpenseByPage);
+expensesRouter.get("/expenses/filterByTitle/:text/:branchId", expenses_1.filterExpensesByTitle);
 exports.default = expensesRouter;

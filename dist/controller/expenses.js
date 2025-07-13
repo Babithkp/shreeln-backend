@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteExpenseByNotification = exports.updateExpenseByNotification = exports.updateExpenseDetails = exports.deleteExpense = exports.getAllExpenses = exports.createExpense = void 0;
+exports.filterExpensesByTitle = exports.getExpenseByPage = exports.deleteExpenseByNotification = exports.updateExpenseByNotification = exports.updateExpenseDetails = exports.deleteExpense = exports.getAllExpenses = exports.createExpense = void 0;
 const client_1 = require("@prisma/client");
 const prisma = new client_1.PrismaClient();
 const createExpense = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -103,8 +103,8 @@ const getAllExpenses = (req, res) => __awaiter(void 0, void 0, void 0, function*
                 },
             },
             orderBy: {
-                date: "asc"
-            }
+                date: "desc",
+            },
         });
         res.status(200).json({ data: expenses });
     }
@@ -302,3 +302,101 @@ const deleteExpenseByNotification = (req, res) => __awaiter(void 0, void 0, void
     }
 });
 exports.deleteExpenseByNotification = deleteExpenseByNotification;
+const getExpenseByPage = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
+    const branchId = req.query.branchId;
+    if (!page || !limit) {
+        res.status(400).json({
+            message: "Invalid Expense Id",
+        });
+        return;
+    }
+    const skip = (page - 1) * limit;
+    const whereClause = {};
+    if (branchId !== "null") {
+        whereClause.branchesId = branchId;
+    }
+    try {
+        const ExpenseCount = yield prisma.expense.count({
+            where: whereClause,
+        });
+        const ExpenseData = yield prisma.expense.findMany({
+            skip,
+            take: limit,
+            where: whereClause,
+            include: {
+                Branches: {
+                    select: {
+                        branchName: true,
+                    },
+                },
+                Admin: {
+                    select: {
+                        branchName: true,
+                    },
+                },
+            },
+            orderBy: {
+                date: "desc",
+            },
+        });
+        const data = {
+            ExpenseCount,
+            ExpenseData,
+        };
+        res.status(200).json({ data });
+    }
+    catch (error) {
+        res.status(500).json({
+            message: "Internal Server Error",
+        });
+        console.log(error);
+    }
+});
+exports.getExpenseByPage = getExpenseByPage;
+const filterExpensesByTitle = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { text, branchId } = req.params;
+    try {
+        const whereClause = {
+            OR: [
+                { expenseId: { contains: text, mode: "insensitive" } },
+                { description: { contains: text, mode: "insensitive" } },
+            ],
+        };
+        if (branchId !== "null") {
+            whereClause.branchesId = branchId;
+        }
+        const expenses = yield prisma.expense.findMany({
+            where: whereClause,
+            include: {
+                Branches: {
+                    select: {
+                        branchName: true,
+                    },
+                },
+                Admin: {
+                    select: {
+                        branchName: true,
+                    },
+                },
+            },
+            orderBy: {
+                date: "desc",
+            },
+        });
+        if (expenses) {
+            res.status(200).json({
+                message: "Expense Details",
+                data: expenses,
+            });
+        }
+    }
+    catch (error) {
+        res.status(500).json({
+            message: "Internal Server Error",
+        });
+        console.log(error);
+    }
+});
+exports.filterExpensesByTitle = filterExpensesByTitle;

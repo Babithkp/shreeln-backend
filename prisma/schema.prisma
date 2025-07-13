@@ -19,29 +19,6 @@ type LRList {
   status   String @default("unPaid")
 }
 
-model PaymentRecord {
-  id                String    @id @default(auto()) @map("_id") @db.ObjectId
-  IDNumber          String
-  date              String
-  customerName      String
-  amount            String
-  amountInWords     String
-  pendingAmount     Float
-  transactionNumber String
-  paymentMode       String
-  remarks           String
-  Admin             Admin?    @relation(fields: [adminId], references: [id])
-  adminId           String?   @db.ObjectId
-  Branches          Branches? @relation(fields: [branchesId], references: [id])
-  branchesId        String?   @db.ObjectId
-  FM                FM?       @relation(fields: [fMId], references: [id], onDelete: Cascade)
-  fMId              String?   @db.ObjectId
-  Bill              Bill?     @relation(fields: [billId], references: [id], onDelete: Cascade)
-  billId            String?   @db.ObjectId
-  client            Client?   @relation(fields: [clientId], references: [id])
-  clientId          String?   @db.ObjectId
-}
-
 model Admin {
   id             String          @id @default(auto()) @map("_id") @db.ObjectId
   userName       String          @unique
@@ -140,7 +117,7 @@ model Vehicle {
   id            String   @id @default(auto()) @map("_id") @db.ObjectId
   vendorName    String   @unique
   vehicletypes  String
-  vehicleNumber String   @unique
+  vehicleNumber String
   ownerName     String?
   ownerPhone    String?
   driverName    String?
@@ -151,6 +128,29 @@ model Vehicle {
   vendorId      String?  @db.ObjectId
   vendor        Vendors? @relation(fields: [vendorId], references: [id], onDelete: Cascade)
   LR            LR[]
+}
+
+model PaymentRecord {
+  id                String    @id @default(auto()) @map("_id") @db.ObjectId
+  IDNumber          String
+  date              String
+  customerName      String
+  amount            String
+  amountInWords     String
+  pendingAmount     Float
+  transactionNumber String
+  paymentMode       String
+  remarks           String
+  Admin             Admin?    @relation(fields: [adminId], references: [id])
+  adminId           String?   @db.ObjectId
+  Branches          Branches? @relation(fields: [branchesId], references: [id])
+  branchesId        String?   @db.ObjectId
+  FM                FM?       @relation(fields: [fMId], references: [id], onDelete: Cascade)
+  fMId              String?   @db.ObjectId
+  Bill              Bill?     @relation(fields: [billId], references: [id], onDelete: Cascade)
+  billId            String?   @db.ObjectId
+  client            Client?   @relation(fields: [clientId], references: [id])
+  clientId          String?   @db.ObjectId
 }
 
 model LR {

@@ -18,4 +18,8 @@ branchRouter.post("/filterBranchBymonth", branch_1.filterBranchBymonth);
 branchRouter.post("/createNotification", branch_1.createNotification);
 branchRouter.get("/getBranchNotifications/:branchId", branch_1.getBranchNotifications);
 branchRouter.post("/createNotificationForBranch", branch_1.createNotificationForBranch);
+branchRouter.get("/getAllRecordPaymentForPage", branch_1.getRecentPaymentsForPage);
+branchRouter.get("/getAllRecordPaymentForBranchPage", branch_1.getRecentPaymentsForBranchPage);
+branchRouter.get("/filterRecordPaymentByName/:name", branch_1.filterRecordPaymentByName);
+branchRouter.get("/filterRecordPaymentByNameForBranch/:name/:branchId", branch_1.filterRecordPaymentByNameForBranch);
 exports.default = branchRouter;

@@ -1,4 +1,5 @@
-import { Request, Response } from "express";import { PrismaClient } from "@prisma/client";
+import { Request, Response } from "express";
+import { PrismaClient } from "@prisma/client";
 import { deleteLRFile } from "./fileUpload";
 
 const prisma = new PrismaClient();
@@ -115,9 +116,9 @@ export const createPOD = async (req: Request, res: Response) => {
 export const getAllPODs = async (req: Request, res: Response) => {
   try {
     const pods = await prisma.pOD.findMany({
-      orderBy:{
-        date: "desc"
-      }
+      orderBy: {
+        date: "desc",
+      },
     });
     res.status(200).json({ data: pods });
   } catch (error) {
@@ -351,7 +352,6 @@ export const updatePODByNotification = async (req: Request, res: Response) => {
   }
 };
 
-
 export const deletePODByNotification = async (req: Request, res: Response) => {
   const { id } = req.params;
   if (!id) {
@@ -389,6 +389,84 @@ export const deletePODByNotification = async (req: Request, res: Response) => {
     } else {
       res.status(400).json({
         message: "POD Delete failed",
+      });
+    }
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+    console.log(error);
+  }
+};
+
+export const getPodByPage = async (req: Request, res: Response) => {
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 50;
+  const branchId = req.query.branchId as string;
+
+  if (!page || !limit) {
+    res.status(400).json({
+      message: "Invalid POD Id",
+    });
+    return;
+  }
+  const skip = (page - 1) * limit;
+
+  const whereClause: any = {};
+  if (branchId !== "null") {
+    whereClause.branchesId = branchId;
+  }
+
+  try {
+    const PODCount = await prisma.pOD.count({
+      where: whereClause,
+    });
+    const PODData = await prisma.pOD.findMany({
+      skip,
+      take: limit,
+      where: whereClause,
+      orderBy: {
+        date: "desc",
+      },
+    });
+
+    const data = {
+      PODCount,
+      PODData,
+    };
+
+    res.status(200).json({ data });
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+    console.log(error);
+  }
+};
+
+export const filterPODByText = async (req: Request, res: Response) => {
+  const { text, branchId } = req.params;
+
+  try {
+    const whereClause: any = {
+      OR: [
+        { lrNumber: { contains: text, mode: "insensitive" } },
+        { clientName: { contains: text, mode: "insensitive" } },
+      ],
+    };
+    if (branchId !== "null") {
+      whereClause.branchesId = branchId;
+    }
+    const pods = await prisma.pOD.findMany({
+      where: whereClause,
+      orderBy: {
+        date: "desc",
+      },
+    });
+    if (pods) {
+      res.status(200).json({
+        message: "POD Details",
+        data: pods,
       });
     }
   } catch (error) {

@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createNotificationForBranch = exports.createNotification = exports.getBranchNotifications = exports.filterBranchBymonth = exports.filterRecordPayment = exports.getAllRecortPayment = exports.deleteClient = exports.updateclientDetails = exports.deleteBranch = exports.updateBranchDetails = exports.getAllBranchDetails = exports.branchLogin = void 0;
+exports.filterRecordPaymentByNameForBranch = exports.filterRecordPaymentByName = exports.getRecentPaymentsForBranchPage = exports.getRecentPaymentsForPage = exports.createNotificationForBranch = exports.createNotification = exports.getBranchNotifications = exports.filterBranchBymonth = exports.filterRecordPayment = exports.getAllRecortPayment = exports.deleteClient = exports.updateclientDetails = exports.deleteBranch = exports.updateBranchDetails = exports.getAllBranchDetails = exports.branchLogin = void 0;
 const client_1 = require("@prisma/client");
 const prisma = new client_1.PrismaClient();
 const branchLogin = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -337,8 +337,24 @@ const filterBranchBymonth = (req, res) => __awaiter(void 0, void 0, void 0, func
                     },
                 },
             },
-            include: {
-                bill: true,
+            select: {
+                branchName: true,
+                FM: {
+                    select: {
+                        hire: true,
+                        otherCharges: true,
+                        detentionCharges: true,
+                        rtoCharges: true,
+                        tds: true,
+                        date: true,
+                    },
+                },
+                bill: {
+                    select: {
+                        subTotal: true,
+                        date: true,
+                    },
+                },
             },
         });
         const admin = yield prisma.admin.findFirst({
@@ -352,16 +368,29 @@ const filterBranchBymonth = (req, res) => __awaiter(void 0, void 0, void 0, func
                     },
                 },
             },
-            include: {
-                bill: true,
+            select: {
+                branchName: true,
+                FM: {
+                    select: {
+                        hire: true,
+                        otherCharges: true,
+                        detentionCharges: true,
+                        rtoCharges: true,
+                        tds: true,
+                    },
+                },
+                bill: {
+                    select: {
+                        subTotal: true,
+                    },
+                },
             },
         });
-        if (branches && admin) {
-            res.status(200).json({
-                message: "Branch Details",
-                data: [admin, ...branches],
-            });
-        }
+        const data = [admin, ...branches];
+        res.status(200).json({
+            message: "Branch Details",
+            data: [admin, ...branches],
+        });
     }
     catch (error) {
         res.status(500).json({
@@ -417,7 +446,7 @@ const createNotification = (req, res) => __awaiter(void 0, void 0, void 0, funct
                 data: data ? JSON.parse(data) : null,
                 adminId: admin === null || admin === void 0 ? void 0 : admin.id,
                 status,
-                fileId
+                fileId,
             },
         });
         res.status(200).json({
@@ -448,7 +477,7 @@ const createNotificationForBranch = (req, res) => __awaiter(void 0, void 0, void
                 message,
                 description,
                 status,
-                branchesId: branchId
+                branchesId: branchId,
             },
         });
         res.status(200).json({
@@ -463,3 +492,114 @@ const createNotificationForBranch = (req, res) => __awaiter(void 0, void 0, void
     }
 });
 exports.createNotificationForBranch = createNotificationForBranch;
+const getRecentPaymentsForPage = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
+    if (!page || !limit) {
+        res.status(400).json({
+            message: "Invalid LR Id",
+        });
+        return;
+    }
+    const skip = (page - 1) * limit;
+    try {
+        const paymentCount = yield prisma.paymentRecord.count();
+        const paymentRecord = yield prisma.paymentRecord.findMany({
+            skip,
+            take: limit,
+            orderBy: {
+                date: "desc",
+            },
+        });
+        const data = {
+            paymentCount,
+            paymentRecord,
+        };
+        res.status(200).json({ data });
+    }
+    catch (error) {
+        res.status(500).json({
+            message: "Internal Server Error",
+        });
+        console.log(error);
+    }
+});
+exports.getRecentPaymentsForPage = getRecentPaymentsForPage;
+const getRecentPaymentsForBranchPage = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
+    const branchId = req.query.branchId;
+    if (!page || !limit || !branchId) {
+        res.status(400).json({
+            message: "Invalid LR Id",
+        });
+        return;
+    }
+    const skip = (page - 1) * limit;
+    try {
+        const paymentCount = yield prisma.paymentRecord.count({
+            where: {
+                branchesId: branchId,
+            },
+        });
+        const paymentRecord = yield prisma.paymentRecord.findMany({
+            skip,
+            take: limit,
+            where: {
+                branchesId: branchId,
+            },
+            orderBy: {
+                date: "desc",
+            },
+        });
+        const data = {
+            paymentCount,
+            paymentRecord,
+        };
+        res.status(200).json({ data });
+    }
+    catch (error) {
+        res.status(500).json({
+            message: "Internal Server Error",
+        });
+        console.log(error);
+    }
+});
+exports.getRecentPaymentsForBranchPage = getRecentPaymentsForBranchPage;
+const filterRecordPaymentByName = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { name } = req.params;
+    try {
+        const paymentRecord = yield prisma.paymentRecord.findMany({
+            where: {
+                OR: [{ customerName: { contains: name, mode: "insensitive" } }],
+            },
+        });
+        res.status(200).json({ data: paymentRecord });
+    }
+    catch (error) {
+        res.status(500).json({
+            message: "Internal Server Error",
+        });
+        console.log(error);
+    }
+});
+exports.filterRecordPaymentByName = filterRecordPaymentByName;
+const filterRecordPaymentByNameForBranch = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { name, branchId } = req.params;
+    try {
+        const paymentRecord = yield prisma.paymentRecord.findMany({
+            where: {
+                OR: [{ customerName: { contains: name, mode: "insensitive" } }],
+                branchesId: branchId,
+            },
+        });
+        res.status(200).json({ data: paymentRecord });
+    }
+    catch (error) {
+        res.status(500).json({
+            message: "Internal Server Error",
+        });
+        console.log(error);
+    }
+});
+exports.filterRecordPaymentByNameForBranch = filterRecordPaymentByNameForBranch;

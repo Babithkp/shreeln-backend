@@ -9,13 +9,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteFMRecordByNotification = exports.updateRecordPaymentByNotification = exports.deleteLRByNotification = exports.deleteFMByNotification = exports.updateFMByNotification = exports.updateLRByNotification = exports.getLRByBranchId = exports.getFMByBranchId = exports.filterFMBymonth = exports.deletePaymentRecordFromFM = exports.addPaymentRecordToFM = exports.sendFMEmail = exports.updateFM = exports.deleteFM = exports.getFMData = exports.createFM = exports.sendLREmail = exports.filterLRDetails = exports.updateLR = exports.deleteLR = exports.getLRByLrNumber = exports.getLRData = exports.createLR = void 0;
+exports.deleteFMRecordByNotification = exports.updateRecordPaymentByNotification = exports.deleteLRByNotification = exports.deleteFMByNotification = exports.updateFMByNotification = exports.updateLRByNotification = exports.getLRByBranchId = exports.getFMByBranchId = exports.filterFMBymonthForBranch = exports.filterFMBymonth = exports.deletePaymentRecordFromFM = exports.addPaymentRecordToFM = exports.sendFMEmail = exports.updateFM = exports.deleteFM = exports.filterFMDetailsForBranch = exports.filterFMDetails = exports.getFMByPageForBranch = exports.getFMByPage = exports.getFMData = exports.createFM = exports.sendLREmail = exports.filterLRDetailsForBranch = exports.filterLRDetails = exports.updateLR = exports.deleteLR = exports.getLRByLrNumber = exports.getLRByPageForBranch = exports.getLRByPage = exports.getLRData = exports.createLR = void 0;
 const client_1 = require("@prisma/client");
 const LREmail_1 = require("./utils/LREmail");
 const FMEmail_1 = require("./utils/FMEmail");
 const prisma = new client_1.PrismaClient();
 const createLR = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { branchId, adminId, lrNumber, date, from, to, insurance, consignorName, consignorGSTIN, consignorPincode, consignorAddress, consigneeName, consigneeGSTIN, consigneePincode, consigneeAddress, noOfPackages, methodOfPacking, description, invoiceNo, invoiceDate, value, weight, sizeL, sizeW, sizeH, ftl, Vehicle, paymentType, freightCharges, hamali, surcharge, stCh, riskCh, unLoading, extraKms, detention, weightment, others, ewbNumber, ewbExpiryDate, totalAmt, emails, client, } = req.body;
+    const { branchId, adminId, lrNumber, date, from, to, insurance, consignorName, consignorGSTIN, consignorPincode, consignorAddress, consigneeName, consigneeGSTIN, consigneePincode, consigneeAddress, noOfPackages, methodOfPacking, description, invoiceNo, invoiceDate, value, weight, sizeL, sizeW, sizeH, ftl, vehicleId, paymentType, freightCharges, hamali, surcharge, stCh, riskCh, unLoading, extraKms, detention, weightment, others, ewbNumber, ewbExpiryDate, totalAmt, emails, client, } = req.body;
     if (!lrNumber ||
         !date ||
         !from ||
@@ -32,7 +32,7 @@ const createLR = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         !methodOfPacking ||
         !description ||
         !weight ||
-        !Vehicle ||
+        !vehicleId ||
         !paymentType ||
         !client) {
         res.status(400).json({
@@ -54,7 +54,7 @@ const createLR = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         }
         const vehicle = yield prisma.vehicle.findFirst({
             where: {
-                vehicleNumber: Vehicle.vehicleNumber,
+                id: vehicleId,
             },
         });
         const clients = yield prisma.client.findUnique({
@@ -169,6 +169,146 @@ const getLRData = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.getLRData = getLRData;
+const getLRByPage = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
+    if (!page || !limit) {
+        res.status(400).json({
+            message: "Invalid LR Id",
+        });
+        return;
+    }
+    const skip = (page - 1) * limit;
+    try {
+        const LRCount = yield prisma.lR.count();
+        const LRData = yield prisma.lR.findMany({
+            skip,
+            take: limit,
+            orderBy: {
+                date: "desc",
+            },
+            include: {
+                Vehicle: true,
+                branch: {
+                    select: {
+                        branchName: true,
+                        contactNumber: true,
+                        address: true,
+                        city: true,
+                        state: true,
+                        pincode: true,
+                    },
+                },
+                admin: {
+                    select: {
+                        branchName: true,
+                        contactNumber: true,
+                        address: true,
+                        city: true,
+                        state: true,
+                        pincode: true,
+                    },
+                },
+                pod: {
+                    select: {
+                        id: true,
+                    },
+                },
+                client: {
+                    select: {
+                        name: true,
+                    },
+                },
+            },
+        });
+        const data = {
+            LRCount,
+            LRData,
+        };
+        res.status(200).json({ data });
+    }
+    catch (error) {
+        res.status(500).json({
+            message: "Internal Server Error",
+        });
+        console.log(error);
+    }
+});
+exports.getLRByPage = getLRByPage;
+const getLRByPageForBranch = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
+    const branchId = req.query.branchId;
+    if (!page || !limit || !branchId) {
+        res.status(400).json({
+            message: "Invalid LR Id",
+        });
+        return;
+    }
+    const skip = (page - 1) * limit;
+    try {
+        const LRCount = yield prisma.lR.count({
+            where: {
+                branchId: branchId,
+            },
+        });
+        const LRData = yield prisma.lR.findMany({
+            skip,
+            take: limit,
+            where: {
+                branchId: branchId,
+            },
+            include: {
+                Vehicle: true,
+                branch: {
+                    select: {
+                        branchName: true,
+                        contactNumber: true,
+                        address: true,
+                        city: true,
+                        state: true,
+                        pincode: true,
+                    },
+                },
+                admin: {
+                    select: {
+                        branchName: true,
+                        contactNumber: true,
+                        address: true,
+                        city: true,
+                        state: true,
+                        pincode: true,
+                    },
+                },
+                pod: {
+                    select: {
+                        id: true,
+                    },
+                },
+                client: {
+                    select: {
+                        name: true,
+                    },
+                },
+            },
+            orderBy: {
+                date: "desc",
+            },
+        });
+        const data = {
+            LRCount,
+            LRData,
+        };
+        res.status(200).json({ data });
+    }
+    catch (error) {
+        res.status(500).json({
+            message: "Internal Server Error",
+        });
+        console.log(error);
+    }
+});
+exports.getLRByPageForBranch = getLRByPageForBranch;
 const getLRByLrNumber = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { lrNumber } = req.params;
     if (!lrNumber) {
@@ -265,7 +405,7 @@ const updateLR = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         });
         const vehicle = yield prisma.vehicle.findFirst({
             where: {
-                vehicleNumber: vehicleId,
+                id: vehicleId,
             },
         });
         const clients = yield prisma.client.findUnique({
@@ -348,11 +488,9 @@ const filterLRDetails = (req, res) => __awaiter(void 0, void 0, void 0, function
             where: {
                 OR: [
                     { lrNumber: { contains: text, mode: "insensitive" } },
-                    { consigneeName: { contains: text, mode: "insensitive" } },
-                    { consignorName: { contains: text, mode: "insensitive" } },
+                    { client: { name: { contains: text, mode: "insensitive" } } },
                     { from: { contains: text, mode: "insensitive" } },
                     { to: { contains: text, mode: "insensitive" } },
-                    { description: { contains: text, mode: "insensitive" } },
                 ],
             },
             include: {
@@ -377,6 +515,16 @@ const filterLRDetails = (req, res) => __awaiter(void 0, void 0, void 0, function
                         pincode: true,
                     },
                 },
+                pod: {
+                    select: {
+                        id: true,
+                    },
+                },
+                client: {
+                    select: {
+                        name: true,
+                    },
+                },
             },
             orderBy: {
                 date: "desc",
@@ -397,6 +545,70 @@ const filterLRDetails = (req, res) => __awaiter(void 0, void 0, void 0, function
     }
 });
 exports.filterLRDetails = filterLRDetails;
+const filterLRDetailsForBranch = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { branchId, text } = req.params;
+    try {
+        const lrs = yield prisma.lR.findMany({
+            where: {
+                branchId: branchId,
+                OR: [
+                    { lrNumber: { contains: text, mode: "insensitive" } },
+                    { consignorName: { contains: text, mode: "insensitive" } },
+                    { consigneeName: { contains: text, mode: "insensitive" } },
+                ],
+            },
+            include: {
+                Vehicle: true,
+                branch: {
+                    select: {
+                        branchName: true,
+                        contactNumber: true,
+                        address: true,
+                        city: true,
+                        state: true,
+                        pincode: true,
+                    },
+                },
+                admin: {
+                    select: {
+                        branchName: true,
+                        contactNumber: true,
+                        address: true,
+                        city: true,
+                        state: true,
+                        pincode: true,
+                    },
+                },
+                pod: {
+                    select: {
+                        id: true,
+                    },
+                },
+                client: {
+                    select: {
+                        name: true,
+                    },
+                },
+            },
+            orderBy: {
+                date: "desc",
+            },
+        });
+        if (lrs) {
+            res.status(200).json({
+                message: "LR Details",
+                data: lrs,
+            });
+        }
+    }
+    catch (error) {
+        res.status(400).json({
+            message: "Internal Server Error",
+        });
+        console.log(error);
+    }
+});
+exports.filterLRDetailsForBranch = filterLRDetailsForBranch;
 const sendLREmail = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c, _d, _e, _f, _g, _h;
     const { email } = req.params;
@@ -571,6 +783,148 @@ const getFMData = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.getFMData = getFMData;
+const getFMByPage = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
+    if (!page || !limit) {
+        res.status(400).json({
+            message: "Invalid LR Id",
+        });
+        return;
+    }
+    const skip = (page - 1) * limit;
+    try {
+        const FMCount = yield prisma.fM.count();
+        const FMData = yield prisma.fM.findMany({
+            skip,
+            take: limit,
+            orderBy: {
+                date: "desc",
+            },
+            include: {
+                PaymentRecords: true,
+            },
+        });
+        const data = {
+            FMCount,
+            FMData,
+        };
+        res.status(200).json({ data });
+    }
+    catch (error) {
+        res.status(500).json({
+            message: "Internal Server Error",
+        });
+        console.log(error);
+    }
+});
+exports.getFMByPage = getFMByPage;
+const getFMByPageForBranch = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
+    const branchId = req.query.branchId;
+    if (!page || !limit || !branchId) {
+        res.status(400).json({
+            message: "Invalid LR Id",
+        });
+        return;
+    }
+    const skip = (page - 1) * limit;
+    try {
+        const FMCount = yield prisma.fM.count({
+            where: {
+                branchId: branchId,
+            },
+        });
+        const FMData = yield prisma.fM.findMany({
+            skip,
+            take: limit,
+            where: {
+                branchId: branchId,
+            },
+            include: {
+                PaymentRecords: true,
+            },
+        });
+        const data = {
+            FMCount,
+            FMData,
+        };
+        res.status(200).json({ data });
+    }
+    catch (error) {
+        res.status(500).json({
+            message: "Internal Server Error",
+        });
+        console.log(error);
+    }
+});
+exports.getFMByPageForBranch = getFMByPageForBranch;
+const filterFMDetails = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { text } = req.params;
+    try {
+        const fms = yield prisma.fM.findMany({
+            where: {
+                OR: [
+                    { fmNumber: { contains: text, mode: "insensitive" } },
+                    { vendorName: { contains: text, mode: "insensitive" } },
+                ],
+            },
+            include: {
+                PaymentRecords: true,
+            },
+            orderBy: {
+                createdAt: "desc",
+            },
+        });
+        if (fms) {
+            res.status(200).json({
+                message: "FM Details",
+                data: fms,
+            });
+        }
+    }
+    catch (error) {
+        res.status(500).json({
+            message: "Internal Server Error",
+        });
+        console.log(error);
+    }
+});
+exports.filterFMDetails = filterFMDetails;
+const filterFMDetailsForBranch = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { branchId, text } = req.params;
+    try {
+        const fms = yield prisma.fM.findMany({
+            where: {
+                branchId: branchId,
+                OR: [
+                    { fmNumber: { contains: text, mode: "insensitive" } },
+                    { vendorName: { contains: text, mode: "insensitive" } },
+                ],
+            },
+            include: {
+                PaymentRecords: true,
+            },
+            orderBy: {
+                createdAt: "desc",
+            },
+        });
+        if (fms) {
+            res.status(200).json({
+                message: "FM Details",
+                data: fms,
+            });
+        }
+    }
+    catch (error) {
+        res.status(500).json({
+            message: "Internal Server Error",
+        });
+        console.log(error);
+    }
+});
+exports.filterFMDetailsForBranch = filterFMDetailsForBranch;
 const deleteFM = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
     if (!id) {
@@ -1053,6 +1407,41 @@ const filterFMBymonth = (req, res) => __awaiter(void 0, void 0, void 0, function
     }
 });
 exports.filterFMBymonth = filterFMBymonth;
+const filterFMBymonthForBranch = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { branchId } = req.params;
+    const { startDate, endDate } = req.body;
+    if (!startDate || !endDate) {
+        res.status(400).json({ message: "Invalid Date Range" });
+        return;
+    }
+    try {
+        const fms = yield prisma.fM.findMany({
+            where: {
+                branchId: branchId,
+                date: {
+                    gte: startDate,
+                    lte: endDate,
+                },
+            },
+            include: {
+                PaymentRecords: true,
+            },
+        });
+        if (fms) {
+            res.status(200).json({
+                message: "FM Details",
+                data: fms,
+            });
+        }
+    }
+    catch (error) {
+        res.status(500).json({
+            message: "Internal Server Error",
+        });
+        console.log(error);
+    }
+});
+exports.filterFMBymonthForBranch = filterFMBymonthForBranch;
 const getFMByBranchId = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { branchId } = req.params;
     if (!branchId) {

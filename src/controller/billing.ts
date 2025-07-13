@@ -182,6 +182,141 @@ export const createBill = async (req: Request, res: Response) => {
     console.log(error);
   }
 };
+export const createBillsupplementary = async (req: Request, res: Response) => {
+  const {
+    billNumber,
+    date,
+    dueDate,
+    clientName,
+    hsnSacCode,
+    placeOfSupply,
+    state,
+    statecode,
+    lrData,
+    igstRate,
+    cgstRate,
+    sgstRate,
+    subTotal,
+    total,
+    totalInWords,
+    unloading,
+    hamali,
+    extraKmWeight,
+    detention,
+    weightment,
+    others,
+    otherCharges,
+    branchId,
+    adminId,
+  } = req.body;
+
+  if (
+    !billNumber ||
+    !date ||
+    !clientName ||
+    !hsnSacCode ||
+    !placeOfSupply ||
+    !state ||
+    !statecode ||
+    !Array.isArray(lrData) ||
+    lrData.length === 0 ||
+    !subTotal ||
+    !total ||
+    !totalInWords
+  ) {
+    res.status(400).json({
+      message: "Invalid Bill Details",
+    });
+    return;
+  }
+
+  try {
+    const client = await prisma.client.findUnique({
+      where: {
+        name: clientName,
+      },
+    });
+    if (!client) {
+      res.status(400).json({
+        message: "Invalid Client Id",
+      });
+      return;
+    }
+    const bill = await prisma.bill.create({
+      data: {
+        billNumber,
+        date,
+        dueDate,
+        hsnSacCode,
+        placeOfSupply,
+        state,
+        statecode,
+        igstRate,
+        cgstRate,
+        sgstRate,
+        subTotal,
+        total,
+        totalInWords,
+        pendingAmount: subTotal,
+        unloading,
+        hamali,
+        extraKmWeight,
+        detention,
+        weightment,
+        others,
+        otherCharges,
+        clientId: client?.id,
+        lrData: {
+          connect: lrData.map((lr: any) => ({ id: lr.id })),
+        },
+        ...(adminId ? { adminId } : {}),
+        ...(branchId ? { branchesId: branchId } : {}),
+      },
+    });
+    const updatedClient = await prisma.client.update({
+      where: {
+        id: client?.id,
+      },
+      data: {
+        pendingPayment: client.pendingPayment + subTotal,
+      },
+    });
+    const admin = await prisma.admin.findFirst();
+    if (!admin) {
+      res.status(400).json({
+        message: "Invalid Admin Id",
+      });
+      return;
+    }
+    if (updatedClient?.pendingPayment > updatedClient?.creditLimit) {
+      await prisma.notification.create({
+        data: {
+          adminId: admin.id,
+          requestId: bill.id,
+          title: "Credit Limit",
+          description: `The credit limit of INR ${
+            updatedClient.creditLimit
+          } for the client ${
+            updatedClient.name
+          } has reached. The current outstanding is INR ${updatedClient.pendingPayment.toFixed(
+            2
+          )}`,
+          message: "",
+          status: "one-time",
+        },
+      });
+    }
+
+    res.status(200).json({
+      message: "Bill Created",
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+    console.log(error);
+  }
+};
 
 export const getBillDetails = async (req: Request, res: Response) => {
   try {
@@ -476,6 +611,307 @@ export const updateBillDetails = async (req: Request, res: Response) => {
   }
 };
 
+export const filterBillBymonth = async (req: Request, res: Response) => {
+  const { startDate, endDate } = req.body;
+  if (!startDate || !endDate) {
+    res.status(400).json({ message: "Invalid Date Range" });
+    return;
+  }
+  try {
+    const bills = await prisma.bill.findMany({
+      where: {
+        date: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+      include: {
+        PaymentRecords: true,
+      },
+    });
+    if (bills) {
+      res.status(200).json({
+        message: "Bill Details",
+        data: bills,
+      });
+    }
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+    console.log(error);
+  }
+};
+export const filterBillBymonthForBranch = async (
+  req: Request,
+  res: Response
+) => {
+  const { branchId } = req.params;
+  const { startDate, endDate } = req.body;
+  if (!startDate || !endDate || !branchId) {
+    res.status(400).json({ message: "Invalid Date Range" });
+    return;
+  }
+  try {
+    const bills = await prisma.bill.findMany({
+      where: {
+        branchesId: branchId,
+        date: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+      include: {
+        PaymentRecords: true,
+      },
+    });
+    if (bills) {
+      res.status(200).json({
+        message: "Bill Details",
+        data: bills,
+      });
+    }
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+    console.log(error);
+  }
+};
+
+export const getBillByBranchId = async (req: Request, res: Response) => {
+  const { branchId } = req.params;
+  if (!branchId) {
+    res.status(400).json({
+      message: "Invalid Branch Id",
+    });
+    return;
+  }
+  try {
+    const bills = await prisma.bill.findMany({
+      where: {
+        branchesId: branchId,
+      },
+      include: {
+        PaymentRecords: true,
+      },
+      orderBy: {
+        date: "asc",
+      },
+    });
+    if (bills) {
+      res.status(200).json({
+        message: "Bill Details",
+        data: bills,
+      });
+    }
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+    console.log(error);
+  }
+};
+
+export const getBillByPage = async (req: Request, res: Response) => {
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 50;
+
+  if (!page || !limit) {
+    res.status(400).json({
+      message: "Invalid Bill Id",
+    });
+    return;
+  }
+  const skip = (page - 1) * limit;
+  try {
+    const BillCount = await prisma.bill.count();
+    const BillData = await prisma.bill.findMany({
+      skip,
+      take: limit,
+      include: {
+        lrData: {
+          include: {
+            Vehicle: true,
+          },
+        },
+        PaymentRecords: {
+          orderBy: {
+            date: "asc",
+          },
+        },
+        Client: true,
+        Branches: true,
+        Admin: true,
+      },
+      orderBy: {
+        date: "desc",
+      },
+    });
+
+    const data = {
+      BillCount,
+      BillData,
+    };
+
+    res.status(200).json({ data });
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+    console.log(error);
+  }
+};
+
+export const getBillByPageForBranch = async (req: Request, res: Response) => {
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 50;
+  const branchId = req.query.branchId as string;
+
+  if (!page || !limit || !branchId) {
+    res.status(400).json({
+      message: "Invalid Bill Id",
+    });
+    return;
+  }
+  const skip = (page - 1) * limit;
+  try {
+    const BillCount = await prisma.bill.count({
+      where: {
+        branchesId: branchId,
+      },
+    });
+    const BillData = await prisma.bill.findMany({
+      skip,
+      take: limit,
+      where: {
+        branchesId: branchId,
+      },
+      include: {
+        lrData: {
+          include: {
+            Vehicle: true,
+          },
+        },
+        PaymentRecords: {
+          orderBy: {
+            date: "asc",
+          },
+        },
+        Client: true,
+        Branches: true,
+        Admin: true,
+      },
+      orderBy: {
+        date: "desc",
+      },
+    });
+
+    const data = {
+      BillCount,
+      BillData,
+    };
+
+    res.status(200).json({ data });
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+    console.log(error);
+  }
+};
+
+export const filterBillData = async (req: Request, res: Response) => {
+  const { text } = req.params;
+  try {
+    const bills = await prisma.bill.findMany({
+      where: {
+        OR: [
+          { billNumber: { contains: text, mode: "insensitive" } },
+          { Client: { name: { contains: text, mode: "insensitive" } } },
+        ],
+      },
+      include: {
+        lrData: {
+          include: {
+            Vehicle: true,
+          },
+        },
+        PaymentRecords: {
+          orderBy: {
+            date: "asc",
+          },
+        },
+        Client: true,
+        Branches: true,
+        Admin: true,
+      },
+      orderBy: {
+        date: "desc",
+      },
+    });
+    if (bills) {
+      res.status(200).json({
+        message: "Bill Details",
+        data: bills,
+      });
+    }
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+    console.log(error);
+  }
+};
+
+export const filterBillDetailsForBranch = async (
+  req: Request,
+  res: Response
+) => {
+  const { branchId, text } = req.params;
+
+  try {
+    const bills = await prisma.bill.findMany({
+      where: {
+        branchesId: branchId,
+        OR: [
+          { billNumber: { contains: text, mode: "insensitive" } },
+          { Client: { name: { contains: text, mode: "insensitive" } } },
+        ],
+      },
+      include: {
+        lrData: {
+          include: {
+            Vehicle: true,
+          },
+        },
+        PaymentRecords: {
+          orderBy: {
+            date: "asc",
+          },
+        },
+        Client: true,
+        Branches: true,
+        Admin: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+    if (bills) {
+      res.status(200).json({
+        message: "Bill Details",
+        data: bills,
+      });
+    }
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+    console.log(error);
+  }
+};
+
 export const addPaymentRecordToBill = async (req: Request, res: Response) => {
   const {
     date,
@@ -510,13 +946,13 @@ export const addPaymentRecordToBill = async (req: Request, res: Response) => {
   try {
     const bill = await prisma.bill.findUnique({
       where: { billNumber: IDNumber },
-      include:{
+      include: {
         Client: {
           select: {
             id: true,
-          }
-        }
-      }
+          },
+        },
+      },
     });
 
     if (!bill) {
@@ -640,7 +1076,7 @@ export const addPaymentRecordToBill = async (req: Request, res: Response) => {
 
       const client = await prisma.client.findUnique({
         where: {
-          id: bill.Client?.id, 
+          id: bill.Client?.id,
         },
       });
       if (!client) return;
@@ -747,72 +1183,6 @@ export const deletePaymentRecordFromBill = async (
   } catch (error) {
     console.error("Error deleting payment record:", error);
     res.status(500).json({ message: "Internal Server Error" });
-  }
-};
-
-export const filterBillBymonth = async (req: Request, res: Response) => {
-  const { startDate, endDate } = req.body;
-  if (!startDate || !endDate) {
-    res.status(400).json({ message: "Invalid Date Range" });
-    return;
-  }
-  try {
-    const bills = await prisma.bill.findMany({
-      where: {
-        date: {
-          gte: startDate,
-          lte: endDate,
-        },
-      },
-      include: {
-        PaymentRecords: true,
-      },
-    });
-    if (bills) {
-      res.status(200).json({
-        message: "Bill Details",
-        data: bills,
-      });
-    }
-  } catch (error) {
-    res.status(500).json({
-      message: "Internal Server Error",
-    });
-    console.log(error);
-  }
-};
-
-export const getBillByBranchId = async (req: Request, res: Response) => {
-  const { branchId } = req.params;
-  if (!branchId) {
-    res.status(400).json({
-      message: "Invalid Branch Id",
-    });
-    return;
-  }
-  try {
-    const bills = await prisma.bill.findMany({
-      where: {
-        branchesId: branchId,
-      },
-      include: {
-        PaymentRecords: true,
-      },
-      orderBy: {
-        date: "asc",
-      },
-    });
-    if (bills) {
-      res.status(200).json({
-        message: "Bill Details",
-        data: bills,
-      });
-    }
-  } catch (error) {
-    res.status(500).json({
-      message: "Internal Server Error",
-    });
-    console.log(error);
   }
 };
 

@@ -31,7 +31,7 @@ export const createLR = async (req: Request, res: Response) => {
     sizeW,
     sizeH,
     ftl,
-    Vehicle,
+    vehicleId,
     paymentType,
     freightCharges,
     hamali,
@@ -67,7 +67,7 @@ export const createLR = async (req: Request, res: Response) => {
     !methodOfPacking ||
     !description ||
     !weight ||
-    !Vehicle ||
+    !vehicleId ||
     !paymentType ||
     !client
   ) {
@@ -91,7 +91,7 @@ export const createLR = async (req: Request, res: Response) => {
 
     const vehicle = await prisma.vehicle.findFirst({
       where: {
-        vehicleNumber: Vehicle.vehicleNumber,
+        id: vehicleId,
       },
     });
 
@@ -206,6 +206,150 @@ export const getLRData = async (req: Request, res: Response) => {
       },
     });
     res.status(200).json({ data: lrs });
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+    console.log(error);
+  }
+};
+
+export const getLRByPage = async (req: Request, res: Response) => {
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 50;
+
+  if (!page || !limit) {
+    res.status(400).json({
+      message: "Invalid LR Id",
+    });
+    return;
+  }
+  const skip = (page - 1) * limit;
+  try {
+    const LRCount = await prisma.lR.count();
+    const LRData = await prisma.lR.findMany({
+      skip,
+      take: limit,
+      orderBy: {
+        date: "desc",
+      },
+      include: {
+        Vehicle: true,
+        branch: {
+          select: {
+            branchName: true,
+            contactNumber: true,
+            address: true,
+            city: true,
+            state: true,
+            pincode: true,
+          },
+        },
+        admin: {
+          select: {
+            branchName: true,
+            contactNumber: true,
+            address: true,
+            city: true,
+            state: true,
+            pincode: true,
+          },
+        },
+        pod: {
+          select: {
+            id: true,
+          },
+        },
+        client: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    });
+
+    const data = {
+      LRCount,
+      LRData,
+    };
+
+    res.status(200).json({ data });
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+    console.log(error);
+  }
+};
+
+export const getLRByPageForBranch = async (req: Request, res: Response) => {
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 50;
+  const branchId = req.query.branchId as string;
+
+  if (!page || !limit || !branchId) {
+    res.status(400).json({
+      message: "Invalid LR Id",
+    });
+    return;
+  }
+  const skip = (page - 1) * limit;
+  try {
+    const LRCount = await prisma.lR.count({
+      where: {
+        branchId: branchId,
+      },
+    });
+    const LRData = await prisma.lR.findMany({
+      skip,
+      take: limit,
+      where: {
+        branchId: branchId,
+      },
+      include: {
+        Vehicle: true,
+        branch: {
+          select: {
+            branchName: true,
+            contactNumber: true,
+            address: true,
+            city: true,
+            state: true,
+            pincode: true,
+          },
+        },
+        admin: {
+          select: {
+            branchName: true,
+            contactNumber: true,
+            address: true,
+            city: true,
+            state: true,
+            pincode: true,
+          },
+        },
+        pod: {
+          select: {
+            id: true,
+          },
+        },
+        client: {
+          select: {
+            name: true,
+          },
+        },
+      },
+      orderBy: {
+        date: "desc",
+      },
+    });
+
+    const data = {
+      LRCount,
+      LRData,
+    };
+
+    res.status(200).json({ data });
   } catch (error) {
     res.status(500).json({
       message: "Internal Server Error",
@@ -353,7 +497,7 @@ export const updateLR = async (req: Request, res: Response) => {
     });
     const vehicle = await prisma.vehicle.findFirst({
       where: {
-        vehicleNumber: vehicleId,
+        id: vehicleId,
       },
     });
     const clients = await prisma.client.findUnique({
@@ -436,11 +580,9 @@ export const filterLRDetails = async (req: Request, res: Response) => {
       where: {
         OR: [
           { lrNumber: { contains: text, mode: "insensitive" } },
-          { consigneeName: { contains: text, mode: "insensitive" } },
-          { consignorName: { contains: text, mode: "insensitive" } },
+          { client: { name: { contains: text, mode: "insensitive" } } },
           { from: { contains: text, mode: "insensitive" } },
           { to: { contains: text, mode: "insensitive" } },
-          { description: { contains: text, mode: "insensitive" } },
         ],
       },
       include: {
@@ -465,6 +607,16 @@ export const filterLRDetails = async (req: Request, res: Response) => {
             pincode: true,
           },
         },
+        pod: {
+          select: {
+            id: true,
+          },
+        },
+        client: {
+          select: {
+            name: true,
+          },
+        },
       },
       orderBy: {
         date: "desc",
@@ -483,6 +635,70 @@ export const filterLRDetails = async (req: Request, res: Response) => {
     console.log(error);
   }
 };
+
+export const filterLRDetailsForBranch = async (req: Request, res: Response) => {
+  const { branchId, text } = req.params;
+
+  try {
+    const lrs = await prisma.lR.findMany({
+      where: {
+        branchId: branchId,
+        OR: [
+          { lrNumber: { contains: text, mode: "insensitive" } },
+          { consignorName: { contains: text, mode: "insensitive" } },
+          { consigneeName: { contains: text, mode: "insensitive" } },
+        ],
+      },
+      include: {
+        Vehicle: true,
+        branch: {
+          select: {
+            branchName: true,
+            contactNumber: true,
+            address: true,
+            city: true,
+            state: true,
+            pincode: true,
+          },
+        },
+        admin: {
+          select: {
+            branchName: true,
+            contactNumber: true,
+            address: true,
+            city: true,
+            state: true,
+            pincode: true,
+          },
+        },
+        pod: {
+          select: {
+            id: true,
+          },
+        },
+        client: {
+          select: {
+            name: true,
+          },
+        },
+      },
+      orderBy: {
+        date: "desc",
+      },
+    });
+    if (lrs) {
+      res.status(200).json({
+        message: "LR Details",
+        data: lrs,
+      });
+    }
+  } catch (error) {
+    res.status(400).json({
+      message: "Internal Server Error",
+    });
+    console.log(error);
+  }
+}
 
 export const sendLREmail = async (req: Request, res: Response) => {
   const { email } = req.params;
@@ -710,6 +926,151 @@ export const getFMData = async (req: Request, res: Response) => {
       },
     });
     res.status(200).json({ data: data });
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+    console.log(error);
+  }
+};
+
+export const getFMByPage = async (req: Request, res: Response) => {
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 50;
+
+  if (!page || !limit) {
+    res.status(400).json({
+      message: "Invalid LR Id",
+    });
+    return;
+  }
+  const skip = (page - 1) * limit;
+  try {
+    const FMCount = await prisma.fM.count();
+    const FMData = await prisma.fM.findMany({
+      skip,
+      take: limit,
+      orderBy: {
+        date: "desc",
+      },
+      include: {
+        PaymentRecords: true,
+      },
+    });
+
+    const data = {
+      FMCount,
+      FMData,
+    };
+
+    res.status(200).json({ data });
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+    console.log(error);
+  }
+};
+
+export const getFMByPageForBranch = async (req: Request, res: Response) => {
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 50;
+  const branchId = req.query.branchId as string;
+
+  if (!page || !limit || !branchId) {
+    res.status(400).json({
+      message: "Invalid LR Id",
+    });
+    return;
+  }
+  const skip = (page - 1) * limit;
+  try {
+    const FMCount = await prisma.fM.count({
+      where: {
+        branchId: branchId,
+      },
+    });
+    const FMData = await prisma.fM.findMany({
+      skip,
+      take: limit,
+      where: {
+        branchId: branchId,
+      },
+      include: {
+        PaymentRecords: true,
+      },
+    });
+
+    const data = {
+      FMCount,
+      FMData,
+    };
+
+    res.status(200).json({ data });
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+    console.log(error);
+  }
+};
+
+export const filterFMDetails = async (req: Request, res: Response) => {
+  const { text } = req.params;
+  try {
+    const fms = await prisma.fM.findMany({
+      where: {
+        OR: [
+          { fmNumber: { contains: text, mode: "insensitive" } },
+          { vendorName: { contains: text, mode: "insensitive" } },
+        ],
+      },
+      include: {
+        PaymentRecords: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+    if (fms) {
+      res.status(200).json({
+        message: "FM Details",
+        data: fms,
+      });
+    }
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+    console.log(error);
+  }
+};
+
+export const filterFMDetailsForBranch = async (req: Request, res: Response) => {
+  const { branchId, text } = req.params;
+
+  try {
+    const fms = await prisma.fM.findMany({
+      where: {
+        branchId: branchId,
+        OR: [
+          { fmNumber: { contains: text, mode: "insensitive" } },
+          { vendorName: { contains: text, mode: "insensitive" } },
+        ],
+      },
+      include: {
+        PaymentRecords: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+    if (fms) {
+      res.status(200).json({
+        message: "FM Details",
+        data: fms,
+      });
+    }
   } catch (error) {
     res.status(500).json({
       message: "Internal Server Error",
@@ -1292,6 +1653,39 @@ export const filterFMBymonth = async (req: Request, res: Response) => {
   try {
     const fms = await prisma.fM.findMany({
       where: {
+        date: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+      include: {
+        PaymentRecords: true,
+      },
+    });
+    if (fms) {
+      res.status(200).json({
+        message: "FM Details",
+        data: fms,
+      });
+    }
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+    console.log(error);
+  }
+};
+export const filterFMBymonthForBranch = async (req: Request, res: Response) => {
+  const { branchId } = req.params;
+  const { startDate, endDate } = req.body;
+  if (!startDate || !endDate) {
+    res.status(400).json({ message: "Invalid Date Range" });
+    return;
+  }
+  try {
+    const fms = await prisma.fM.findMany({
+      where: {
+        branchId: branchId,
         date: {
           gte: startDate,
           lte: endDate,

@@ -297,12 +297,15 @@ export const createClient = async (req: Request, res: Response) => {
 export const getAllClients = async (req: Request, res: Response) => {
   try {
     const clients = await prisma.client.findMany({
-      include: {
-        bill: {
-          include:{
-            PaymentRecords: true
-          }
-        },
+      select: {
+        name: true,
+        pendingPayment: true,
+        GSTIN: true,
+        address: true,
+        pincode: true,
+        email: true,
+        city:true,
+        state:true,
         LR: {
           include: {
             Vehicle: true,
@@ -351,9 +354,9 @@ export const getAllAdminNotifications = async (req: Request, res: Response) => {
       include: {
         Branches: true,
       },
-      orderBy:{
-        createdAt: "desc"
-      }
+      orderBy: {
+        createdAt: "desc",
+      },
     });
     res.status(200).json({ data: notifications });
   } catch (error) {
@@ -513,6 +516,170 @@ export const updateOtherSettings = async (req: Request, res: Response) => {
         message: "Other Settings Updated",
       });
     }
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+    console.log(error);
+  }
+};
+
+export const getDashboardData = async (req: Request, res: Response) => {
+  try {
+    const branchData = await prisma.branches.findMany({
+      select: {
+        branchName: true,
+        FM: {
+          select: {
+            hire: true,
+            otherCharges: true,
+            detentionCharges: true,
+            rtoCharges: true,
+            tds: true,
+          },
+        },
+        bill: {
+          select: {
+            subTotal: true,
+          },
+        },
+      },
+    });
+    const admin = await prisma.admin.findFirst({
+      select: {
+        branchName: true,
+        FM: {
+          select: {
+            hire: true,
+            otherCharges: true,
+            detentionCharges: true,
+            rtoCharges: true,
+            tds: true,
+          },
+        },
+        bill: {
+          select: {
+            subTotal: true,
+          },
+        },
+      },
+    });
+
+    const billData = await prisma.bill.findMany({
+      select: {
+        date: true,
+        subTotal: true,
+        PaymentRecords: {
+          select: {
+            amount: true,
+          },
+        },
+      },
+    });
+
+    const FMData = await prisma.fM.findMany({
+      select: {
+        hire: true,
+        otherCharges: true,
+        detentionCharges: true,
+        rtoCharges: true,
+        tds: true,
+        date: true,
+      },
+    });
+
+    const clientData = await prisma.client.findMany({
+      select: {
+        name: true,
+        bill: {
+          select: {
+            subTotal: true,
+          },
+        },
+      },
+    });
+    const vendorCount = await prisma.vendors.count();
+
+    const overAllBranchData = [admin, ...branchData];
+
+    const data = {
+      clientData,
+      vendorCount,
+      overAllBranchData,
+      FMData,
+      billData,
+      branchData,
+    };
+
+    res.status(200).json({ data });
+  } catch (error) {
+    res.status(400).json({
+      message: "Internal Server Error",
+    });
+    console.log(error);
+  }
+};
+
+export const getDashboardDataForBranch = async (
+  req: Request,
+  res: Response
+) => {
+  const branchId = req.params.id;
+  try {
+    const billData = await prisma.bill.findMany({
+      where: {
+        branchesId: branchId,
+      },
+      select: {
+        date: true,
+        subTotal: true,
+        PaymentRecords: {
+          select: {
+            amount: true,
+          },
+        },
+      },
+    });
+
+    const FMData = await prisma.fM.findMany({
+      where: {
+        branchId,
+      },
+      select: {
+        hire: true,
+        otherCharges: true,
+        detentionCharges: true,
+        rtoCharges: true,
+        tds: true,
+        date: true,
+      },
+    });
+
+    const clientData = await prisma.client.findMany({
+      select: {
+        name: true,
+        bill: {
+          select: {
+            subTotal: true,
+          },
+        },
+      },
+    });
+    const vendorCount = await prisma.vendors.count();
+
+    const data = {
+      clientData,
+      vendorCount,
+      overAllBranchData: [],
+      FMData,
+      billData,
+      branchData: [],
+    };
+
+    res.status(200).json({
+      message: "Dashboard Data",
+      data: data,
+    });
   } catch (error) {
     res.status(500).json({
       message: "Internal Server Error",

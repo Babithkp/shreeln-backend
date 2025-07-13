@@ -10,6 +10,8 @@ import {
   getAllClients,
   getBillId,
   getBrachersNames,
+  getDashboardData,
+  getDashboardDataForBranch,
   getExpenseId,
   getOtherSettings,
   updateNotification,
@@ -32,5 +34,7 @@ adminRouter.get("/admin/getExpenseId", getExpenseId);
 adminRouter.get("/admin/getBillId", getBillId);
 adminRouter.get("/admin/getOtherSettings", getOtherSettings);
 adminRouter.patch("/admin/updateOtherSettings", updateOtherSettings);
+adminRouter.get("/admin/getDashboardData", getDashboardData);
+adminRouter.get("/admin/getDashboardDataForBranch/:id", getDashboardDataForBranch);
 
 export default adminRouter;

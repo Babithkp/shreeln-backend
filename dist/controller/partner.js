@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.filterFMByVendor = exports.filterBillByClient = exports.deleteVehicle = exports.updateVehicleDetails = exports.getVehicleById = exports.getAllVehicles = exports.createVehicle = exports.deleteVendor = exports.updateVendorDetails = exports.getAllVendors = exports.createVendor = void 0;
+exports.filterClientByName = exports.getClientForPage = exports.filterVendorByName = exports.getVendorForPage = exports.filterFMLRByVendor = exports.getBillLRForClient = exports.deleteVehicle = exports.updateVehicleDetails = exports.getVehicleById = exports.getAllVehicles = exports.createVehicle = exports.deleteVendor = exports.updateVendorDetails = exports.getAllVendors = exports.createVendor = void 0;
 const client_1 = require("@prisma/client");
 const prisma = new client_1.PrismaClient();
 const createVendor = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -89,8 +89,8 @@ const getAllVendors = (req, res) => __awaiter(void 0, void 0, void 0, function* 
                 },
             },
             orderBy: {
-                createdAt: 'desc'
-            }
+                createdAt: "desc",
+            },
         });
         res.status(200).json({ data: vendors });
     }
@@ -208,24 +208,18 @@ const deleteVendor = (req, res) => __awaiter(void 0, void 0, void 0, function* (
 exports.deleteVendor = deleteVendor;
 const createVehicle = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { vendorName, vehicletypes, vehicleNumber, ownerName, ownerPhone, driverName, driverPhone, insurance, RC, panNumber, } = req.body;
-    if (!vehicletypes || !vehicleNumber || !insurance || !RC || !panNumber || !driverPhone) {
+    if (!vehicletypes ||
+        !vehicleNumber ||
+        !insurance ||
+        !RC ||
+        !panNumber ||
+        !driverPhone) {
         res.status(400).json({
             message: "Invalid Vehicle Details",
         });
         return;
     }
     try {
-        const isVehicleNumberAvailable = yield prisma.vehicle.findFirst({
-            where: {
-                vehicleNumber,
-            },
-        });
-        if (isVehicleNumberAvailable) {
-            res.status(201).json({
-                message: "Vehicle Number already exists",
-            });
-            return;
-        }
         const vendor = yield prisma.vendors.findUnique({
             where: {
                 name: vendorName,
@@ -393,7 +387,7 @@ const deleteVehicle = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     }
 });
 exports.deleteVehicle = deleteVehicle;
-const filterBillByClient = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const getBillLRForClient = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { name, from, to } = req.body;
     try {
         const client = yield prisma.client.findUnique({
@@ -411,10 +405,33 @@ const filterBillByClient = (req, res) => __awaiter(void 0, void 0, void 0, funct
         const bills = yield prisma.bill.findMany({
             where: Object.assign({ clientId: client.id }, (from || to ? { date: dateFilter } : {})),
             include: {
-                lrData: true,
+                lrData: {
+                    select: {
+                        lrNumber: true,
+                        from: true,
+                        to: true,
+                        totalAmt: true,
+                    },
+                },
             },
         });
-        res.status(200).json({ data: bills });
+        const LRs = yield prisma.lR.findMany({
+            where: {
+                clientId: client.id,
+            },
+            include: {
+                Vehicle: {
+                    select: {
+                        vehicleNumber: true,
+                    },
+                },
+            },
+        });
+        const data = {
+            bills,
+            LRs: LRs.filter((lr) => lr.billId == null),
+        };
+        res.status(200).json({ data });
     }
     catch (error) {
         res.status(500).json({
@@ -423,26 +440,44 @@ const filterBillByClient = (req, res) => __awaiter(void 0, void 0, void 0, funct
         console.log(error);
     }
 });
-exports.filterBillByClient = filterBillByClient;
-const filterFMByVendor = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+exports.getBillLRForClient = getBillLRForClient;
+const filterFMLRByVendor = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { name, from, to } = req.body;
+    const { branchId } = req.params;
     try {
         const vendor = yield prisma.vendors.findUnique({
             where: { name },
         });
-        console.log(vendor);
         if (!vendor) {
             res.status(404).json({ message: "Vendor not found" });
             return;
         }
         const FMs = yield prisma.fM.findMany({
-            where: Object.assign({ vendorName: vendor.name }, (from || to
+            where: Object.assign(Object.assign(Object.assign({}, (branchId ? { branchId } : {})), { vendorName: vendor.name }), (from || to
                 ? {
                     date: Object.assign(Object.assign({}, (from ? { gte: from } : {})), (to ? { lte: to } : {})),
                 }
                 : {})),
         });
-        res.status(200).json({ data: FMs });
+        const LRs = yield prisma.lR.findMany({
+            where: Object.assign(Object.assign({}, (branchId ? { branchId } : {})), { Vehicle: {
+                    vendorName: vendor.name,
+                } }),
+            include: {
+                Vehicle: {
+                    select: {
+                        vehicleNumber: true,
+                    }
+                },
+            }
+        });
+        const usedLRNumbers = new Set(FMs.flatMap((fm) => fm.LRDetails.map((lr) => lr.lrNumber)));
+        const filteredLRs = LRs.filter((lr) => !usedLRNumbers.has(lr.lrNumber));
+        const data = {
+            FMs,
+            LRs: filteredLRs,
+        };
+        res.status(200).json({ data });
     }
     catch (error) {
         res.status(500).json({
@@ -451,4 +486,177 @@ const filterFMByVendor = (req, res) => __awaiter(void 0, void 0, void 0, functio
         console.log(error);
     }
 });
-exports.filterFMByVendor = filterFMByVendor;
+exports.filterFMLRByVendor = filterFMLRByVendor;
+const getVendorForPage = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
+    if (!page || !limit) {
+        res.status(400).json({
+            message: "Invalid Vendor Id",
+        });
+        return;
+    }
+    try {
+        const skip = (page - 1) * limit;
+        const totalVendors = yield prisma.vendors.count();
+        const vendorData = yield prisma.vendors.findMany({
+            skip,
+            take: limit,
+            include: {
+                vehicles: {
+                    include: {
+                        LR: true,
+                    },
+                },
+                FM: {
+                    include: {
+                        PaymentRecords: true,
+                    },
+                },
+            },
+            orderBy: {
+                createdAt: "desc",
+            },
+        });
+        const data = {
+            vendorCount: totalVendors,
+            vendorData,
+        };
+        res.status(200).json({ data });
+    }
+    catch (error) {
+        res.status(500).json({
+            message: "Internal Server Error",
+        });
+        console.log(error);
+    }
+});
+exports.getVendorForPage = getVendorForPage;
+const filterVendorByName = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { name } = req.params;
+    try {
+        const vendor = yield prisma.vendors.findMany({
+            where: {
+                OR: [
+                    { name: { contains: name, mode: "insensitive" } },
+                    { contactPerson: { contains: name, mode: "insensitive" } },
+                ],
+            },
+            include: {
+                vehicles: {
+                    include: {
+                        LR: true,
+                    },
+                },
+                FM: {
+                    include: {
+                        PaymentRecords: true,
+                    },
+                },
+            },
+            orderBy: {
+                createdAt: "desc",
+            },
+        });
+        if (vendor) {
+            res.status(200).json({
+                message: "Vendor Details",
+                data: vendor,
+            });
+        }
+    }
+    catch (error) {
+        res.status(500).json({
+            message: "Internal Server Error",
+        });
+        console.log(error);
+    }
+});
+exports.filterVendorByName = filterVendorByName;
+const getClientForPage = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
+    if (!page || !limit) {
+        res.status(400).json({
+            message: "Invalid Client Id",
+        });
+        return;
+    }
+    try {
+        const skip = (page - 1) * limit;
+        const totalClients = yield prisma.client.count();
+        const clientData = yield prisma.client.findMany({
+            skip,
+            take: limit,
+            include: {
+                bill: {
+                    include: {
+                        PaymentRecords: true,
+                    },
+                },
+                LR: {
+                    include: {
+                        Vehicle: true,
+                    },
+                },
+            },
+            orderBy: {
+                createdAt: "desc",
+            },
+        });
+        const data = {
+            clientCount: totalClients,
+            clientData,
+        };
+        res.status(200).json({ data });
+    }
+    catch (error) {
+        res.status(500).json({
+            message: "Internal Server Error",
+        });
+        console.log(error);
+    }
+});
+exports.getClientForPage = getClientForPage;
+const filterClientByName = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { name } = req.params;
+    try {
+        const client = yield prisma.client.findMany({
+            where: {
+                OR: [
+                    { name: { contains: name, mode: "insensitive" } },
+                    { city: { contains: name, mode: "insensitive" } },
+                    { contactPerson: { contains: name, mode: "insensitive" } },
+                ],
+            },
+            include: {
+                bill: {
+                    include: {
+                        PaymentRecords: true,
+                    },
+                },
+                LR: {
+                    include: {
+                        Vehicle: true,
+                    },
+                },
+            },
+            orderBy: {
+                createdAt: "desc",
+            },
+        });
+        if (client) {
+            res.status(200).json({
+                message: "Client Details",
+                data: client,
+            });
+        }
+    }
+    catch (error) {
+        res.status(500).json({
+            message: "Internal Server Error",
+        });
+        console.log(error);
+    }
+});
+exports.filterClientByName = filterClientByName;

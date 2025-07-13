@@ -90,9 +90,9 @@ export const getAllVendors = async (req: Request, res: Response) => {
           },
         },
       },
-      orderBy:{
-        createdAt:'desc'  
-      }
+      orderBy: {
+        createdAt: "desc",
+      },
     });
     res.status(200).json({ data: vendors });
   } catch (error) {
@@ -119,8 +119,6 @@ export const updateVendorDetails = async (req: Request, res: Response) => {
     outstandingLimit,
   } = req.body;
   const { id } = req.params;
-
-  
 
   if (
     !id ||
@@ -236,27 +234,20 @@ export const createVehicle = async (req: Request, res: Response) => {
     RC,
     panNumber,
   } = req.body;
-  if (!vehicletypes || !vehicleNumber || !insurance || !RC || !panNumber || !driverPhone) {
+  if (
+    !vehicletypes ||
+    !vehicleNumber ||
+    !insurance ||
+    !RC ||
+    !panNumber ||
+    !driverPhone
+  ) {
     res.status(400).json({
       message: "Invalid Vehicle Details",
     });
     return;
   }
   try {
-
-    const isVehicleNumberAvailable = await prisma.vehicle.findFirst({
-      where: {
-        vehicleNumber,
-      },
-    });
-
-    if (isVehicleNumberAvailable) {
-      res.status(201).json({
-        message: "Vehicle Number already exists",
-      });
-      return;
-    }
-
     const vendor = await prisma.vendors.findUnique({
       where: {
         name: vendorName,
@@ -431,7 +422,7 @@ export const deleteVehicle = async (req: Request, res: Response) => {
   }
 };
 
-export const filterBillByClient = async (req: Request, res: Response) => {
+export const getBillLRForClient = async (req: Request, res: Response) => {
   const { name, from, to } = req.body;
 
   try {
@@ -454,11 +445,36 @@ export const filterBillByClient = async (req: Request, res: Response) => {
         ...(from || to ? { date: dateFilter } : {}),
       },
       include: {
-        lrData: true,
+        lrData: {
+          select: {
+            lrNumber: true,
+            from: true,
+            to: true,
+            totalAmt: true,
+          },
+        },
       },
     });
 
-    res.status(200).json({ data: bills });
+    const LRs = await prisma.lR.findMany({
+      where: {
+        clientId: client.id,
+      },
+      include: {
+        Vehicle: {
+          select: {
+            vehicleNumber: true,
+          },
+        },
+      },
+    });
+
+    const data = {
+      bills,
+      LRs: LRs.filter((lr) => lr.billId == null),
+    };
+
+    res.status(200).json({ data });
   } catch (error) {
     res.status(500).json({
       message: "Internal Server Error",
@@ -467,14 +483,15 @@ export const filterBillByClient = async (req: Request, res: Response) => {
   }
 };
 
-export const filterFMByVendor = async (req: Request, res: Response) => {
+export const filterFMLRByVendor = async (req: Request, res: Response) => {
   const { name, from, to } = req.body;
+  const { branchId } = req.params;
+
   try {
     const vendor = await prisma.vendors.findUnique({
       where: { name },
     });
-    console.log(vendor);
-    
+
     if (!vendor) {
       res.status(404).json({ message: "Vendor not found" });
       return;
@@ -482,7 +499,8 @@ export const filterFMByVendor = async (req: Request, res: Response) => {
 
     const FMs = await prisma.fM.findMany({
       where: {
-        vendorName: vendor.name, 
+        ...(branchId ? { branchId } : {}),
+        vendorName: vendor.name,
         ...(from || to
           ? {
               date: {
@@ -493,9 +511,213 @@ export const filterFMByVendor = async (req: Request, res: Response) => {
           : {}),
       },
     });
-    
-    
-    res.status(200).json({ data: FMs });
+
+    const LRs = await prisma.lR.findMany({
+      where: {
+        ...(branchId ? { branchId } : {}),
+        Vehicle: {
+          vendorName: vendor.name,
+        },
+      },
+      include:{
+        Vehicle: {
+          select:{
+            vehicleNumber:true,
+          }
+        },
+      }
+    });
+
+    const usedLRNumbers = new Set(
+      FMs.flatMap((fm) => fm.LRDetails.map((lr) => lr.lrNumber))
+    );
+    const filteredLRs = LRs.filter((lr) => !usedLRNumbers.has(lr.lrNumber));
+
+    const data = {
+      FMs,
+      LRs: filteredLRs,
+    };
+
+    res.status(200).json({ data });
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+    console.log(error);
+  }
+};
+
+export const getVendorForPage = async (req: Request, res: Response) => {
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 50;
+
+  if (!page || !limit) {
+    res.status(400).json({
+      message: "Invalid Vendor Id",
+    });
+    return;
+  }
+
+  try {
+    const skip = (page - 1) * limit;
+    const totalVendors = await prisma.vendors.count();
+
+    const vendorData = await prisma.vendors.findMany({
+      skip,
+      take: limit,
+      include: {
+        vehicles: {
+          include: {
+            LR: true,
+          },
+        },
+        FM: {
+          include: {
+            PaymentRecords: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    const data = {
+      vendorCount: totalVendors,
+      vendorData,
+    };
+
+    res.status(200).json({ data });
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+    console.log(error);
+  }
+};
+
+export const filterVendorByName = async (req: Request, res: Response) => {
+  const { name } = req.params;
+  try {
+    const vendor = await prisma.vendors.findMany({
+      where: {
+        OR: [
+          { name: { contains: name, mode: "insensitive" } },
+          { contactPerson: { contains: name, mode: "insensitive" } },
+        ],
+      },
+      include: {
+        vehicles: {
+          include: {
+            LR: true,
+          },
+        },
+        FM: {
+          include: {
+            PaymentRecords: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+    if (vendor) {
+      res.status(200).json({
+        message: "Vendor Details",
+        data: vendor,
+      });
+    }
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+    console.log(error);
+  }
+};
+
+export const getClientForPage = async (req: Request, res: Response) => {
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 50;
+
+  if (!page || !limit) {
+    res.status(400).json({
+      message: "Invalid Client Id",
+    });
+    return;
+  }
+
+  try {
+    const skip = (page - 1) * limit;
+    const totalClients = await prisma.client.count();
+
+    const clientData = await prisma.client.findMany({
+      skip,
+      take: limit,
+      include: {
+        bill: {
+          include: {
+            PaymentRecords: true,
+          },
+        },
+        LR: {
+          include: {
+            Vehicle: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    const data = {
+      clientCount: totalClients,
+      clientData,
+    };
+
+    res.status(200).json({ data });
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+    console.log(error);
+  }
+};
+
+export const filterClientByName = async (req: Request, res: Response) => {
+  const { name } = req.params;
+  try {
+    const client = await prisma.client.findMany({
+      where: {
+        OR: [
+          { name: { contains: name, mode: "insensitive" } },
+          { city: { contains: name, mode: "insensitive" } },
+          { contactPerson: { contains: name, mode: "insensitive" } },
+        ],
+      },
+      include: {
+        bill: {
+          include: {
+            PaymentRecords: true,
+          },
+        },
+        LR: {
+          include: {
+            Vehicle: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+    if (client) {
+      res.status(200).json({
+        message: "Client Details",
+        data: client,
+      });
+    }
   } catch (error) {
     res.status(500).json({
       message: "Internal Server Error",

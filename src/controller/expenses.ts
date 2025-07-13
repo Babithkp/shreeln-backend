@@ -116,9 +116,9 @@ export const getAllExpenses = async (req: Request, res: Response) => {
           },
         },
       },
-      orderBy:{
-        date: "asc"
-      }
+      orderBy: {
+        date: "desc",
+      },
     });
     res.status(200).json({ data: expenses });
   } catch (error) {
@@ -327,6 +327,109 @@ export const deleteExpenseByNotification = async (
 
       res.status(200).json({
         message: "Expense Deleted",
+      });
+    }
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+    console.log(error);
+  }
+};
+
+export const getExpenseByPage = async (req: Request, res: Response) => {
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 50;
+  const branchId = req.query.branchId as string;
+
+  if (!page || !limit) {
+    res.status(400).json({
+      message: "Invalid Expense Id",
+    });
+    return;
+  }
+  const skip = (page - 1) * limit;
+
+  const whereClause: any = {};
+  if (branchId !== "null") {
+    whereClause.branchesId = branchId;
+  }
+
+  try {
+    const ExpenseCount = await prisma.expense.count({
+      where: whereClause,
+    });
+    const ExpenseData = await prisma.expense.findMany({
+      skip,
+      take: limit,
+      where: whereClause,
+      include: {
+        Branches: {
+          select: {
+            branchName: true,
+          },
+        },
+        Admin: {
+          select: {
+            branchName: true,
+          },
+        },
+      },
+      orderBy: {
+        date: "desc",
+      },
+    });
+
+    const data = {
+      ExpenseCount,
+      ExpenseData,
+    };
+
+    res.status(200).json({ data });
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+    console.log(error);
+  }
+};
+
+export const filterExpensesByTitle = async (req: Request, res: Response) => {
+  const { text, branchId } = req.params;
+  
+  
+  try {
+    const whereClause: any = {
+      OR: [
+        { expenseId: { contains: text, mode: "insensitive" } },
+        { description: { contains: text, mode: "insensitive" } },
+      ],
+    };
+    if (branchId !== "null") {
+      whereClause.branchesId = branchId;
+    }
+    const expenses = await prisma.expense.findMany({
+      where: whereClause,
+      include: {
+        Branches: {
+          select: {
+            branchName: true,
+          },
+        },
+        Admin: {
+          select: {
+            branchName: true,
+          },
+        },
+      },
+      orderBy: {
+        date: "desc",
+      },
+    });
+    if (expenses) {
+      res.status(200).json({
+        message: "Expense Details",
+        data: expenses,
       });
     }
   } catch (error) {

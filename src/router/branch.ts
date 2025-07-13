@@ -11,6 +11,10 @@ import express from "express";import {
   updateBranchDetails,
   updateclientDetails,
   createNotificationForBranch,
+  getRecentPaymentsForPage,
+  filterRecordPaymentByName,
+  getRecentPaymentsForBranchPage,
+  filterRecordPaymentByNameForBranch,
 
 } from "../controller/branch";
 import { updateBillRecordByNotification } from "../controller/billing";
@@ -29,5 +33,9 @@ branchRouter.post("/filterBranchBymonth", filterBranchBymonth);
 branchRouter.post("/createNotification", createNotification);
 branchRouter.get("/getBranchNotifications/:branchId", getBranchNotifications);
 branchRouter.post("/createNotificationForBranch", createNotificationForBranch);
+branchRouter.get("/getAllRecordPaymentForPage", getRecentPaymentsForPage);
+branchRouter.get("/getAllRecordPaymentForBranchPage", getRecentPaymentsForBranchPage);
+branchRouter.get("/filterRecordPaymentByName/:name", filterRecordPaymentByName);
+branchRouter.get("/filterRecordPaymentByNameForBranch/:name/:branchId", filterRecordPaymentByNameForBranch);
 
 export default branchRouter;

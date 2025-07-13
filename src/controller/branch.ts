@@ -227,7 +227,7 @@ export const updateclientDetails = async (req: Request, res: Response) => {
           pincode,
           email,
           panNumber,
-          creditLimit:parseFloat(creditLimit),
+          creditLimit: parseFloat(creditLimit),
         },
       });
       res.status(200).json({
@@ -341,6 +341,7 @@ export const filterRecordPayment = async (req: Request, res: Response) => {
 
 export const filterBranchBymonth = async (req: Request, res: Response) => {
   const { startDate, endDate } = req.body;
+
   if (!startDate || !endDate) {
     res.status(400).json({ message: "Invalid Date Range" });
     return;
@@ -357,8 +358,24 @@ export const filterBranchBymonth = async (req: Request, res: Response) => {
           },
         },
       },
-      include: {
-        bill: true,
+      select: {
+        branchName: true,
+        FM: {
+          select: {
+            hire: true,
+            otherCharges: true,
+            detentionCharges: true,
+            rtoCharges: true,
+            tds: true,
+            date: true,
+          },
+        },
+        bill: {
+          select: {
+            subTotal: true,
+            date: true,
+          },
+        },
       },
     });
     const admin = await prisma.admin.findFirst({
@@ -372,16 +389,31 @@ export const filterBranchBymonth = async (req: Request, res: Response) => {
           },
         },
       },
-      include: {
-        bill: true,
+      select: {
+        branchName: true,
+        FM: {
+          select: {
+            hire: true,
+            otherCharges: true,
+            detentionCharges: true,
+            rtoCharges: true,
+            tds: true,
+          },
+        },
+        bill: {
+          select: {
+            subTotal: true,
+          },
+        },
       },
     });
-    if (branches && admin) {
-      res.status(200).json({
-        message: "Branch Details",
-        data: [admin, ...branches],
-      });
-    }
+
+    const data = [admin, ...branches];
+
+    res.status(200).json({
+      message: "Branch Details",
+      data: [admin, ...branches],
+    });
   } catch (error) {
     res.status(500).json({
       message: "Internal Server Error",
@@ -417,9 +449,10 @@ export const getBranchNotifications = async (req: Request, res: Response) => {
 };
 
 export const createNotification = async (req: Request, res: Response) => {
-  const { requestId, title, message, description, data, status,fileId } = req.body;
-  
-  if (!requestId || !title ) {
+  const { requestId, title, message, description, data, status, fileId } =
+    req.body;
+
+  if (!requestId || !title) {
     res.status(400).json({
       message: "Invalid Notification Details",
     });
@@ -436,7 +469,7 @@ export const createNotification = async (req: Request, res: Response) => {
         data: data ? JSON.parse(data) : null,
         adminId: admin?.id,
         status,
-        fileId
+        fileId,
       },
     });
     res.status(200).json({
@@ -450,9 +483,11 @@ export const createNotification = async (req: Request, res: Response) => {
   }
 };
 
-export const createNotificationForBranch = async (req: Request, res: Response) => {
-  const { requestId, title, message, description,  status, branchId } = req.body;
-
+export const createNotificationForBranch = async (
+  req: Request,
+  res: Response
+) => {
+  const { requestId, title, message, description, status, branchId } = req.body;
 
   if (!requestId || !title || !branchId) {
     res.status(400).json({
@@ -468,12 +503,133 @@ export const createNotificationForBranch = async (req: Request, res: Response) =
         message,
         description,
         status,
-        branchesId: branchId
+        branchesId: branchId,
       },
     });
     res.status(200).json({
       message: "Notification Created",
     });
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+    console.log(error);
+  }
+};
+
+export const getRecentPaymentsForPage = async (req: Request, res: Response) => {
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 50;
+
+  if (!page || !limit) {
+    res.status(400).json({
+      message: "Invalid LR Id",
+    });
+    return;
+  }
+  const skip = (page - 1) * limit;
+  try {
+    const paymentCount = await prisma.paymentRecord.count();
+    const paymentRecord = await prisma.paymentRecord.findMany({
+      skip,
+      take: limit,
+      orderBy: {
+        date: "desc",
+      },
+    });
+    const data = {
+      paymentCount,
+      paymentRecord,
+    };
+
+    res.status(200).json({ data });
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+    console.log(error);
+  }
+};
+
+export const getRecentPaymentsForBranchPage = async (
+  req: Request,
+  res: Response
+) => {
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 50;
+  const branchId = req.query.branchId as string;
+
+  if (!page || !limit || !branchId) {
+    res.status(400).json({
+      message: "Invalid LR Id",
+    });
+    return;
+  }
+  const skip = (page - 1) * limit;
+  try {
+    const paymentCount = await prisma.paymentRecord.count({
+      where: {
+        branchesId: branchId,
+      },
+    });
+    const paymentRecord = await prisma.paymentRecord.findMany({
+      skip,
+      take: limit,
+      where: {
+        branchesId: branchId,
+      },
+      orderBy: {
+        date: "desc",
+      },
+    });
+    const data = {
+      paymentCount,
+      paymentRecord,
+    };
+
+    res.status(200).json({ data });
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+    console.log(error);
+  }
+};
+
+export const filterRecordPaymentByName = async (
+  req: Request,
+  res: Response
+) => {
+  const { name } = req.params;
+  try {
+    const paymentRecord = await prisma.paymentRecord.findMany({
+      where: {
+        OR: [{ customerName: { contains: name, mode: "insensitive" } }],
+      },
+    });
+
+    res.status(200).json({ data: paymentRecord });
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+    console.log(error);
+  }
+};
+
+export const filterRecordPaymentByNameForBranch = async (
+  req: Request,
+  res: Response
+) => {
+  const { name, branchId } = req.params;
+  try {
+    const paymentRecord = await prisma.paymentRecord.findMany({
+      where: {
+        OR: [{ customerName: { contains: name, mode: "insensitive" } }],
+        branchesId: branchId,
+      },
+    });
+    res.status(200).json({ data: paymentRecord });
   } catch (error) {
     res.status(500).json({
       message: "Internal Server Error",

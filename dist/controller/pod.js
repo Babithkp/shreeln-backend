@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deletePODByNotification = exports.updatePODByNotification = exports.checkPaymentForStatusChange = exports.updatePODDetails = exports.deletePOD = exports.getAllPODs = exports.createPOD = void 0;
+exports.filterPODByText = exports.getPodByPage = exports.deletePODByNotification = exports.updatePODByNotification = exports.checkPaymentForStatusChange = exports.updatePODDetails = exports.deletePOD = exports.getAllPODs = exports.createPOD = void 0;
 const client_1 = require("@prisma/client");
 const fileUpload_1 = require("./fileUpload");
 const prisma = new client_1.PrismaClient();
@@ -97,8 +97,8 @@ const getAllPODs = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     try {
         const pods = yield prisma.pOD.findMany({
             orderBy: {
-                date: "desc"
-            }
+                date: "desc",
+            },
         });
         res.status(200).json({ data: pods });
     }
@@ -361,3 +361,77 @@ const deletePODByNotification = (req, res) => __awaiter(void 0, void 0, void 0, 
     }
 });
 exports.deletePODByNotification = deletePODByNotification;
+const getPodByPage = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
+    const branchId = req.query.branchId;
+    if (!page || !limit) {
+        res.status(400).json({
+            message: "Invalid POD Id",
+        });
+        return;
+    }
+    const skip = (page - 1) * limit;
+    const whereClause = {};
+    if (branchId !== "null") {
+        whereClause.branchesId = branchId;
+    }
+    try {
+        const PODCount = yield prisma.pOD.count({
+            where: whereClause,
+        });
+        const PODData = yield prisma.pOD.findMany({
+            skip,
+            take: limit,
+            where: whereClause,
+            orderBy: {
+                date: "desc",
+            },
+        });
+        const data = {
+            PODCount,
+            PODData,
+        };
+        res.status(200).json({ data });
+    }
+    catch (error) {
+        res.status(500).json({
+            message: "Internal Server Error",
+        });
+        console.log(error);
+    }
+});
+exports.getPodByPage = getPodByPage;
+const filterPODByText = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { text, branchId } = req.params;
+    try {
+        const whereClause = {
+            OR: [
+                { lrNumber: { contains: text, mode: "insensitive" } },
+                { clientName: { contains: text, mode: "insensitive" } },
+            ],
+        };
+        if (branchId !== "null") {
+            whereClause.branchesId = branchId;
+        }
+        const pods = yield prisma.pOD.findMany({
+            where: whereClause,
+            orderBy: {
+                date: "desc",
+            },
+        });
+        if (pods) {
+            res.status(200).json({
+                message: "POD Details",
+                data: pods,
+            });
+        }
+    }
+    catch (error) {
+        res.status(500).json({
+            message: "Internal Server Error",
+        });
+        console.log(error);
+    }
+});
+exports.filterPODByText = filterPODByText;
