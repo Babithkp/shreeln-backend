@@ -536,6 +536,9 @@ export const filterFMLRByVendor = async (req: Request, res: Response) => {
       LRs: LRs.filter((lr) => lr.pod.length == 0),
     };
 
+    console.log(data.LRs);
+    
+
     res.status(200).json({ data });
   } catch (error) {
     res.status(500).json({

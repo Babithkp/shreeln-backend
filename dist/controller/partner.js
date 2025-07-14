@@ -459,24 +459,27 @@ const filterFMLRByVendor = (req, res) => __awaiter(void 0, void 0, void 0, funct
                 }
                 : {})),
         });
+        const lrNumbers = FMs.flatMap((fm) => fm.LRDetails.map((lr) => lr.lrNumber));
         const LRs = yield prisma.lR.findMany({
-            where: Object.assign(Object.assign({}, (branchId ? { branchId } : {})), { Vehicle: {
-                    vendorName: vendor.name,
-                } }),
+            where: {
+                lrNumber: {
+                    in: lrNumbers,
+                },
+            },
             include: {
                 Vehicle: {
                     select: {
                         vehicleNumber: true,
-                    }
+                    },
                 },
-            }
+                pod: true,
+            },
         });
-        const usedLRNumbers = new Set(FMs.flatMap((fm) => fm.LRDetails.map((lr) => lr.lrNumber)));
-        const filteredLRs = LRs.filter((lr) => !usedLRNumbers.has(lr.lrNumber));
         const data = {
             FMs,
-            LRs: filteredLRs,
+            LRs: LRs.filter((lr) => lr.pod.length == 0),
         };
+        console.log(data.LRs);
         res.status(200).json({ data });
     }
     catch (error) {
