@@ -8,10 +8,21 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getDashboardDataForBranch = exports.getDashboardData = exports.updateOtherSettings = exports.getOtherSettings = exports.getBillId = exports.getExpenseId = exports.updateNotification = exports.deleteNotification = exports.getAllAdminNotifications = exports.fectchAdminData = exports.getAllClients = exports.createClient = exports.changeBranchPassword = exports.getBrachersNames = exports.createBranch = exports.adminLogin = exports.createAdmin = void 0;
 const client_1 = require("@prisma/client");
+const ioredis_1 = __importDefault(require("ioredis"));
+const dotenv_1 = __importDefault(require("dotenv"));
+dotenv_1.default.config();
+const redisEnv = process.env.REDIS_URL;
+if (!redisEnv) {
+    throw new Error("REDIS_URL is not set");
+}
 const prisma = new client_1.PrismaClient();
+const client = new ioredis_1.default(redisEnv);
 const createAdmin = () => __awaiter(void 0, void 0, void 0, function* () {
     const existingAdmin = yield prisma.admin.findFirst();
     if (!existingAdmin) {
@@ -514,86 +525,96 @@ const updateOtherSettings = (req, res) => __awaiter(void 0, void 0, void 0, func
 exports.updateOtherSettings = updateOtherSettings;
 const getDashboardData = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const branchData = yield prisma.branches.findMany({
-            select: {
-                branchName: true,
-                FM: {
-                    select: {
-                        hire: true,
-                        otherCharges: true,
-                        detentionCharges: true,
-                        rtoCharges: true,
-                        tds: true,
+        const dashboardData = yield client.get("dashboard");
+        if (dashboardData) {
+            res.status(200).json({
+                message: "Dashboard Data",
+                data: JSON.parse(dashboardData),
+            });
+        }
+        else {
+            const branchData = yield prisma.branches.findMany({
+                select: {
+                    branchName: true,
+                    FM: {
+                        select: {
+                            hire: true,
+                            otherCharges: true,
+                            detentionCharges: true,
+                            rtoCharges: true,
+                            tds: true,
+                        },
+                    },
+                    bill: {
+                        select: {
+                            subTotal: true,
+                        },
                     },
                 },
-                bill: {
-                    select: {
-                        subTotal: true,
+            });
+            const admin = yield prisma.admin.findFirst({
+                select: {
+                    branchName: true,
+                    FM: {
+                        select: {
+                            hire: true,
+                            otherCharges: true,
+                            detentionCharges: true,
+                            rtoCharges: true,
+                            tds: true,
+                        },
+                    },
+                    bill: {
+                        select: {
+                            subTotal: true,
+                        },
                     },
                 },
-            },
-        });
-        const admin = yield prisma.admin.findFirst({
-            select: {
-                branchName: true,
-                FM: {
-                    select: {
-                        hire: true,
-                        otherCharges: true,
-                        detentionCharges: true,
-                        rtoCharges: true,
-                        tds: true,
+            });
+            const billData = yield prisma.bill.findMany({
+                select: {
+                    date: true,
+                    subTotal: true,
+                    PaymentRecords: {
+                        select: {
+                            amount: true,
+                        },
                     },
                 },
-                bill: {
-                    select: {
-                        subTotal: true,
+            });
+            const FMData = yield prisma.fM.findMany({
+                select: {
+                    hire: true,
+                    otherCharges: true,
+                    detentionCharges: true,
+                    rtoCharges: true,
+                    tds: true,
+                    date: true,
+                },
+            });
+            const clientData = yield prisma.client.findMany({
+                select: {
+                    name: true,
+                    bill: {
+                        select: {
+                            subTotal: true,
+                        },
                     },
                 },
-            },
-        });
-        const billData = yield prisma.bill.findMany({
-            select: {
-                date: true,
-                subTotal: true,
-                PaymentRecords: {
-                    select: {
-                        amount: true,
-                    },
-                },
-            },
-        });
-        const FMData = yield prisma.fM.findMany({
-            select: {
-                hire: true,
-                otherCharges: true,
-                detentionCharges: true,
-                rtoCharges: true,
-                tds: true,
-                date: true,
-            },
-        });
-        const clientData = yield prisma.client.findMany({
-            select: {
-                name: true,
-                bill: {
-                    select: {
-                        subTotal: true,
-                    },
-                },
-            },
-        });
-        const vendorCount = yield prisma.vendors.count();
-        const overAllBranchData = [admin, ...branchData];
-        const data = {
-            clientData,
-            vendorCount,
-            overAllBranchData,
-            FMData,
-            billData,
-            branchData,
-        };
-        res.status(200).json({ data });
+            });
+            const vendorCount = yield prisma.vendors.count();
+            const overAllBranchData = [admin, ...branchData];
+            const data = {
+                clientData,
+                vendorCount,
+                overAllBranchData,
+                FMData,
+                billData,
+                branchData,
+            };
+            yield client.setex("dashboard", 1800, JSON.stringify(data));
+            res.status(200).json({ data });
+        }
     }
     catch (error) {
         res.status(400).json({

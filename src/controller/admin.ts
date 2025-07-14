@@ -1,7 +1,14 @@
-import { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
+import { Request, Response } from "express";import { PrismaClient } from "@prisma/client";
+import Redis from "ioredis";
+import dotenv from "dotenv";
+dotenv.config();
+const redisEnv = process.env.REDIS_URL;
+if (!redisEnv) {
+  throw new Error("REDIS_URL is not set");
+}
 
 const prisma = new PrismaClient();
+const client = new Redis(redisEnv);
 
 export const createAdmin = async () => {
   const existingAdmin = await prisma.admin.findFirst();
@@ -304,8 +311,8 @@ export const getAllClients = async (req: Request, res: Response) => {
         address: true,
         pincode: true,
         email: true,
-        city:true,
-        state:true,
+        city: true,
+        state: true,
         LR: {
           include: {
             Vehicle: true,
@@ -526,92 +533,101 @@ export const updateOtherSettings = async (req: Request, res: Response) => {
 
 export const getDashboardData = async (req: Request, res: Response) => {
   try {
-    const branchData = await prisma.branches.findMany({
-      select: {
-        branchName: true,
-        FM: {
-          select: {
-            hire: true,
-            otherCharges: true,
-            detentionCharges: true,
-            rtoCharges: true,
-            tds: true,
+    const dashboardData = await client.get("dashboard");
+    if (dashboardData) {
+      res.status(200).json({
+        message: "Dashboard Data",
+        data: JSON.parse(dashboardData),
+      });
+    } else {
+      const branchData = await prisma.branches.findMany({
+        select: {
+          branchName: true,
+          FM: {
+            select: {
+              hire: true,
+              otherCharges: true,
+              detentionCharges: true,
+              rtoCharges: true,
+              tds: true,
+            },
+          },
+          bill: {
+            select: {
+              subTotal: true,
+            },
           },
         },
-        bill: {
-          select: {
-            subTotal: true,
+      });
+      const admin = await prisma.admin.findFirst({
+        select: {
+          branchName: true,
+          FM: {
+            select: {
+              hire: true,
+              otherCharges: true,
+              detentionCharges: true,
+              rtoCharges: true,
+              tds: true,
+            },
+          },
+          bill: {
+            select: {
+              subTotal: true,
+            },
           },
         },
-      },
-    });
-    const admin = await prisma.admin.findFirst({
-      select: {
-        branchName: true,
-        FM: {
-          select: {
-            hire: true,
-            otherCharges: true,
-            detentionCharges: true,
-            rtoCharges: true,
-            tds: true,
+      });
+
+      const billData = await prisma.bill.findMany({
+        select: {
+          date: true,
+          subTotal: true,
+          PaymentRecords: {
+            select: {
+              amount: true,
+            },
           },
         },
-        bill: {
-          select: {
-            subTotal: true,
+      });
+
+      const FMData = await prisma.fM.findMany({
+        select: {
+          hire: true,
+          otherCharges: true,
+          detentionCharges: true,
+          rtoCharges: true,
+          tds: true,
+          date: true,
+        },
+      });
+
+      const clientData = await prisma.client.findMany({
+        select: {
+          name: true,
+          bill: {
+            select: {
+              subTotal: true,
+            },
           },
         },
-      },
-    });
+      });
+      const vendorCount = await prisma.vendors.count();
 
-    const billData = await prisma.bill.findMany({
-      select: {
-        date: true,
-        subTotal: true,
-        PaymentRecords: {
-          select: {
-            amount: true,
-          },
-        },
-      },
-    });
+      const overAllBranchData = [admin, ...branchData];
 
-    const FMData = await prisma.fM.findMany({
-      select: {
-        hire: true,
-        otherCharges: true,
-        detentionCharges: true,
-        rtoCharges: true,
-        tds: true,
-        date: true,
-      },
-    });
+      const data = {
+        clientData,
+        vendorCount,
+        overAllBranchData,
+        FMData,
+        billData,
+        branchData,
+      };
 
-    const clientData = await prisma.client.findMany({
-      select: {
-        name: true,
-        bill: {
-          select: {
-            subTotal: true,
-          },
-        },
-      },
-    });
-    const vendorCount = await prisma.vendors.count();
-
-    const overAllBranchData = [admin, ...branchData];
-
-    const data = {
-      clientData,
-      vendorCount,
-      overAllBranchData,
-      FMData,
-      billData,
-      branchData,
-    };
-
-    res.status(200).json({ data });
+      await client.setex("dashboard", 1800, JSON.stringify(data));
+      res.status(200).json({ data });
+    }
   } catch (error) {
     res.status(400).json({
       message: "Internal Server Error",
