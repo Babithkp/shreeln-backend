@@ -460,6 +460,25 @@ export const getExpenseId = async (req: Request, res: Response) => {
   }
 };
 
+export const getCreditId = async (req: Request, res: Response) => {
+  try {
+    const creditId = await prisma.admin.findFirst({
+      select: {
+        creditId: true,
+      },
+    });
+    res.status(200).json({
+      message: "Credit Id",
+      data: creditId,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+    console.log(error);
+  }
+};
+
 export const getBillId = async (req: Request, res: Response) => {
   try {
     const billId = await prisma.admin.findFirst({
@@ -625,7 +644,7 @@ export const getDashboardData = async (req: Request, res: Response) => {
         branchData,
       };
 
-      await client.setex("dashboard", 1800, JSON.stringify(data));
+      await client.setex("dashboard", 900, JSON.stringify(data));
       res.status(200).json({ data });
     }
   } catch (error) {

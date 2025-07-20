@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.filterExpensesByTitle = exports.getExpenseByPage = exports.deleteExpenseByNotification = exports.updateExpenseByNotification = exports.updateExpenseDetails = exports.deleteExpense = exports.getAllExpenses = exports.createExpense = void 0;
+exports.getAllCredit = exports.updateCreditByNotification = exports.deleteCreditByNotification = exports.filterCreditsByTitle = exports.deleteCredit = exports.updateCreditDetails = exports.getCreditByPage = exports.createCredit = exports.filterExpensesByTitle = exports.getExpenseByPage = exports.deleteExpenseByNotification = exports.updateExpenseByNotification = exports.updateExpenseDetails = exports.deleteExpense = exports.getAllExpenses = exports.createExpense = void 0;
 const client_1 = require("@prisma/client");
 const prisma = new client_1.PrismaClient();
 const createExpense = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -157,8 +157,6 @@ const updateExpenseDetails = (req, res) => __awaiter(void 0, void 0, void 0, fun
         !description ||
         !date ||
         !category ||
-        !customerName ||
-        !linkTo ||
         !amount ||
         !amountInWords ||
         !paymentType ||
@@ -361,7 +359,7 @@ const filterExpensesByTitle = (req, res) => __awaiter(void 0, void 0, void 0, fu
         const whereClause = {
             OR: [
                 { expenseId: { contains: text, mode: "insensitive" } },
-                { description: { contains: text, mode: "insensitive" } },
+                { title: { contains: text, mode: "insensitive" } },
             ],
         };
         if (branchId !== "null") {
@@ -400,3 +398,389 @@ const filterExpensesByTitle = (req, res) => __awaiter(void 0, void 0, void 0, fu
     }
 });
 exports.filterExpensesByTitle = filterExpensesByTitle;
+const createCredit = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { creditId, description, date, category, customerName, linkTo, billNumber, fmNumber, amount, amountInWords, paymentType, transactionNumber, title, branchesId, adminId, } = req.body;
+    if (!creditId ||
+        !description ||
+        !date ||
+        !category ||
+        !amount ||
+        !amountInWords ||
+        !paymentType ||
+        !transactionNumber ||
+        !title) {
+        res.status(400).json({
+            message: "Invalid Credit Details",
+        });
+        return;
+    }
+    try {
+        const creditIdExists = yield prisma.credit.findFirst({
+            where: {
+                creditId,
+            },
+        });
+        if (creditIdExists) {
+            res.status(201).json({
+                message: "Expense Id already exists",
+            });
+            return;
+        }
+        yield prisma.credit.create({
+            data: Object.assign(Object.assign({ creditId,
+                description,
+                date,
+                category,
+                customerName,
+                linkTo,
+                billNumber,
+                fmNumber,
+                amount,
+                amountInWords,
+                paymentType,
+                transactionNumber,
+                title }, (adminId ? { adminId } : {})), (branchesId ? { branchesId } : {})),
+        });
+        const admin = yield prisma.admin.findFirst({
+            select: {
+                creditId: true,
+                id: true,
+            },
+        });
+        if (!admin) {
+            res.status(201).json({
+                message: "Invalid Admin Id",
+            });
+            return;
+        }
+        yield prisma.admin.update({
+            where: {
+                id: admin.id,
+            },
+            data: {
+                creditId: (parseFloat(admin.creditId || "1000") + 1).toString(),
+            },
+        });
+        res.status(200).json({
+            message: "Credit Created",
+        });
+    }
+    catch (error) {
+        res.status(500).json({
+            message: "Internal Server Error",
+        });
+        console.log(error);
+    }
+});
+exports.createCredit = createCredit;
+const getCreditByPage = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
+    const branchId = req.query.branchId;
+    if (!page || !limit) {
+        res.status(400).json({
+            message: "Invalid Credit Id",
+        });
+        return;
+    }
+    const skip = (page - 1) * limit;
+    const whereClause = {};
+    if (branchId !== "null") {
+        whereClause.branchesId = branchId;
+    }
+    try {
+        const creditCount = yield prisma.credit.count({
+            where: whereClause,
+        });
+        const creditData = yield prisma.credit.findMany({
+            skip,
+            take: limit,
+            where: whereClause,
+            include: {
+                Branches: {
+                    select: {
+                        branchName: true,
+                    },
+                },
+                Admin: {
+                    select: {
+                        branchName: true,
+                    },
+                },
+            },
+            orderBy: {
+                date: "desc",
+            },
+        });
+        const data = {
+            creditCount,
+            creditData,
+        };
+        res.status(200).json({ data });
+    }
+    catch (error) {
+        res.status(500).json({
+            message: "Internal Server Error",
+        });
+        console.log(error);
+    }
+});
+exports.getCreditByPage = getCreditByPage;
+const updateCreditDetails = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { creditId, description, date, category, customerName, linkTo, billNumber, fmNumber, amount, amountInWords, paymentType, transactionNumber, title, } = req.body;
+    const { id } = req.params;
+    if (!id ||
+        !creditId ||
+        !description ||
+        !date ||
+        !category ||
+        !amount ||
+        !amountInWords ||
+        !paymentType ||
+        !transactionNumber ||
+        !title) {
+        res.status(400).json({
+            message: "Invalid Expense Details",
+        });
+        return;
+    }
+    try {
+        yield prisma.credit.update({
+            where: {
+                id,
+            },
+            data: {
+                creditId,
+                description,
+                date,
+                category,
+                customerName,
+                linkTo,
+                billNumber,
+                fmNumber,
+                amount,
+                amountInWords,
+                paymentType,
+                transactionNumber,
+                title,
+            },
+        });
+        res.status(200).json({
+            message: "Credit Updated",
+        });
+    }
+    catch (error) {
+        res.status(500).json({
+            message: "Internal Server Error",
+        });
+        console.log(error);
+    }
+});
+exports.updateCreditDetails = updateCreditDetails;
+const deleteCredit = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id } = req.params;
+    if (!id) {
+        res.status(400).json({
+            message: "Invalid Expense Id",
+        });
+        return;
+    }
+    try {
+        const credit = yield prisma.credit.findUnique({
+            where: {
+                id,
+            },
+        });
+        if (credit) {
+            yield prisma.credit.delete({
+                where: {
+                    id: credit.id,
+                },
+            });
+            res.status(200).json({
+                message: "credit Deleted",
+            });
+        }
+    }
+    catch (error) {
+        res.status(500).json({
+            message: "Internal Server Error",
+        });
+        console.log(error);
+    }
+});
+exports.deleteCredit = deleteCredit;
+const filterCreditsByTitle = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { text, branchId } = req.params;
+    try {
+        const whereClause = {
+            OR: [
+                { creditId: { contains: text, mode: "insensitive" } },
+                { title: { contains: text, mode: "insensitive" } },
+            ],
+        };
+        if (branchId !== "null") {
+            whereClause.branchesId = branchId;
+        }
+        const expenses = yield prisma.credit.findMany({
+            where: whereClause,
+            include: {
+                Branches: {
+                    select: {
+                        branchName: true,
+                    },
+                },
+                Admin: {
+                    select: {
+                        branchName: true,
+                    },
+                },
+            },
+            orderBy: {
+                date: "desc",
+            },
+        });
+        if (expenses) {
+            res.status(200).json({
+                message: "Expense Details",
+                data: expenses,
+            });
+        }
+    }
+    catch (error) {
+        res.status(500).json({
+            message: "Internal Server Error",
+        });
+        console.log(error);
+    }
+});
+exports.filterCreditsByTitle = filterCreditsByTitle;
+const deleteCreditByNotification = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const { id } = req.params;
+    if (!id) {
+        res.status(400).json({
+            message: "Invalid Expense Id",
+        });
+        return;
+    }
+    try {
+        const credit = yield prisma.credit.findUnique({
+            where: {
+                creditId: id,
+            },
+            include: {
+                Branches: true,
+            },
+        });
+        if (credit) {
+            yield prisma.credit.delete({
+                where: {
+                    id: credit.id,
+                },
+            });
+            yield prisma.notification.create({
+                data: {
+                    requestId: credit.creditId,
+                    title: "Credit deleted",
+                    message: (_a = credit.Branches) === null || _a === void 0 ? void 0 : _a.branchName,
+                    description: "Approved",
+                    status: "editable",
+                    branchesId: credit.branchesId,
+                },
+            });
+            res.status(200).json({
+                message: "Expense Deleted",
+            });
+        }
+    }
+    catch (error) {
+        res.status(500).json({
+            message: "Internal Server Error",
+        });
+        console.log(error);
+    }
+});
+exports.deleteCreditByNotification = deleteCreditByNotification;
+const updateCreditByNotification = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const { id } = req.params;
+    const { data } = req.body;
+    if (!id) {
+        res.status(400).json({
+            message: "Invalid Credit Id",
+        });
+        return;
+    }
+    try {
+        const expense = yield prisma.credit.findUnique({
+            where: {
+                creditId: id,
+            },
+            include: {
+                Branches: true,
+            },
+        });
+        if (expense) {
+            yield prisma.credit.update({
+                where: {
+                    id: expense.id,
+                },
+                data: Object.assign({}, data),
+            });
+            yield prisma.notification.create({
+                data: {
+                    requestId: expense.creditId,
+                    title: "Credit edited",
+                    message: (_a = expense.Branches) === null || _a === void 0 ? void 0 : _a.branchName,
+                    description: "Approved",
+                    status: "editable",
+                    branchesId: expense.branchesId,
+                },
+            });
+            res.status(200).json({
+                message: "Expense Updated",
+            });
+            return;
+        }
+        res.status(401).json({
+            message: "Expense Not Found",
+        });
+    }
+    catch (error) {
+        res.status(500).json({
+            message: "Internal Server Error",
+        });
+        console.log(error);
+    }
+});
+exports.updateCreditByNotification = updateCreditByNotification;
+const getAllCredit = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const expenses = yield prisma.credit.findMany({
+            include: {
+                Branches: {
+                    select: {
+                        branchName: true,
+                    },
+                },
+                Admin: {
+                    select: {
+                        branchName: true,
+                    },
+                },
+            },
+            orderBy: {
+                date: "desc",
+            },
+        });
+        res.status(200).json({ data: expenses });
+    }
+    catch (error) {
+        res.status(500).json({
+            message: "Internal Server Error",
+        });
+        console.log(error);
+    }
+});
+exports.getAllCredit = getAllCredit;

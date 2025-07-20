@@ -33,6 +33,7 @@ model Admin {
   email          String
   expenseId      String?         @default("1000")
   billId         String?         @default("2800")
+  creditId       String?         @default("1000")
   PaymentRecords PaymentRecord[]
   branches       Branches[]
   clients        Client[]
@@ -43,6 +44,7 @@ model Admin {
   notifications  Notification[]
   expenses       Expense[]
   pod            POD[]
+  Credit         Credit[]
 }
 
 model Branches {
@@ -67,6 +69,7 @@ model Branches {
   notifications  Notification[]
   expenses       Expense[]
   pod            POD[]
+  Credit         Credit[]
 }
 
 model Client {
@@ -344,6 +347,27 @@ model POD {
 model Expense {
   id                String    @id @default(auto()) @map("_id") @db.ObjectId
   expenseId         String    @unique
+  description       String
+  date              String
+  category          String
+  customerName      String?
+  linkTo            String?
+  billNumber        String?
+  fmNumber          String?
+  amount            String
+  amountInWords     String
+  paymentType       String
+  transactionNumber String
+  title             String
+  Branches          Branches? @relation(fields: [branchesId], references: [id])
+  branchesId        String?   @db.ObjectId
+  Admin             Admin?    @relation(fields: [adminId], references: [id])
+  adminId           String?   @db.ObjectId
+}
+
+model Credit {
+  id                String    @id @default(auto()) @map("_id") @db.ObjectId
+  creditId          String    @unique
   description       String
   date              String
   category          String

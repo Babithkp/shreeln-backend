@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getDashboardDataForBranch = exports.getDashboardData = exports.updateOtherSettings = exports.getOtherSettings = exports.getBillId = exports.getExpenseId = exports.updateNotification = exports.deleteNotification = exports.getAllAdminNotifications = exports.fectchAdminData = exports.getAllClients = exports.createClient = exports.changeBranchPassword = exports.getBrachersNames = exports.createBranch = exports.adminLogin = exports.createAdmin = void 0;
+exports.getDashboardDataForBranch = exports.getDashboardData = exports.updateOtherSettings = exports.getOtherSettings = exports.getBillId = exports.getCreditId = exports.getExpenseId = exports.updateNotification = exports.deleteNotification = exports.getAllAdminNotifications = exports.fectchAdminData = exports.getAllClients = exports.createClient = exports.changeBranchPassword = exports.getBrachersNames = exports.createBranch = exports.adminLogin = exports.createAdmin = void 0;
 const client_1 = require("@prisma/client");
 const ioredis_1 = __importDefault(require("ioredis"));
 const dotenv_1 = __importDefault(require("dotenv"));
@@ -449,6 +449,26 @@ const getExpenseId = (req, res) => __awaiter(void 0, void 0, void 0, function* (
     }
 });
 exports.getExpenseId = getExpenseId;
+const getCreditId = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const creditId = yield prisma.admin.findFirst({
+            select: {
+                creditId: true,
+            },
+        });
+        res.status(200).json({
+            message: "Credit Id",
+            data: creditId,
+        });
+    }
+    catch (error) {
+        res.status(500).json({
+            message: "Internal Server Error",
+        });
+        console.log(error);
+    }
+});
+exports.getCreditId = getCreditId;
 const getBillId = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const billId = yield prisma.admin.findFirst({
@@ -612,7 +632,7 @@ const getDashboardData = (req, res) => __awaiter(void 0, void 0, void 0, functio
                 billData,
                 branchData,
             };
-            yield client.setex("dashboard", 1800, JSON.stringify(data));
+            yield client.setex("dashboard", 900, JSON.stringify(data));
             res.status(200).json({ data });
         }
     }

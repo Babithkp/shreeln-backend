@@ -10,6 +10,7 @@ import {
   getAllClients,
   getBillId,
   getBrachersNames,
+  getCreditId,
   getDashboardData,
   getDashboardDataForBranch,
   getExpenseId,
@@ -32,6 +33,7 @@ adminRouter.delete("/admin/deleteNotification/:id", deleteNotification);
 adminRouter.patch("/admin/updateNotification/:id/:status", updateNotification);
 adminRouter.get("/admin/getExpenseId", getExpenseId);
 adminRouter.get("/admin/getBillId", getBillId);
+adminRouter.get("/admin/getCreditId", getCreditId);
 adminRouter.get("/admin/getOtherSettings", getOtherSettings);
 adminRouter.patch("/admin/updateOtherSettings", updateOtherSettings);
 adminRouter.get("/admin/getDashboardData", getDashboardData);

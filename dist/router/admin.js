@@ -18,6 +18,7 @@ adminRouter.delete("/admin/deleteNotification/:id", admin_1.deleteNotification);
 adminRouter.patch("/admin/updateNotification/:id/:status", admin_1.updateNotification);
 adminRouter.get("/admin/getExpenseId", admin_1.getExpenseId);
 adminRouter.get("/admin/getBillId", admin_1.getBillId);
+adminRouter.get("/admin/getCreditId", admin_1.getCreditId);
 adminRouter.get("/admin/getOtherSettings", admin_1.getOtherSettings);
 adminRouter.patch("/admin/updateOtherSettings", admin_1.updateOtherSettings);
 adminRouter.get("/admin/getDashboardData", admin_1.getDashboardData);
