@@ -504,6 +504,7 @@ export const getOtherSettings = async (req: Request, res: Response) => {
       select: {
         billId: true,
         expenseId: true,
+        creditId: true
       },
     });
     res.status(200).json({
@@ -519,8 +520,8 @@ export const getOtherSettings = async (req: Request, res: Response) => {
 };
 
 export const updateOtherSettings = async (req: Request, res: Response) => {
-  const { billId, expenseId } = req.body;
-  if (!billId || !expenseId) {
+  const { billId, expenseId,creditId } = req.body;
+  if (!billId || !expenseId || !creditId) {
     res.status(400).json({
       message: "Invalid Other Settings",
     });
@@ -536,6 +537,7 @@ export const updateOtherSettings = async (req: Request, res: Response) => {
         data: {
           billId,
           expenseId,
+          creditId
         },
       });
       res.status(200).json({

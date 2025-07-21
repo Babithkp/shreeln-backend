@@ -495,6 +495,7 @@ const getOtherSettings = (req, res) => __awaiter(void 0, void 0, void 0, functio
             select: {
                 billId: true,
                 expenseId: true,
+                creditId: true
             },
         });
         res.status(200).json({
@@ -511,8 +512,8 @@ const getOtherSettings = (req, res) => __awaiter(void 0, void 0, void 0, functio
 });
 exports.getOtherSettings = getOtherSettings;
 const updateOtherSettings = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { billId, expenseId } = req.body;
-    if (!billId || !expenseId) {
+    const { billId, expenseId, creditId } = req.body;
+    if (!billId || !expenseId || !creditId) {
         res.status(400).json({
             message: "Invalid Other Settings",
         });
@@ -528,6 +529,7 @@ const updateOtherSettings = (req, res) => __awaiter(void 0, void 0, void 0, func
                 data: {
                     billId,
                     expenseId,
+                    creditId
                 },
             });
             res.status(200).json({
