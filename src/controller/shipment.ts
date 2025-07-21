@@ -231,7 +231,7 @@ export const getLRByPage = async (req: Request, res: Response) => {
       skip,
       take: limit,
       orderBy: {
-        date: "desc",
+        lrNumber: "asc", 
       },
       include: {
         Vehicle: true,
@@ -951,7 +951,7 @@ export const getFMByPage = async (req: Request, res: Response) => {
       skip,
       take: limit,
       orderBy: {
-        date: "desc",
+        fmNumber: "asc",
       },
       include: {
         PaymentRecords: true,
