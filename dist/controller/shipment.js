@@ -185,7 +185,7 @@ const getLRByPage = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
             skip,
             take: limit,
             orderBy: {
-                date: "desc",
+                lrNumber: "asc",
             },
             include: {
                 Vehicle: true,
@@ -799,7 +799,7 @@ const getFMByPage = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
             skip,
             take: limit,
             orderBy: {
-                date: "desc",
+                fmNumber: "asc",
             },
             include: {
                 PaymentRecords: true,
