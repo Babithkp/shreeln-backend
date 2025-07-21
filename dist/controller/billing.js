@@ -627,7 +627,7 @@ const getBillByPage = (req, res) => __awaiter(void 0, void 0, void 0, function* 
                 Admin: true,
             },
             orderBy: {
-                date: "desc",
+                billNumber: "asc",
             },
         });
         const data = {
