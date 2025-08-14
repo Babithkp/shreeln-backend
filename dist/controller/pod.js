@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.filterPODByText = exports.getPodByPage = exports.deletePODByNotification = exports.updatePODByNotification = exports.checkPaymentForStatusChange = exports.updatePODDetails = exports.deletePOD = exports.getAllPODs = exports.createPOD = void 0;
 const client_1 = require("@prisma/client");
 const fileUpload_1 = require("./fileUpload");
+const redis_1 = require("./utils/redis");
 const prisma = new client_1.PrismaClient();
 const createPOD = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { lrNumber, date, from, to, clientName, clientGSTIN, receivingDate, receivingBranch, documentLink, branchesId, adminId, } = req.body;
@@ -81,6 +82,7 @@ const createPOD = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 });
             }
         }
+        yield (0, redis_1.clearPODCache)();
         res.status(200).json({
             message: "POD Created",
         });
@@ -163,6 +165,7 @@ const deletePOD = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 }
             }
         }
+        yield (0, redis_1.clearPODCache)();
         res.status(200).json({
             message: "POD Deleted",
         });
@@ -208,6 +211,7 @@ const updatePODDetails = (req, res) => __awaiter(void 0, void 0, void 0, functio
                 documentLink,
             },
         });
+        yield (0, redis_1.clearPODCache)();
         res.status(200).json({
             message: "POD Updated",
         });
@@ -299,6 +303,7 @@ const updatePODByNotification = (req, res) => __awaiter(void 0, void 0, void 0, 
                 branchesId: pod.branchesId,
             },
         });
+        yield (0, redis_1.clearPODCache)();
         res.status(200).json({
             message: "POD Updated",
         });
@@ -343,6 +348,7 @@ const deletePODByNotification = (req, res) => __awaiter(void 0, void 0, void 0, 
                     branchesId: pod.branchesId,
                 },
             });
+            yield (0, redis_1.clearPODCache)();
             res.status(200).json({
                 message: "POD Deleted",
             });
@@ -377,21 +383,27 @@ const getPodByPage = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         whereClause.branchesId = branchId;
     }
     try {
-        const PODCount = yield prisma.pOD.count({
-            where: whereClause,
+        const data = yield (0, redis_1.redisGetOrSetFunctions)({
+            key: `POD-data-${page}-${skip}`,
+            expiry: "1800",
+            fetchFunction: () => __awaiter(void 0, void 0, void 0, function* () {
+                const PODCount = yield prisma.pOD.count({
+                    where: whereClause,
+                });
+                const PODData = yield prisma.pOD.findMany({
+                    skip,
+                    take: limit,
+                    where: whereClause,
+                    orderBy: {
+                        date: "desc",
+                    },
+                });
+                return {
+                    PODCount,
+                    PODData,
+                };
+            }),
         });
-        const PODData = yield prisma.pOD.findMany({
-            skip,
-            take: limit,
-            where: whereClause,
-            orderBy: {
-                date: "desc",
-            },
-        });
-        const data = {
-            PODCount,
-            PODData,
-        };
         res.status(200).json({ data });
     }
     catch (error) {

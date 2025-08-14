@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
+import { clearClientCache, redisGetOrSetFunctions } from "./utils/redis";
 
 const prisma = new PrismaClient();
 
@@ -230,6 +231,7 @@ export const updateclientDetails = async (req: Request, res: Response) => {
           creditLimit: parseFloat(creditLimit),
         },
       });
+      await clearClientCache()
       res.status(200).json({
         message: "Client Updated",
       });
@@ -262,6 +264,7 @@ export const deleteClient = async (req: Request, res: Response) => {
           id: client.id,
         },
       });
+      await clearClientCache()
       res.status(200).json({
         message: "Client Deleted",
       });
@@ -274,20 +277,27 @@ export const deleteClient = async (req: Request, res: Response) => {
   }
 };
 
-export const getAllRecortPayment = async (req: Request, res: Response) => {
+export const getAllRecordPayment = async (req: Request, res: Response) => {
   try {
-    const paymentRecord = await prisma.paymentRecord.findMany({
-      include: {
-        FM: true,
-        Bill: true,
-        Branches: true,
-        Admin: true,
-      },
-      orderBy: {
-        date: "desc",
+    const data = await redisGetOrSetFunctions({
+      key: "getAllRecordPayment",
+      expiry: "1800",
+      fetchFunction: async () => {
+        return await prisma.paymentRecord.findMany({
+          include: {
+            FM: true,
+            Bill: true,
+            Branches: true,
+            Admin: true,
+          },
+          orderBy: {
+            date: "desc",
+          },
+        });
       },
     });
-    res.status(200).json({ data: paymentRecord });
+
+    res.status(200).json({ data: data });
   } catch (error) {
     res.status(500).json({
       message: "Internal Server Error",
@@ -529,18 +539,24 @@ export const getRecentPaymentsForPage = async (req: Request, res: Response) => {
   }
   const skip = (page - 1) * limit;
   try {
-    const paymentCount = await prisma.paymentRecord.count();
-    const paymentRecord = await prisma.paymentRecord.findMany({
-      skip,
-      take: limit,
-      orderBy: {
-        date: "desc",
+    const data = await redisGetOrSetFunctions({
+      key: `recent-payment-${page}-${skip}`,
+      expiry: "1800",
+      fetchFunction: async () => {
+        const paymentCount = await prisma.paymentRecord.count();
+        const paymentRecord = await prisma.paymentRecord.findMany({
+          skip,
+          take: limit,
+          orderBy: {
+            date: "desc",
+          },
+        });
+        return {
+          paymentCount,
+          paymentRecord,
+        };
       },
     });
-    const data = {
-      paymentCount,
-      paymentRecord,
-    };
 
     res.status(200).json({ data });
   } catch (error) {

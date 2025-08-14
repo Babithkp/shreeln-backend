@@ -1,5 +1,11 @@
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
+import {
+  clearAllExpenseCache,
+  clearCreditCache,
+  clearExpenseCache,
+  redisGetOrSetFunctions,
+} from "./utils/redis";
 const prisma = new PrismaClient();
 
 export const createExpense = async (req: Request, res: Response) => {
@@ -89,7 +95,8 @@ export const createExpense = async (req: Request, res: Response) => {
         expenseId: (parseFloat(admin.expenseId || "1000") + 1).toString(),
       },
     });
-
+    await clearAllExpenseCache();
+    await clearExpenseCache()
     res.status(200).json({
       message: "Expense Created",
     });
@@ -149,6 +156,8 @@ export const deleteExpense = async (req: Request, res: Response) => {
           id: expense.id,
         },
       });
+      await clearAllExpenseCache();
+      await clearExpenseCache()
       res.status(200).json({
         message: "Expense Deleted",
       });
@@ -216,7 +225,8 @@ export const updateExpenseDetails = async (req: Request, res: Response) => {
         title,
       },
     });
-
+    await clearAllExpenseCache();
+    await clearExpenseCache()
     res.status(200).json({
       message: "Expense Updated",
     });
@@ -269,6 +279,8 @@ export const updateExpenseByNotification = async (
           branchesId: expense.branchesId,
         },
       });
+      await clearAllExpenseCache();
+      await clearExpenseCache()
       res.status(200).json({
         message: "Expense Updated",
       });
@@ -322,7 +334,8 @@ export const deleteExpenseByNotification = async (
           branchesId: expense.branchesId,
         },
       });
-
+      await clearAllExpenseCache();
+      await clearExpenseCache()
       res.status(200).json({
         message: "Expense Deleted",
       });
@@ -354,34 +367,39 @@ export const getExpenseByPage = async (req: Request, res: Response) => {
   }
 
   try {
-    const ExpenseCount = await prisma.expense.count({
-      where: whereClause,
-    });
-    const ExpenseData = await prisma.expense.findMany({
-      skip,
-      take: limit,
-      where: whereClause,
-      include: {
-        Branches: {
-          select: {
-            branchName: true,
+    const data = await redisGetOrSetFunctions({
+      key: `expense-data-${page}-${skip}`,
+      expiry: "1800",
+      fetchFunction: async () => {
+        const ExpenseCount = await prisma.expense.count({
+          where: whereClause,
+        });
+        const ExpenseData = await prisma.expense.findMany({
+          skip,
+          take: limit,
+          where: whereClause,
+          include: {
+            Branches: {
+              select: {
+                branchName: true,
+              },
+            },
+            Admin: {
+              select: {
+                branchName: true,
+              },
+            },
           },
-        },
-        Admin: {
-          select: {
-            branchName: true,
+          orderBy: {
+            date: "desc",
           },
-        },
-      },
-      orderBy: {
-        date: "desc",
+        });
+        return {
+          ExpenseCount,
+          ExpenseData,
+        };
       },
     });
-
-    const data = {
-      ExpenseCount,
-      ExpenseData,
-    };
 
     res.status(200).json({ data });
   } catch (error) {
@@ -394,7 +412,7 @@ export const getExpenseByPage = async (req: Request, res: Response) => {
 
 export const filterExpensesByTitle = async (req: Request, res: Response) => {
   const { text, branchId } = req.params;
-  
+
   try {
     const whereClause: any = {
       OR: [
@@ -436,8 +454,6 @@ export const filterExpensesByTitle = async (req: Request, res: Response) => {
     console.log(error);
   }
 };
-
-
 
 export const createCredit = async (req: Request, res: Response) => {
   const {
@@ -526,7 +542,7 @@ export const createCredit = async (req: Request, res: Response) => {
         creditId: (parseFloat(admin.creditId || "1000") + 1).toString(),
       },
     });
-
+    await clearCreditCache();
     res.status(200).json({
       message: "Credit Created",
     });
@@ -538,12 +554,10 @@ export const createCredit = async (req: Request, res: Response) => {
   }
 };
 
-
 export const getCreditByPage = async (req: Request, res: Response) => {
   const page = parseInt(req.query.page as string) || 1;
   const limit = parseInt(req.query.limit as string) || 50;
   const branchId = req.query.branchId as string;
-
 
   if (!page || !limit) {
     res.status(400).json({
@@ -559,36 +573,39 @@ export const getCreditByPage = async (req: Request, res: Response) => {
   }
 
   try {
-    const creditCount = await prisma.credit.count({
-      where: whereClause,
-    });
-    const creditData = await prisma.credit.findMany({
-      skip,
-      take: limit,
-      where: whereClause,
-      include: {
-        Branches: {
-          select: {
-            branchName: true,
+    const data = await redisGetOrSetFunctions({
+      key: `credit-data-${page}-${skip}`,
+      expiry: "1800",
+      fetchFunction: async () => {
+        const creditCount = await prisma.credit.count({
+          where: whereClause,
+        });
+        const creditData = await prisma.credit.findMany({
+          skip,
+          take: limit,
+          where: whereClause,
+          include: {
+            Branches: {
+              select: {
+                branchName: true,
+              },
+            },
+            Admin: {
+              select: {
+                branchName: true,
+              },
+            },
           },
-        },
-        Admin: {
-          select: {
-            branchName: true,
+          orderBy: {
+            creditId: "asc",
           },
-        },
-      },
-      orderBy: {
-        date: "desc",
+        });
+        return {
+          creditCount,
+          creditData,
+        };
       },
     });
-
-    const data = {
-      creditCount,
-      creditData,
-    };
-
-
 
     res.status(200).json({ data });
   } catch (error) {
@@ -616,7 +633,6 @@ export const updateCreditDetails = async (req: Request, res: Response) => {
     title,
   } = req.body;
   const { id } = req.params;
-  
 
   if (
     !id ||
@@ -656,7 +672,7 @@ export const updateCreditDetails = async (req: Request, res: Response) => {
         title,
       },
     });
-
+    await clearCreditCache();
     res.status(200).json({
       message: "Credit Updated",
     });
@@ -688,6 +704,7 @@ export const deleteCredit = async (req: Request, res: Response) => {
           id: credit.id,
         },
       });
+      await clearCreditCache();
       res.status(200).json({
         message: "credit Deleted",
       });
@@ -702,8 +719,7 @@ export const deleteCredit = async (req: Request, res: Response) => {
 
 export const filterCreditsByTitle = async (req: Request, res: Response) => {
   const { text, branchId } = req.params;
-  
-  
+
   try {
     const whereClause: any = {
       OR: [
@@ -784,7 +800,7 @@ export const deleteCreditByNotification = async (
           branchesId: credit.branchesId,
         },
       });
-
+      await clearCreditCache();
       res.status(200).json({
         message: "Expense Deleted",
       });
@@ -796,7 +812,6 @@ export const deleteCreditByNotification = async (
     console.log(error);
   }
 };
-
 
 export const updateCreditByNotification = async (
   req: Request,
@@ -839,6 +854,7 @@ export const updateCreditByNotification = async (
           branchesId: expense.branchesId,
         },
       });
+      await clearCreditCache();
       res.status(200).json({
         message: "Expense Updated",
       });
@@ -857,24 +873,30 @@ export const updateCreditByNotification = async (
 
 export const getAllCredit = async (req: Request, res: Response) => {
   try {
-    const expenses = await prisma.credit.findMany({
-      include: {
-        Branches: {
-          select: {
-            branchName: true,
+    const data = await redisGetOrSetFunctions({
+      key: "getAllCredit",
+      expiry: "1800",
+      fetchFunction: async () => {
+        return await prisma.credit.findMany({
+          include: {
+            Branches: {
+              select: {
+                branchName: true,
+              },
+            },
+            Admin: {
+              select: {
+                branchName: true,
+              },
+            },
           },
-        },
-        Admin: {
-          select: {
-            branchName: true,
+          orderBy: {
+            date: "desc",
           },
-        },
-      },
-      orderBy: {
-        date: "desc",
+        });
       },
     });
-    res.status(200).json({ data: expenses });
+    res.status(200).json({ data });
   } catch (error) {
     res.status(500).json({
       message: "Internal Server Error",

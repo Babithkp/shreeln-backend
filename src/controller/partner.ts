@@ -1,5 +1,7 @@
 import { Request, Response } from "express";import { PrismaClient } from "@prisma/client";
+import { clearVendorCache, redisGetOrSetFunctions } from "./utils/redis";
 const prisma = new PrismaClient();
+
 export const createVendor = async (req: Request, res: Response) => {
   const {
     name,
@@ -63,6 +65,7 @@ export const createVendor = async (req: Request, res: Response) => {
           adminId: admin?.id,
         },
       });
+      await clearVendorCache();
       res.status(200).json({
         message: "Vendor Created",
       });
@@ -177,6 +180,7 @@ export const updateVendorDetails = async (req: Request, res: Response) => {
           outstandingLimit: parseFloat(outstandingLimit || "0"),
         },
       });
+      await clearVendorCache();
       res.status(200).json({
         message: "Vendor Updated",
       });
@@ -209,6 +213,7 @@ export const deleteVendor = async (req: Request, res: Response) => {
           id: vendor.id,
         },
       });
+      await clearVendorCache();
       res.status(200).json({
         message: "Vendor Deleted",
       });
@@ -536,9 +541,6 @@ export const filterFMLRByVendor = async (req: Request, res: Response) => {
       LRs: LRs.filter((lr) => lr.pod.length == 0),
     };
 
-    console.log(data.LRs);
-    
-
     res.status(200).json({ data });
   } catch (error) {
     res.status(500).json({
@@ -559,34 +561,38 @@ export const getVendorForPage = async (req: Request, res: Response) => {
     return;
   }
 
+  const skip = (page - 1) * limit;
   try {
-    const skip = (page - 1) * limit;
-    const totalVendors = await prisma.vendors.count();
-
-    const vendorData = await prisma.vendors.findMany({
-      skip,
-      take: limit,
-      include: {
-        vehicles: {
+    const data = await redisGetOrSetFunctions({
+      key: `vendor-data-${page}-${skip}`,
+      expiry: "1800",
+      fetchFunction: async () => {
+        const totalVendors = await prisma.vendors.count();
+        const vendorData = await prisma.vendors.findMany({
+          skip,
+          take: limit,
           include: {
-            LR: true,
+            vehicles: {
+              include: {
+                LR: true,
+              },
+            },
+            FM: {
+              include: {
+                PaymentRecords: true,
+              },
+            },
           },
-        },
-        FM: {
-          include: {
-            PaymentRecords: true,
+          orderBy: {
+            createdAt: "desc",
           },
-        },
-      },
-      orderBy: {
-        createdAt: "desc",
+        });
+        return {
+          vendorCount: totalVendors,
+          vendorData,
+        };
       },
     });
-
-    const data = {
-      vendorCount: totalVendors,
-      vendorData,
-    };
 
     res.status(200).json({ data });
   } catch (error) {
@@ -647,35 +653,39 @@ export const getClientForPage = async (req: Request, res: Response) => {
     });
     return;
   }
+  const skip = (page - 1) * limit;
 
   try {
-    const skip = (page - 1) * limit;
-    const totalClients = await prisma.client.count();
-
-    const clientData = await prisma.client.findMany({
-      skip,
-      take: limit,
-      include: {
-        bill: {
+    const data = await redisGetOrSetFunctions({
+      key: `client-data-${page}-${skip}`,
+      expiry: "1800",
+      fetchFunction: async () => {
+        const totalClients = await prisma.client.count();
+        const clientData = await prisma.client.findMany({
+          skip,
+          take: limit,
           include: {
-            PaymentRecords: true,
+            bill: {
+              include: {
+                PaymentRecords: true,
+              },
+            },
+            LR: {
+              include: {
+                Vehicle: true,
+              },
+            },
           },
-        },
-        LR: {
-          include: {
-            Vehicle: true,
+          orderBy: {
+            createdAt: "desc",
           },
-        },
-      },
-      orderBy: {
-        createdAt: "desc",
+        });
+        return {
+          clientCount: totalClients,
+          clientData,
+        };
       },
     });
-
-    const data = {
-      clientCount: totalClients,
-      clientData,
-    };
 
     res.status(200).json({ data });
   } catch (error) {

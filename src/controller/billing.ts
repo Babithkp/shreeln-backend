@@ -4,6 +4,7 @@ import {
   BillEmailBody,
   sendBillEmailToClient,
 } from "./utils/billEmail";
+import { clearAllBillCache, clearDashboardCache, clearGetAllRecordPaymentCache, clearRecentTransactionCache, redisGetOrSetFunctions } from "./utils/redis";
 
 const prisma = new PrismaClient();
 
@@ -172,6 +173,8 @@ export const createBill = async (req: Request, res: Response) => {
         },
       });
     }
+    await clearDashboardCache();
+    await clearAllBillCache();
     res.status(200).json({
       message: "Bill Created",
     });
@@ -182,6 +185,7 @@ export const createBill = async (req: Request, res: Response) => {
     console.log(error);
   }
 };
+
 export const createBillsupplementary = async (req: Request, res: Response) => {
   const {
     billNumber,
@@ -306,7 +310,8 @@ export const createBillsupplementary = async (req: Request, res: Response) => {
         },
       });
     }
-
+    await clearDashboardCache();
+    await clearAllBillCache();
     res.status(200).json({
       message: "Bill Created",
     });
@@ -406,7 +411,8 @@ export const deleteBill = async (req: Request, res: Response) => {
           id: bill.id,
         },
       });
-
+      await clearDashboardCache();
+      await clearAllBillCache();
       res.status(200).json({
         message: "Bill Deleted",
       });
@@ -599,7 +605,8 @@ export const updateBillDetails = async (req: Request, res: Response) => {
         },
       });
     }
-
+    await clearDashboardCache();
+    await clearAllBillCache();
     res.status(200).json({
       message: "Bill Updated",
     });
@@ -725,34 +732,39 @@ export const getBillByPage = async (req: Request, res: Response) => {
   }
   const skip = (page - 1) * limit;
   try {
-    const BillCount = await prisma.bill.count();
-    const BillData = await prisma.bill.findMany({
-      skip,
-      take: limit,
-      include: {
-        lrData: {
+    const data = await redisGetOrSetFunctions({
+      key: `bill-data-${page}-${skip}`,
+      expiry: "1800",
+      fetchFunction: async () => {
+        const BillCount = await prisma.bill.count();
+        const BillData = await prisma.bill.findMany({
+          skip,
+          take: limit,
           include: {
-            Vehicle: true,
+            lrData: {
+              include: {
+                Vehicle: true,
+              },
+            },
+            PaymentRecords: {
+              orderBy: {
+                date: "desc",
+              },
+            },
+            Client: true,
+            Branches: true,
+            Admin: true,
           },
-        },
-        PaymentRecords: {
           orderBy: {
-            date: "asc",
+            createdAt: "desc",
           },
-        },
-        Client: true,
-        Branches: true,
-        Admin: true,
-      },
-      orderBy: {
-        billNumber: "asc",
+        });
+        return {
+          BillCount,
+          BillData,
+        };
       },
     });
-
-    const data = {
-      BillCount,
-      BillData,
-    };
 
     res.status(200).json({ data });
   } catch (error) {
@@ -1089,7 +1101,10 @@ export const addPaymentRecordToBill = async (req: Request, res: Response) => {
         },
       });
     }
-
+    await clearDashboardCache();
+    await clearAllBillCache();
+    await clearGetAllRecordPaymentCache();
+    await clearRecentTransactionCache();
     res.status(200).json({ message: "Payment Record Added" });
   } catch (error) {
     console.error("Error adding payment record:", error);
@@ -1178,7 +1193,10 @@ export const deletePaymentRecordFromBill = async (
           client.pendingPayment + parseFloat(paymentRecord.amount || "0"),
       },
     });
-
+    await clearDashboardCache();
+    await clearAllBillCache();
+    await clearGetAllRecordPaymentCache();
+    await clearRecentTransactionCache();
     res.status(200).json({ message: "Payment Record Deleted" });
   } catch (error) {
     console.error("Error deleting payment record:", error);
@@ -1319,7 +1337,9 @@ export const updateBillByNotification = async (req: Request, res: Response) => {
         branchesId: bill.branchesId,
       },
     });
-
+    await clearDashboardCache();
+    await clearAllBillCache();
+    await clearRecentTransactionCache();
     res.status(200).json({
       message: "Bill Updated",
     });
@@ -1333,8 +1353,6 @@ export const updateBillByNotification = async (req: Request, res: Response) => {
 
 export const deleteBillByNotification = async (req: Request, res: Response) => {
   const { billId } = req.body;
-
-  console.log(billId);
 
   if (!billId) {
     res.status(400).json({
@@ -1364,6 +1382,8 @@ export const deleteBillByNotification = async (req: Request, res: Response) => {
           description: "Approved",
         },
       });
+      await clearDashboardCache();
+      await clearAllBillCache();
       res.status(200).json({
         message: "Bill Deleted",
       });
@@ -1477,7 +1497,10 @@ export const updateBillRecordByNotification = async (
         branchesId: bill.branchesId,
       },
     });
-
+    await clearDashboardCache();
+    await clearAllBillCache();
+    await clearGetAllRecordPaymentCache();
+    await clearRecentTransactionCache();
     res.status(200).json({ message: "Payment Record Updated" });
   } catch (error) {
     res.status(500).json({
@@ -1577,10 +1600,51 @@ export const deleteBillRecordByNotification = async (
         branchesId: bill.branchesId,
       },
     });
-
+    await clearDashboardCache();
+    await clearAllBillCache();
+    await clearGetAllRecordPaymentCache();
+    await clearRecentTransactionCache();
     res.status(200).json({ message: "Payment Record Deleted" });
   } catch (error) {
     console.error("Error deleting payment record:", error);
     res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const updateTdsOfBill = async (req: Request, res: Response) => {
+  const { id, tds } = req.params;
+  if (!id || !tds) {
+    res.status(400).json({
+      message: "Invalid Bill Id",
+    });
+    return;
+  }
+
+  try {
+    const bill = await prisma.bill.findUnique({
+      where: { id },
+    });
+    if (!bill) {
+      res.status(400).json({
+        message: "Invalid Bill Id",
+      });
+      return;
+    }
+    const updatedBill = await prisma.bill.update({
+      where: { id },
+      data: {
+        tds: parseInt(tds),
+      },
+    });
+    if (updatedBill?.tds) {
+      res.status(200).json({
+        message: "TDS Updated",
+      });
+    }
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+    console.log(error);
   }
 };

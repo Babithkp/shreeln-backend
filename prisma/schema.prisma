@@ -267,6 +267,7 @@ model FM {
 model Bill {
   id             String          @id @default(auto()) @map("_id") @db.ObjectId
   billNumber     String          @unique
+  tds            Int?            @default(1)
   date           String
   dueDate        String?
   hsnSacCode     String

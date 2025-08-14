@@ -8,21 +8,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getDashboardDataForBranch = exports.getDashboardData = exports.updateOtherSettings = exports.getOtherSettings = exports.getBillId = exports.getCreditId = exports.getExpenseId = exports.updateNotification = exports.deleteNotification = exports.getAllAdminNotifications = exports.fectchAdminData = exports.getAllClients = exports.createClient = exports.changeBranchPassword = exports.getBrachersNames = exports.createBranch = exports.adminLogin = exports.createAdmin = void 0;
 const client_1 = require("@prisma/client");
-const ioredis_1 = __importDefault(require("ioredis"));
-const dotenv_1 = __importDefault(require("dotenv"));
-dotenv_1.default.config();
-const redisEnv = process.env.REDIS_URL;
-if (!redisEnv) {
-    throw new Error("REDIS_URL is not set");
-}
+const redis_1 = require("./utils/redis");
 const prisma = new client_1.PrismaClient();
-const client = new ioredis_1.default(redisEnv);
 const createAdmin = () => __awaiter(void 0, void 0, void 0, function* () {
     const existingAdmin = yield prisma.admin.findFirst();
     if (!existingAdmin) {
@@ -130,6 +120,7 @@ const createBranch = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                     adminId: admin === null || admin === void 0 ? void 0 : admin.id,
                 },
             });
+            yield (0, redis_1.clearDashboardCache)();
             res.status(200).json({
                 message: "Branch Created",
             });
@@ -267,11 +258,13 @@ const createClient = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                     adminId: admin === null || admin === void 0 ? void 0 : admin.id,
                 },
             });
+            yield (0, redis_1.clearDashboardCache)();
             res.status(200).json({
                 message: "Client Created",
             });
             return;
         }
+        yield (0, redis_1.clearClientCache)();
         res.status(400).json({
             message: "Client Not Found",
         });
@@ -495,7 +488,7 @@ const getOtherSettings = (req, res) => __awaiter(void 0, void 0, void 0, functio
             select: {
                 billId: true,
                 expenseId: true,
-                creditId: true
+                creditId: true,
             },
         });
         res.status(200).json({
@@ -529,7 +522,7 @@ const updateOtherSettings = (req, res) => __awaiter(void 0, void 0, void 0, func
                 data: {
                     billId,
                     expenseId,
-                    creditId
+                    creditId,
                 },
             });
             res.status(200).json({
@@ -547,96 +540,91 @@ const updateOtherSettings = (req, res) => __awaiter(void 0, void 0, void 0, func
 exports.updateOtherSettings = updateOtherSettings;
 const getDashboardData = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const dashboardData = yield client.get("dashboard");
-        if (dashboardData) {
-            res.status(200).json({
-                message: "Dashboard Data",
-                data: JSON.parse(dashboardData),
-            });
-        }
-        else {
-            const branchData = yield prisma.branches.findMany({
-                select: {
-                    branchName: true,
-                    FM: {
-                        select: {
-                            hire: true,
-                            otherCharges: true,
-                            detentionCharges: true,
-                            rtoCharges: true,
-                            tds: true,
+        const data = yield (0, redis_1.redisGetOrSetFunctions)({
+            key: "dashboard",
+            expiry: "1800",
+            fetchFunction: () => __awaiter(void 0, void 0, void 0, function* () {
+                const branchData = yield prisma.branches.findMany({
+                    select: {
+                        branchName: true,
+                        FM: {
+                            select: {
+                                hire: true,
+                                otherCharges: true,
+                                detentionCharges: true,
+                                rtoCharges: true,
+                                tds: true,
+                            },
+                        },
+                        bill: {
+                            select: {
+                                subTotal: true,
+                            },
                         },
                     },
-                    bill: {
-                        select: {
-                            subTotal: true,
+                });
+                const admin = yield prisma.admin.findFirst({
+                    select: {
+                        branchName: true,
+                        FM: {
+                            select: {
+                                hire: true,
+                                otherCharges: true,
+                                detentionCharges: true,
+                                rtoCharges: true,
+                                tds: true,
+                            },
+                        },
+                        bill: {
+                            select: {
+                                subTotal: true,
+                            },
                         },
                     },
-                },
-            });
-            const admin = yield prisma.admin.findFirst({
-                select: {
-                    branchName: true,
-                    FM: {
-                        select: {
-                            hire: true,
-                            otherCharges: true,
-                            detentionCharges: true,
-                            rtoCharges: true,
-                            tds: true,
+                });
+                const billData = yield prisma.bill.findMany({
+                    select: {
+                        date: true,
+                        subTotal: true,
+                        PaymentRecords: {
+                            select: {
+                                amount: true,
+                            },
                         },
                     },
-                    bill: {
-                        select: {
-                            subTotal: true,
+                });
+                const FMData = yield prisma.fM.findMany({
+                    select: {
+                        hire: true,
+                        otherCharges: true,
+                        detentionCharges: true,
+                        rtoCharges: true,
+                        tds: true,
+                        date: true,
+                    },
+                });
+                const clientData = yield prisma.client.findMany({
+                    select: {
+                        name: true,
+                        bill: {
+                            select: {
+                                subTotal: true,
+                            },
                         },
                     },
-                },
-            });
-            const billData = yield prisma.bill.findMany({
-                select: {
-                    date: true,
-                    subTotal: true,
-                    PaymentRecords: {
-                        select: {
-                            amount: true,
-                        },
-                    },
-                },
-            });
-            const FMData = yield prisma.fM.findMany({
-                select: {
-                    hire: true,
-                    otherCharges: true,
-                    detentionCharges: true,
-                    rtoCharges: true,
-                    tds: true,
-                    date: true,
-                },
-            });
-            const clientData = yield prisma.client.findMany({
-                select: {
-                    name: true,
-                    bill: {
-                        select: {
-                            subTotal: true,
-                        },
-                    },
-                },
-            });
-            const vendorCount = yield prisma.vendors.count();
-            const overAllBranchData = [admin, ...branchData];
-            const data = {
-                clientData,
-                vendorCount,
-                overAllBranchData,
-                FMData,
-                billData,
-                branchData,
-            };
-            yield client.setex("dashboard", 900, JSON.stringify(data));
-            res.status(200).json({ data });
-        }
+                });
+                const vendorCount = yield prisma.vendors.count();
+                return {
+                    clientData,
+                    vendorCount,
+                    overAllBranchData: [admin, ...branchData],
+                    FMData,
+                    billData,
+                    branchData,
+                };
+            }),
+        });
+        res.status(200).json({ data });
     }
     catch (error) {
         res.status(400).json({
@@ -649,52 +637,58 @@ exports.getDashboardData = getDashboardData;
 const getDashboardDataForBranch = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const branchId = req.params.id;
     try {
-        const billData = yield prisma.bill.findMany({
-            where: {
-                branchesId: branchId,
-            },
-            select: {
-                date: true,
-                subTotal: true,
-                PaymentRecords: {
-                    select: {
-                        amount: true,
+        const data = yield (0, redis_1.redisGetOrSetFunctions)({
+            key: `dashboard-branch-${branchId}`,
+            expiry: "1800",
+            fetchFunction: () => __awaiter(void 0, void 0, void 0, function* () {
+                const billData = yield prisma.bill.findMany({
+                    where: {
+                        branchesId: branchId,
                     },
-                },
-            },
-        });
-        const FMData = yield prisma.fM.findMany({
-            where: {
-                branchId,
-            },
-            select: {
-                hire: true,
-                otherCharges: true,
-                detentionCharges: true,
-                rtoCharges: true,
-                tds: true,
-                date: true,
-            },
-        });
-        const clientData = yield prisma.client.findMany({
-            select: {
-                name: true,
-                bill: {
                     select: {
+                        date: true,
                         subTotal: true,
+                        PaymentRecords: {
+                            select: {
+                                amount: true,
+                            },
+                        },
                     },
-                },
-            },
+                });
+                const FMData = yield prisma.fM.findMany({
+                    where: {
+                        branchId,
+                    },
+                    select: {
+                        hire: true,
+                        otherCharges: true,
+                        detentionCharges: true,
+                        rtoCharges: true,
+                        tds: true,
+                        date: true,
+                    },
+                });
+                const clientData = yield prisma.client.findMany({
+                    select: {
+                        name: true,
+                        bill: {
+                            select: {
+                                subTotal: true,
+                            },
+                        },
+                    },
+                });
+                const vendorCount = yield prisma.vendors.count();
+                return {
+                    clientData,
+                    vendorCount,
+                    overAllBranchData: [],
+                    FMData,
+                    billData,
+                    branchData: [],
+                };
+            }),
         });
-        const vendorCount = yield prisma.vendors.count();
-        const data = {
-            clientData,
-            vendorCount,
-            overAllBranchData: [],
-            FMData,
-            billData,
-            branchData: [],
-        };
         res.status(200).json({
             message: "Dashboard Data",
             data: data,

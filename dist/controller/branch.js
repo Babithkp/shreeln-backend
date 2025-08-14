@@ -9,8 +9,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.filterRecordPaymentByNameForBranch = exports.filterRecordPaymentByName = exports.getRecentPaymentsForBranchPage = exports.getRecentPaymentsForPage = exports.createNotificationForBranch = exports.createNotification = exports.getBranchNotifications = exports.filterBranchBymonth = exports.filterRecordPayment = exports.getAllRecortPayment = exports.deleteClient = exports.updateclientDetails = exports.deleteBranch = exports.updateBranchDetails = exports.getAllBranchDetails = exports.branchLogin = void 0;
+exports.filterRecordPaymentByNameForBranch = exports.filterRecordPaymentByName = exports.getRecentPaymentsForBranchPage = exports.getRecentPaymentsForPage = exports.createNotificationForBranch = exports.createNotification = exports.getBranchNotifications = exports.filterBranchBymonth = exports.filterRecordPayment = exports.getAllRecordPayment = exports.deleteClient = exports.updateclientDetails = exports.deleteBranch = exports.updateBranchDetails = exports.getAllBranchDetails = exports.branchLogin = void 0;
 const client_1 = require("@prisma/client");
+const redis_1 = require("./utils/redis");
 const prisma = new client_1.PrismaClient();
 const branchLogin = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { branchName, password } = req.body;
@@ -213,6 +214,7 @@ const updateclientDetails = (req, res) => __awaiter(void 0, void 0, void 0, func
                     creditLimit: parseFloat(creditLimit),
                 },
             });
+            yield (0, redis_1.clearClientCache)();
             res.status(200).json({
                 message: "Client Updated",
             });
@@ -246,6 +248,7 @@ const deleteClient = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                     id: client.id,
                 },
             });
+            yield (0, redis_1.clearClientCache)();
             res.status(200).json({
                 message: "Client Deleted",
             });
@@ -259,20 +262,26 @@ const deleteClient = (req, res) => __awaiter(void 0, void 0, void 0, function* (
     }
 });
 exports.deleteClient = deleteClient;
-const getAllRecortPayment = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const getAllRecordPayment = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const paymentRecord = yield prisma.paymentRecord.findMany({
-            include: {
-                FM: true,
-                Bill: true,
-                Branches: true,
-                Admin: true,
-            },
-            orderBy: {
-                date: "desc",
-            },
+        const data = yield (0, redis_1.redisGetOrSetFunctions)({
+            key: "getAllRecordPayment",
+            expiry: "1800",
+            fetchFunction: () => __awaiter(void 0, void 0, void 0, function* () {
+                return yield prisma.paymentRecord.findMany({
+                    include: {
+                        FM: true,
+                        Bill: true,
+                        Branches: true,
+                        Admin: true,
+                    },
+                    orderBy: {
+                        date: "desc",
+                    },
+                });
+            }),
         });
-        res.status(200).json({ data: paymentRecord });
+        res.status(200).json({ data: data });
     }
     catch (error) {
         res.status(500).json({
@@ -281,7 +290,7 @@ const getAllRecortPayment = (req, res) => __awaiter(void 0, void 0, void 0, func
         console.log(error);
     }
 });
-exports.getAllRecortPayment = getAllRecortPayment;
+exports.getAllRecordPayment = getAllRecordPayment;
 const filterRecordPayment = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { name, from, to } = req.body;
     try {
@@ -503,18 +512,24 @@ const getRecentPaymentsForPage = (req, res) => __awaiter(void 0, void 0, void 0,
     }
     const skip = (page - 1) * limit;
     try {
-        const paymentCount = yield prisma.paymentRecord.count();
-        const paymentRecord = yield prisma.paymentRecord.findMany({
-            skip,
-            take: limit,
-            orderBy: {
-                date: "desc",
-            },
+        const data = yield (0, redis_1.redisGetOrSetFunctions)({
+            key: `recent-payment-${page}-${skip}`,
+            expiry: "1800",
+            fetchFunction: () => __awaiter(void 0, void 0, void 0, function* () {
+                const paymentCount = yield prisma.paymentRecord.count();
+                const paymentRecord = yield prisma.paymentRecord.findMany({
+                    skip,
+                    take: limit,
+                    orderBy: {
+                        date: "desc",
+                    },
+                });
+                return {
+                    paymentCount,
+                    paymentRecord,
+                };
+            }),
         });
-        const data = {
-            paymentCount,
-            paymentRecord,
-        };
         res.status(200).json({ data });
     }
     catch (error) {

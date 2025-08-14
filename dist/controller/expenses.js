@@ -11,6 +11,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getAllCredit = exports.updateCreditByNotification = exports.deleteCreditByNotification = exports.filterCreditsByTitle = exports.deleteCredit = exports.updateCreditDetails = exports.getCreditByPage = exports.createCredit = exports.filterExpensesByTitle = exports.getExpenseByPage = exports.deleteExpenseByNotification = exports.updateExpenseByNotification = exports.updateExpenseDetails = exports.deleteExpense = exports.getAllExpenses = exports.createExpense = void 0;
 const client_1 = require("@prisma/client");
+const redis_1 = require("./utils/redis");
 const prisma = new client_1.PrismaClient();
 const createExpense = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { expenseId, description, date, category, customerName, linkTo, billNumber, fmNumber, amount, amountInWords, paymentType, transactionNumber, title, branchesId, adminId, } = req.body;
@@ -75,6 +76,8 @@ const createExpense = (req, res) => __awaiter(void 0, void 0, void 0, function* 
                 expenseId: (parseFloat(admin.expenseId || "1000") + 1).toString(),
             },
         });
+        yield (0, redis_1.clearAllExpenseCache)();
+        yield (0, redis_1.clearExpenseCache)();
         res.status(200).json({
             message: "Expense Created",
         });
@@ -136,6 +139,8 @@ const deleteExpense = (req, res) => __awaiter(void 0, void 0, void 0, function* 
                     id: expense.id,
                 },
             });
+            yield (0, redis_1.clearAllExpenseCache)();
+            yield (0, redis_1.clearExpenseCache)();
             res.status(200).json({
                 message: "Expense Deleted",
             });
@@ -188,6 +193,8 @@ const updateExpenseDetails = (req, res) => __awaiter(void 0, void 0, void 0, fun
                 title,
             },
         });
+        yield (0, redis_1.clearAllExpenseCache)();
+        yield (0, redis_1.clearExpenseCache)();
         res.status(200).json({
             message: "Expense Updated",
         });
@@ -236,6 +243,8 @@ const updateExpenseByNotification = (req, res) => __awaiter(void 0, void 0, void
                     branchesId: expense.branchesId,
                 },
             });
+            yield (0, redis_1.clearAllExpenseCache)();
+            yield (0, redis_1.clearExpenseCache)();
             res.status(200).json({
                 message: "Expense Updated",
             });
@@ -287,6 +296,8 @@ const deleteExpenseByNotification = (req, res) => __awaiter(void 0, void 0, void
                     branchesId: expense.branchesId,
                 },
             });
+            yield (0, redis_1.clearAllExpenseCache)();
+            yield (0, redis_1.clearExpenseCache)();
             res.status(200).json({
                 message: "Expense Deleted",
             });
@@ -316,33 +327,39 @@ const getExpenseByPage = (req, res) => __awaiter(void 0, void 0, void 0, functio
         whereClause.branchesId = branchId;
     }
     try {
-        const ExpenseCount = yield prisma.expense.count({
-            where: whereClause,
-        });
-        const ExpenseData = yield prisma.expense.findMany({
-            skip,
-            take: limit,
-            where: whereClause,
-            include: {
-                Branches: {
-                    select: {
-                        branchName: true,
+        const data = yield (0, redis_1.redisGetOrSetFunctions)({
+            key: `expense-data-${page}-${skip}`,
+            expiry: "1800",
+            fetchFunction: () => __awaiter(void 0, void 0, void 0, function* () {
+                const ExpenseCount = yield prisma.expense.count({
+                    where: whereClause,
+                });
+                const ExpenseData = yield prisma.expense.findMany({
+                    skip,
+                    take: limit,
+                    where: whereClause,
+                    include: {
+                        Branches: {
+                            select: {
+                                branchName: true,
+                            },
+                        },
+                        Admin: {
+                            select: {
+                                branchName: true,
+                            },
+                        },
                     },
-                },
-                Admin: {
-                    select: {
-                        branchName: true,
+                    orderBy: {
+                        date: "desc",
                     },
-                },
-            },
-            orderBy: {
-                date: "desc",
-            },
+                });
+                return {
+                    ExpenseCount,
+                    ExpenseData,
+                };
+            }),
         });
-        const data = {
-            ExpenseCount,
-            ExpenseData,
-        };
         res.status(200).json({ data });
     }
     catch (error) {
@@ -461,6 +478,7 @@ const createCredit = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                 creditId: (parseFloat(admin.creditId || "1000") + 1).toString(),
             },
         });
+        yield (0, redis_1.clearCreditCache)();
         res.status(200).json({
             message: "Credit Created",
         });
@@ -489,33 +507,39 @@ const getCreditByPage = (req, res) => __awaiter(void 0, void 0, void 0, function
         whereClause.branchesId = branchId;
     }
     try {
-        const creditCount = yield prisma.credit.count({
-            where: whereClause,
-        });
-        const creditData = yield prisma.credit.findMany({
-            skip,
-            take: limit,
-            where: whereClause,
-            include: {
-                Branches: {
-                    select: {
-                        branchName: true,
+        const data = yield (0, redis_1.redisGetOrSetFunctions)({
+            key: `credit-data-${page}-${skip}`,
+            expiry: "1800",
+            fetchFunction: () => __awaiter(void 0, void 0, void 0, function* () {
+                const creditCount = yield prisma.credit.count({
+                    where: whereClause,
+                });
+                const creditData = yield prisma.credit.findMany({
+                    skip,
+                    take: limit,
+                    where: whereClause,
+                    include: {
+                        Branches: {
+                            select: {
+                                branchName: true,
+                            },
+                        },
+                        Admin: {
+                            select: {
+                                branchName: true,
+                            },
+                        },
                     },
-                },
-                Admin: {
-                    select: {
-                        branchName: true,
+                    orderBy: {
+                        creditId: "asc",
                     },
-                },
-            },
-            orderBy: {
-                date: "desc",
-            },
+                });
+                return {
+                    creditCount,
+                    creditData,
+                };
+            }),
         });
-        const data = {
-            creditCount,
-            creditData,
-        };
         res.status(200).json({ data });
     }
     catch (error) {
@@ -565,6 +589,7 @@ const updateCreditDetails = (req, res) => __awaiter(void 0, void 0, void 0, func
                 title,
             },
         });
+        yield (0, redis_1.clearCreditCache)();
         res.status(200).json({
             message: "Credit Updated",
         });
@@ -597,6 +622,7 @@ const deleteCredit = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                     id: credit.id,
                 },
             });
+            yield (0, redis_1.clearCreditCache)();
             res.status(200).json({
                 message: "credit Deleted",
             });
@@ -689,6 +715,7 @@ const deleteCreditByNotification = (req, res) => __awaiter(void 0, void 0, void 
                     branchesId: credit.branchesId,
                 },
             });
+            yield (0, redis_1.clearCreditCache)();
             res.status(200).json({
                 message: "Expense Deleted",
             });
@@ -738,6 +765,7 @@ const updateCreditByNotification = (req, res) => __awaiter(void 0, void 0, void 
                     branchesId: expense.branchesId,
                 },
             });
+            yield (0, redis_1.clearCreditCache)();
             res.status(200).json({
                 message: "Expense Updated",
             });
@@ -757,24 +785,30 @@ const updateCreditByNotification = (req, res) => __awaiter(void 0, void 0, void 
 exports.updateCreditByNotification = updateCreditByNotification;
 const getAllCredit = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const expenses = yield prisma.credit.findMany({
-            include: {
-                Branches: {
-                    select: {
-                        branchName: true,
+        const data = yield (0, redis_1.redisGetOrSetFunctions)({
+            key: "getAllCredit",
+            expiry: "1800",
+            fetchFunction: () => __awaiter(void 0, void 0, void 0, function* () {
+                return yield prisma.credit.findMany({
+                    include: {
+                        Branches: {
+                            select: {
+                                branchName: true,
+                            },
+                        },
+                        Admin: {
+                            select: {
+                                branchName: true,
+                            },
+                        },
                     },
-                },
-                Admin: {
-                    select: {
-                        branchName: true,
+                    orderBy: {
+                        date: "desc",
                     },
-                },
-            },
-            orderBy: {
-                date: "desc",
-            },
+                });
+            }),
         });
-        res.status(200).json({ data: expenses });
+        res.status(200).json({ data });
     }
     catch (error) {
         res.status(500).json({

@@ -13,6 +13,7 @@ exports.deleteFMRecordByNotification = exports.updateRecordPaymentByNotification
 const client_1 = require("@prisma/client");
 const LREmail_1 = require("./utils/LREmail");
 const FMEmail_1 = require("./utils/FMEmail");
+const redis_1 = require("./utils/redis");
 const prisma = new client_1.PrismaClient();
 const createLR = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { branchId, adminId, lrNumber, date, from, to, insurance, consignorName, consignorGSTIN, consignorPincode, consignorAddress, consigneeName, consigneeGSTIN, consigneePincode, consigneeAddress, noOfPackages, methodOfPacking, description, invoiceNo, invoiceDate, value, weight, sizeL, sizeW, sizeH, ftl, vehicleId, paymentType, freightCharges, hamali, surcharge, stCh, riskCh, unLoading, extraKms, detention, weightment, others, ewbNumber, ewbExpiryDate, totalAmt, emails, client, } = req.body;
@@ -107,6 +108,7 @@ const createLR = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 ewbNumber,
                 ewbExpiryDate, totalAmt: parseFloat(totalAmt || "0"), emails, vehicleId: vehicle === null || vehicle === void 0 ? void 0 : vehicle.id, clientId: clients.id }),
         });
+        yield (0, redis_1.clearLRCache)();
         res.status(200).json({
             message: "LR Created",
         });
@@ -152,6 +154,7 @@ const getLRData = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 client: {
                     select: {
                         name: true,
+                        GSTIN: true,
                     },
                 },
             },
@@ -180,51 +183,57 @@ const getLRByPage = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     }
     const skip = (page - 1) * limit;
     try {
-        const LRCount = yield prisma.lR.count();
-        const LRData = yield prisma.lR.findMany({
-            skip,
-            take: limit,
-            orderBy: {
-                lrNumber: "asc",
-            },
-            include: {
-                Vehicle: true,
-                branch: {
-                    select: {
-                        branchName: true,
-                        contactNumber: true,
-                        address: true,
-                        city: true,
-                        state: true,
-                        pincode: true,
+        const data = yield (0, redis_1.redisGetOrSetFunctions)({
+            key: `LR-data-${page}-${skip}`,
+            expiry: "1800",
+            fetchFunction: () => __awaiter(void 0, void 0, void 0, function* () {
+                const LRCount = yield prisma.lR.count();
+                const LRData = yield prisma.lR.findMany({
+                    skip,
+                    take: limit,
+                    orderBy: {
+                        date: "desc",
                     },
-                },
-                admin: {
-                    select: {
-                        branchName: true,
-                        contactNumber: true,
-                        address: true,
-                        city: true,
-                        state: true,
-                        pincode: true,
+                    include: {
+                        Vehicle: true,
+                        branch: {
+                            select: {
+                                branchName: true,
+                                contactNumber: true,
+                                address: true,
+                                city: true,
+                                state: true,
+                                pincode: true,
+                            },
+                        },
+                        admin: {
+                            select: {
+                                branchName: true,
+                                contactNumber: true,
+                                address: true,
+                                city: true,
+                                state: true,
+                                pincode: true,
+                            },
+                        },
+                        pod: {
+                            select: {
+                                id: true,
+                            },
+                        },
+                        client: {
+                            select: {
+                                name: true,
+                            },
+                        },
                     },
-                },
-                pod: {
-                    select: {
-                        id: true,
-                    },
-                },
-                client: {
-                    select: {
-                        name: true,
-                    },
-                },
-            },
+                });
+                return {
+                    LRCount,
+                    LRData,
+                };
+            }),
         });
-        const data = {
-            LRCount,
-            LRData,
-        };
         res.status(200).json({ data });
     }
     catch (error) {
@@ -358,6 +367,7 @@ const deleteLR = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                     id: lr.id,
                 },
             });
+            yield (0, redis_1.clearLRCache)();
             res.status(200).json({
                 message: "LR Deleted",
             });
@@ -468,6 +478,7 @@ const updateLR = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                     clientId: clients.id,
                 },
             });
+            yield (0, redis_1.clearLRCache)();
             res.status(200).json({
                 message: "LR Updated",
             });
@@ -746,6 +757,7 @@ const createFM = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 },
             });
         }
+        yield (0, redis_1.clearFMCache)();
         res.status(200).json({
             message: "FM Created",
         });
@@ -794,21 +806,27 @@ const getFMByPage = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     }
     const skip = (page - 1) * limit;
     try {
-        const FMCount = yield prisma.fM.count();
-        const FMData = yield prisma.fM.findMany({
-            skip,
-            take: limit,
-            orderBy: {
-                fmNumber: "asc",
-            },
-            include: {
-                PaymentRecords: true,
-            },
+        const data = yield (0, redis_1.redisGetOrSetFunctions)({
+            key: `FM-data-${page}-${skip}`,
+            expiry: "1800",
+            fetchFunction: () => __awaiter(void 0, void 0, void 0, function* () {
+                const FMCount = yield prisma.fM.count();
+                const FMData = yield prisma.fM.findMany({
+                    skip,
+                    take: limit,
+                    orderBy: {
+                        date: "desc",
+                    },
+                    include: {
+                        PaymentRecords: true,
+                    },
+                });
+                return {
+                    FMCount,
+                    FMData,
+                };
+            }),
         });
-        const data = {
-            FMCount,
-            FMData,
-        };
         res.status(200).json({ data });
     }
     catch (error) {
@@ -972,6 +990,7 @@ const deleteFM = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                     id: fm.id,
                 },
             });
+            yield (0, redis_1.clearFMCache)();
             res.status(200).json({
                 message: "FM Deleted",
             });
@@ -1090,6 +1109,7 @@ const updateFM = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                     },
                 });
             }
+            yield (0, redis_1.clearFMCache)();
             res.status(200).json({
                 message: "FM Updated",
             });
@@ -1290,6 +1310,8 @@ const addPaymentRecordToFM = (req, res) => __awaiter(void 0, void 0, void 0, fun
                 },
             });
         }
+        yield (0, redis_1.clearGetAllRecordPaymentCache)();
+        yield (0, redis_1.clearFMCache)();
         res.status(200).json({ message: "Payment Record Added" });
     }
     catch (error) {
@@ -1363,6 +1385,8 @@ const deletePaymentRecordFromFM = (req, res) => __awaiter(void 0, void 0, void 0
                     currentOutStanding: vendor.currentOutStanding - parseFloat(paymentRecord.amount || "0"),
                 },
             });
+            yield (0, redis_1.clearGetAllRecordPaymentCache)();
+            yield (0, redis_1.clearFMCache)();
             res.status(200).json({ message: "Payment Record Deleted" });
             return;
         }
@@ -1577,6 +1601,7 @@ const updateLRByNotification = (req, res) => __awaiter(void 0, void 0, void 0, f
             });
             return;
         }
+        yield (0, redis_1.clearLRCache)();
         res.status(200).json({
             message: "LR Updated",
         });
@@ -1629,6 +1654,7 @@ const updateFMByNotification = (req, res) => __awaiter(void 0, void 0, void 0, f
             });
             return;
         }
+        yield (0, redis_1.clearFMCache)();
         res.status(200).json({
             message: "FM Updated",
         });
@@ -1673,6 +1699,7 @@ const deleteFMByNotification = (req, res) => __awaiter(void 0, void 0, void 0, f
             });
             return;
         }
+        yield (0, redis_1.clearFMCache)();
         res.status(200).json({
             message: "FM Deleted",
         });
@@ -1717,6 +1744,7 @@ const deleteLRByNotification = (req, res) => __awaiter(void 0, void 0, void 0, f
             });
             return;
         }
+        yield (0, redis_1.clearLRCache)();
         res.status(200).json({
             message: "LR Deleted",
         });
@@ -1818,6 +1846,8 @@ const updateRecordPaymentByNotification = (req, res) => __awaiter(void 0, void 0
                 description: "Approved",
             },
         });
+        yield (0, redis_1.clearGetAllRecordPaymentCache)();
+        yield (0, redis_1.clearFMCache)();
         res.status(200).json({
             message: "Payment Record Updated",
         });
@@ -1901,6 +1931,8 @@ const deleteFMRecordByNotification = (req, res) => __awaiter(void 0, void 0, voi
                     description: "Approved",
                 },
             });
+            yield (0, redis_1.clearGetAllRecordPaymentCache)();
+            yield (0, redis_1.clearFMCache)();
             res.status(200).json({ message: "Payment Record Deleted" });
             return;
         }

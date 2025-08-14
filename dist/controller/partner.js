@@ -11,6 +11,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.filterClientByName = exports.getClientForPage = exports.filterVendorByName = exports.getVendorForPage = exports.filterFMLRByVendor = exports.getBillLRForClient = exports.deleteVehicle = exports.updateVehicleDetails = exports.getVehicleById = exports.getAllVehicles = exports.createVehicle = exports.deleteVendor = exports.updateVendorDetails = exports.getAllVendors = exports.createVendor = void 0;
 const client_1 = require("@prisma/client");
+const redis_1 = require("./utils/redis");
 const prisma = new client_1.PrismaClient();
 const createVendor = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { name, GSTIN, contactPerson, contactNumber, address, TDS, city, state, pincode, email, pan, outstandingLimit, } = req.body;
@@ -60,6 +61,7 @@ const createVendor = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                     adminId: admin === null || admin === void 0 ? void 0 : admin.id,
                 },
             });
+            yield (0, redis_1.clearVendorCache)();
             res.status(200).json({
                 message: "Vendor Created",
             });
@@ -160,6 +162,7 @@ const updateVendorDetails = (req, res) => __awaiter(void 0, void 0, void 0, func
                     outstandingLimit: parseFloat(outstandingLimit || "0"),
                 },
             });
+            yield (0, redis_1.clearVendorCache)();
             res.status(200).json({
                 message: "Vendor Updated",
             });
@@ -193,6 +196,7 @@ const deleteVendor = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                     id: vendor.id,
                 },
             });
+            yield (0, redis_1.clearVendorCache)();
             res.status(200).json({
                 message: "Vendor Deleted",
             });
@@ -479,7 +483,6 @@ const filterFMLRByVendor = (req, res) => __awaiter(void 0, void 0, void 0, funct
             FMs,
             LRs: LRs.filter((lr) => lr.pod.length == 0),
         };
-        console.log(data.LRs);
         res.status(200).json({ data });
     }
     catch (error) {
@@ -499,32 +502,38 @@ const getVendorForPage = (req, res) => __awaiter(void 0, void 0, void 0, functio
         });
         return;
     }
+    const skip = (page - 1) * limit;
     try {
-        const skip = (page - 1) * limit;
-        const totalVendors = yield prisma.vendors.count();
-        const vendorData = yield prisma.vendors.findMany({
-            skip,
-            take: limit,
-            include: {
-                vehicles: {
+        const data = yield (0, redis_1.redisGetOrSetFunctions)({
+            key: `vendor-data-${page}-${skip}`,
+            expiry: "1800",
+            fetchFunction: () => __awaiter(void 0, void 0, void 0, function* () {
+                const totalVendors = yield prisma.vendors.count();
+                const vendorData = yield prisma.vendors.findMany({
+                    skip,
+                    take: limit,
                     include: {
-                        LR: true,
+                        vehicles: {
+                            include: {
+                                LR: true,
+                            },
+                        },
+                        FM: {
+                            include: {
+                                PaymentRecords: true,
+                            },
+                        },
                     },
-                },
-                FM: {
-                    include: {
-                        PaymentRecords: true,
+                    orderBy: {
+                        createdAt: "desc",
                     },
-                },
-            },
-            orderBy: {
-                createdAt: "desc",
-            },
+                });
+                return {
+                    vendorCount: totalVendors,
+                    vendorData,
+                };
+            }),
         });
-        const data = {
-            vendorCount: totalVendors,
-            vendorData,
-        };
         res.status(200).json({ data });
     }
     catch (error) {
@@ -585,32 +594,38 @@ const getClientForPage = (req, res) => __awaiter(void 0, void 0, void 0, functio
         });
         return;
     }
+    const skip = (page - 1) * limit;
     try {
-        const skip = (page - 1) * limit;
-        const totalClients = yield prisma.client.count();
-        const clientData = yield prisma.client.findMany({
-            skip,
-            take: limit,
-            include: {
-                bill: {
+        const data = yield (0, redis_1.redisGetOrSetFunctions)({
+            key: `client-data-${page}-${skip}`,
+            expiry: "1800",
+            fetchFunction: () => __awaiter(void 0, void 0, void 0, function* () {
+                const totalClients = yield prisma.client.count();
+                const clientData = yield prisma.client.findMany({
+                    skip,
+                    take: limit,
                     include: {
-                        PaymentRecords: true,
+                        bill: {
+                            include: {
+                                PaymentRecords: true,
+                            },
+                        },
+                        LR: {
+                            include: {
+                                Vehicle: true,
+                            },
+                        },
                     },
-                },
-                LR: {
-                    include: {
-                        Vehicle: true,
+                    orderBy: {
+                        createdAt: "desc",
                     },
-                },
-            },
-            orderBy: {
-                createdAt: "desc",
-            },
+                });
+                return {
+                    clientCount: totalClients,
+                    clientData,
+                };
+            }),
         });
-        const data = {
-            clientCount: totalClients,
-            clientData,
-        };
         res.status(200).json({ data });
     }
     catch (error) {

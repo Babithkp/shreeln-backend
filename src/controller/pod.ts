@@ -1,6 +1,6 @@
-import { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
+import { Request, Response } from "express";import { PrismaClient } from "@prisma/client";
 import { deleteLRFile } from "./fileUpload";
+import { clearPODCache, redisGetOrSetFunctions } from "./utils/redis";
 
 const prisma = new PrismaClient();
 
@@ -101,7 +101,7 @@ export const createPOD = async (req: Request, res: Response) => {
         });
       }
     }
-
+    await clearPODCache()
     res.status(200).json({
       message: "POD Created",
     });
@@ -184,6 +184,7 @@ export const deletePOD = async (req: Request, res: Response) => {
         }
       }
     }
+    await clearPODCache()
     res.status(200).json({
       message: "POD Deleted",
     });
@@ -241,7 +242,7 @@ export const updatePODDetails = async (req: Request, res: Response) => {
         documentLink,
       },
     });
-
+    await clearPODCache()
     res.status(200).json({
       message: "POD Updated",
     });
@@ -340,7 +341,7 @@ export const updatePODByNotification = async (req: Request, res: Response) => {
         branchesId: pod.branchesId,
       },
     });
-
+    await clearPODCache()
     res.status(200).json({
       message: "POD Updated",
     });
@@ -383,6 +384,7 @@ export const deletePODByNotification = async (req: Request, res: Response) => {
           branchesId: pod.branchesId,
         },
       });
+      await clearPODCache()
       res.status(200).json({
         message: "POD Deleted",
       });
@@ -418,22 +420,27 @@ export const getPodByPage = async (req: Request, res: Response) => {
   }
 
   try {
-    const PODCount = await prisma.pOD.count({
-      where: whereClause,
-    });
-    const PODData = await prisma.pOD.findMany({
-      skip,
-      take: limit,
-      where: whereClause,
-      orderBy: {
-        date: "desc",
+    const data = await redisGetOrSetFunctions({
+      key: `POD-data-${page}-${skip}`,
+      expiry: "1800",
+      fetchFunction: async () => {
+        const PODCount = await prisma.pOD.count({
+          where: whereClause,
+        });
+        const PODData = await prisma.pOD.findMany({
+          skip,
+          take: limit,
+          where: whereClause,
+          orderBy: {
+            date: "desc",
+          },
+        });
+        return {
+          PODCount,
+          PODData,
+        };
       },
     });
-
-    const data = {
-      PODCount,
-      PODData,
-    };
 
     res.status(200).json({ data });
   } catch (error) {

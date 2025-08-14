@@ -1,6 +1,12 @@
 import { Request, Response } from "express";import { PrismaClient } from "@prisma/client";
 import { LRData, LREmailBody, sendLREmailToClient } from "./utils/LREmail";
 import { FMData, FMEmailBody, sendFMEmailToClient } from "./utils/FMEmail";
+import {
+  clearFMCache,
+  clearGetAllRecordPaymentCache,
+  clearLRCache,
+  redisGetOrSetFunctions,
+} from "./utils/redis";
 const prisma = new PrismaClient();
 
 export const createLR = async (req: Request, res: Response) => {
@@ -154,6 +160,7 @@ export const createLR = async (req: Request, res: Response) => {
         clientId: clients.id,
       },
     });
+    await clearLRCache()
     res.status(200).json({
       message: "LR Created",
     });
@@ -198,6 +205,7 @@ export const getLRData = async (req: Request, res: Response) => {
         client: {
           select: {
             name: true,
+            GSTIN: true,
           },
         },
       },
@@ -226,52 +234,58 @@ export const getLRByPage = async (req: Request, res: Response) => {
   }
   const skip = (page - 1) * limit;
   try {
-    const LRCount = await prisma.lR.count();
-    const LRData = await prisma.lR.findMany({
-      skip,
-      take: limit,
-      orderBy: {
-        lrNumber: "asc", 
-      },
-      include: {
-        Vehicle: true,
-        branch: {
-          select: {
-            branchName: true,
-            contactNumber: true,
-            address: true,
-            city: true,
-            state: true,
-            pincode: true,
+    const data = await redisGetOrSetFunctions({
+      key: `LR-data-${page}-${skip}`,
+      expiry: "1800",
+      fetchFunction: async () => {
+        const LRCount = await prisma.lR.count();
+        const LRData = await prisma.lR.findMany({
+          skip,
+          take: limit,
+          orderBy: {
+            date: "desc",
           },
-        },
-        admin: {
-          select: {
-            branchName: true,
-            contactNumber: true,
-            address: true,
-            city: true,
-            state: true,
-            pincode: true,
+          include: {
+            Vehicle: true,
+            branch: {
+              select: {
+                branchName: true,
+                contactNumber: true,
+                address: true,
+                city: true,
+                state: true,
+                pincode: true,
+              },
+            },
+            admin: {
+              select: {
+                branchName: true,
+                contactNumber: true,
+                address: true,
+                city: true,
+                state: true,
+                pincode: true,
+              },
+            },
+            pod: {
+              select: {
+                id: true,
+              },
+            },
+            client: {
+              select: {
+                name: true,
+              },
+            },
           },
-        },
-        pod: {
-          select: {
-            id: true,
-          },
-        },
-        client: {
-          select: {
-            name: true,
-          },
-        },
+        });
+
+        return {
+          LRCount,
+          LRData,
+        };
       },
     });
-
-    const data = {
-      LRCount,
-      LRData,
-    };
 
     res.status(200).json({ data });
   } catch (error) {
@@ -406,6 +420,7 @@ export const deleteLR = async (req: Request, res: Response) => {
           id: lr.id,
         },
       });
+      await clearLRCache()
       res.status(200).json({
         message: "LR Deleted",
       });
@@ -560,6 +575,7 @@ export const updateLR = async (req: Request, res: Response) => {
           clientId: clients.id,
         },
       });
+      await clearLRCache()
       res.status(200).json({
         message: "LR Updated",
       });
@@ -698,7 +714,7 @@ export const filterLRDetailsForBranch = async (req: Request, res: Response) => {
     });
     console.log(error);
   }
-}
+};
 
 export const sendLREmail = async (req: Request, res: Response) => {
   const { email } = req.params;
@@ -899,6 +915,7 @@ export const createFM = async (req: Request, res: Response) => {
         },
       });
     }
+    await clearFMCache();
     res.status(200).json({
       message: "FM Created",
     });
@@ -945,23 +962,29 @@ export const getFMByPage = async (req: Request, res: Response) => {
     return;
   }
   const skip = (page - 1) * limit;
+
   try {
-    const FMCount = await prisma.fM.count();
-    const FMData = await prisma.fM.findMany({
-      skip,
-      take: limit,
-      orderBy: {
-        fmNumber: "asc",
-      },
-      include: {
-        PaymentRecords: true,
+    const data = await redisGetOrSetFunctions({
+      key: `FM-data-${page}-${skip}`,
+      expiry: "1800",
+      fetchFunction: async () => {
+        const FMCount = await prisma.fM.count();
+        const FMData = await prisma.fM.findMany({
+          skip,
+          take: limit,
+          orderBy: {
+            date: "desc",
+          },
+          include: {
+            PaymentRecords: true,
+          },
+        });
+        return {
+          FMCount,
+          FMData,
+        };
       },
     });
-
-    const data = {
-      FMCount,
-      FMData,
-    };
 
     res.status(200).json({ data });
   } catch (error) {
@@ -1133,6 +1156,7 @@ export const deleteFM = async (req: Request, res: Response) => {
           id: fm.id,
         },
       });
+      await clearFMCache();
       res.status(200).json({
         message: "FM Deleted",
       });
@@ -1298,6 +1322,7 @@ export const updateFM = async (req: Request, res: Response) => {
           },
         });
       }
+      await clearFMCache();
       res.status(200).json({
         message: "FM Updated",
       });
@@ -1547,7 +1572,8 @@ export const addPaymentRecordToFM = async (req: Request, res: Response) => {
         },
       });
     }
-
+    await clearGetAllRecordPaymentCache();
+    await clearFMCache();
     res.status(200).json({ message: "Payment Record Added" });
   } catch (error) {
     console.error("Error adding payment record:", error);
@@ -1633,7 +1659,8 @@ export const deletePaymentRecordFromFM = async (
             vendor.currentOutStanding - parseFloat(paymentRecord.amount || "0"),
         },
       });
-
+      await clearGetAllRecordPaymentCache();
+      await clearFMCache();
       res.status(200).json({ message: "Payment Record Deleted" });
       return;
     }
@@ -1844,6 +1871,7 @@ export const updateLRByNotification = async (req: Request, res: Response) => {
       });
       return;
     }
+    await clearLRCache()
     res.status(200).json({
       message: "LR Updated",
     });
@@ -1897,6 +1925,7 @@ export const updateFMByNotification = async (req: Request, res: Response) => {
       });
       return;
     }
+    await clearFMCache();
     res.status(200).json({
       message: "FM Updated",
     });
@@ -1940,6 +1969,7 @@ export const deleteFMByNotification = async (req: Request, res: Response) => {
       });
       return;
     }
+    await clearFMCache();
     res.status(200).json({
       message: "FM Deleted",
     });
@@ -1983,6 +2013,7 @@ export const deleteLRByNotification = async (req: Request, res: Response) => {
       });
       return;
     }
+    await clearLRCache()
     res.status(200).json({
       message: "LR Deleted",
     });
@@ -2098,7 +2129,8 @@ export const updateRecordPaymentByNotification = async (
         description: "Approved",
       },
     });
-
+    await clearGetAllRecordPaymentCache();
+    await clearFMCache();
     res.status(200).json({
       message: "Payment Record Updated",
     });
@@ -2194,7 +2226,8 @@ export const deleteFMRecordByNotification = async (
           description: "Approved",
         },
       });
-
+      await clearGetAllRecordPaymentCache();
+      await clearFMCache();
       res.status(200).json({ message: "Payment Record Deleted" });
       return;
     }

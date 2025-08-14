@@ -12,7 +12,7 @@ branchRouter.post("/updateBranch", branch_1.updateBranchDetails);
 branchRouter.delete("/deleteBranch/:id", branch_1.deleteBranch);
 branchRouter.patch("/updateClient/:id", branch_1.updateclientDetails);
 branchRouter.delete("/deleteClient/:id", branch_1.deleteClient);
-branchRouter.get("/getAllRecordPayment", branch_1.getAllRecortPayment);
+branchRouter.get("/getAllRecordPayment", branch_1.getAllRecordPayment);
 branchRouter.post("/filterRecordPayment", branch_1.filterRecordPayment);
 branchRouter.post("/filterBranchBymonth", branch_1.filterBranchBymonth);
 branchRouter.post("/createNotification", branch_1.createNotification);
