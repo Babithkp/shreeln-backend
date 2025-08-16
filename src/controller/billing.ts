@@ -1109,7 +1109,6 @@ export const addPaymentRecordToBill = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error adding payment record:", error);
     res.status(500).json({ message: "Internal Server Error" });
-    return;
   }
 };
 

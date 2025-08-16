@@ -31,19 +31,25 @@ export const clearDashboardCache = async () => {
 export const clearAllBillCache = async () => {
   const pattern = "bill-data-*";
   const keys = await redisClient.keys(pattern);
-  await redisClient.del(keys);
+  if (keys.length > 0) {
+    await redisClient.del(keys);
+  }
 };
 
 export const clearFMCache = async () => {
   const pattern = "FM-data-*";
   const keys = await redisClient.keys(pattern);
-  await redisClient.del(keys);
+  if (keys.length > 0) {
+    await redisClient.del(keys);
+  }
 };
 
 export const clearLRCache = async () => {
   const pattern = "LR-data-*";
   const keys = await redisClient.keys(pattern);
-  await redisClient.del(keys);
+  if (keys.length > 0) {
+    await redisClient.del(keys);
+  }
 };
 
 export const clearAllExpenseCache = async () => {
@@ -57,35 +63,47 @@ export const clearGetAllRecordPaymentCache = async () => {
 export const clearRecentTransactionCache = async () => {
   const pattern = "recent-payment-*";
   const keys = await redisClient.keys(pattern);
-  await redisClient.del(keys);
+  if (keys.length > 0) {
+    await redisClient.del(keys);
+  }
 }
 
 export const clearVendorCache = async () => {
   const pattern = "vendor-data-*";
   const keys = await redisClient.keys(pattern);
-  await redisClient.del(keys);
+  if (keys.length > 0) {
+    await redisClient.del(keys);
+  }
 };
 
 export const clearClientCache = async () => {
   const pattern = "client-data-*";
   const keys = await redisClient.keys(pattern);
-  await redisClient.del(keys);
+  if (keys.length > 0) {
+    await redisClient.del(keys);
+  }
 };
 
 export const clearCreditCache = async () => {
   const pattern = "credit-data-*";
   const keys = await redisClient.keys(pattern);
-  await redisClient.del(keys);
+  if (keys.length > 0) {
+    await redisClient.del(keys);
+  }
 };
 
 export const clearExpenseCache = async () => {
   const pattern = "expense-data-*";
   const keys = await redisClient.keys(pattern);
-  await redisClient.del(keys);
+  if (keys.length > 0) {
+    await redisClient.del(keys);
+  }
 };
 
 export const clearPODCache = async () => {
   const pattern = "POD-data-*";
   const keys = await redisClient.keys(pattern);
-  await redisClient.del(keys);
+  if (keys.length > 0) {
+    await redisClient.del(keys);
+  }
 };
