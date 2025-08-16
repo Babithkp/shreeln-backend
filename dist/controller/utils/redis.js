@@ -38,19 +38,25 @@ exports.clearDashboardCache = clearDashboardCache;
 const clearAllBillCache = () => __awaiter(void 0, void 0, void 0, function* () {
     const pattern = "bill-data-*";
     const keys = yield redisClient.keys(pattern);
-    yield redisClient.del(keys);
+    if (keys.length > 0) {
+        yield redisClient.del(keys);
+    }
 });
 exports.clearAllBillCache = clearAllBillCache;
 const clearFMCache = () => __awaiter(void 0, void 0, void 0, function* () {
     const pattern = "FM-data-*";
     const keys = yield redisClient.keys(pattern);
-    yield redisClient.del(keys);
+    if (keys.length > 0) {
+        yield redisClient.del(keys);
+    }
 });
 exports.clearFMCache = clearFMCache;
 const clearLRCache = () => __awaiter(void 0, void 0, void 0, function* () {
     const pattern = "LR-data-*";
     const keys = yield redisClient.keys(pattern);
-    yield redisClient.del(keys);
+    if (keys.length > 0) {
+        yield redisClient.del(keys);
+    }
 });
 exports.clearLRCache = clearLRCache;
 const clearAllExpenseCache = () => __awaiter(void 0, void 0, void 0, function* () {
@@ -64,36 +70,48 @@ exports.clearGetAllRecordPaymentCache = clearGetAllRecordPaymentCache;
 const clearRecentTransactionCache = () => __awaiter(void 0, void 0, void 0, function* () {
     const pattern = "recent-payment-*";
     const keys = yield redisClient.keys(pattern);
-    yield redisClient.del(keys);
+    if (keys.length > 0) {
+        yield redisClient.del(keys);
+    }
 });
 exports.clearRecentTransactionCache = clearRecentTransactionCache;
 const clearVendorCache = () => __awaiter(void 0, void 0, void 0, function* () {
     const pattern = "vendor-data-*";
     const keys = yield redisClient.keys(pattern);
-    yield redisClient.del(keys);
+    if (keys.length > 0) {
+        yield redisClient.del(keys);
+    }
 });
 exports.clearVendorCache = clearVendorCache;
 const clearClientCache = () => __awaiter(void 0, void 0, void 0, function* () {
     const pattern = "client-data-*";
     const keys = yield redisClient.keys(pattern);
-    yield redisClient.del(keys);
+    if (keys.length > 0) {
+        yield redisClient.del(keys);
+    }
 });
 exports.clearClientCache = clearClientCache;
 const clearCreditCache = () => __awaiter(void 0, void 0, void 0, function* () {
     const pattern = "credit-data-*";
     const keys = yield redisClient.keys(pattern);
-    yield redisClient.del(keys);
+    if (keys.length > 0) {
+        yield redisClient.del(keys);
+    }
 });
 exports.clearCreditCache = clearCreditCache;
 const clearExpenseCache = () => __awaiter(void 0, void 0, void 0, function* () {
     const pattern = "expense-data-*";
     const keys = yield redisClient.keys(pattern);
-    yield redisClient.del(keys);
+    if (keys.length > 0) {
+        yield redisClient.del(keys);
+    }
 });
 exports.clearExpenseCache = clearExpenseCache;
 const clearPODCache = () => __awaiter(void 0, void 0, void 0, function* () {
     const pattern = "POD-data-*";
     const keys = yield redisClient.keys(pattern);
-    yield redisClient.del(keys);
+    if (keys.length > 0) {
+        yield redisClient.del(keys);
+    }
 });
 exports.clearPODCache = clearPODCache;

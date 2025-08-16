@@ -960,7 +960,6 @@ const addPaymentRecordToBill = (req, res) => __awaiter(void 0, void 0, void 0, f
     catch (error) {
         console.error("Error adding payment record:", error);
         res.status(500).json({ message: "Internal Server Error" });
-        return;
     }
 });
 exports.addPaymentRecordToBill = addPaymentRecordToBill;
