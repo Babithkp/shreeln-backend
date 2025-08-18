@@ -434,7 +434,7 @@ const updateBillDetails = (req, res) => __awaiter(void 0, void 0, void 0, functi
                 extraKmWeight,
                 detention,
                 weightment,
-                others,
+                others: null,
                 otherCharges,
                 lrData: {
                     set: [],
@@ -444,6 +444,7 @@ const updateBillDetails = (req, res) => __awaiter(void 0, void 0, void 0, functi
         yield prisma.bill.update({
             where: { id },
             data: {
+                others: others,
                 lrData: {
                     connect: lrData.map((lr) => ({ id: lr.id })),
                 },

@@ -549,7 +549,7 @@ export const updateBillDetails = async (req: Request, res: Response) => {
         extraKmWeight,
         detention,
         weightment,
-        others,
+        others:null,
         otherCharges,
         lrData: {
           set: [],
@@ -560,6 +560,7 @@ export const updateBillDetails = async (req: Request, res: Response) => {
     await prisma.bill.update({
       where: { id },
       data: {
+        others:others,
         lrData: {
           connect: lrData.map((lr: any) => ({ id: lr.id })),
         },
