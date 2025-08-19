@@ -757,7 +757,7 @@ export const getBillByPage = async (req: Request, res: Response) => {
             Admin: true,
           },
           orderBy: {
-            createdAt: "desc",
+            date: "desc",
           },
         });
         return {
