@@ -309,6 +309,8 @@ export const getAllClients = async (req: Request, res: Response) => {
         email: true,
         city: true,
         state: true,
+        contactPerson: true,
+        createdAt:true,
         LR: {
           include: {
             Vehicle: true,

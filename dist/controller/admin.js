@@ -289,6 +289,8 @@ const getAllClients = (req, res) => __awaiter(void 0, void 0, void 0, function* 
                 email: true,
                 city: true,
                 state: true,
+                contactPerson: true,
+                createdAt: true,
                 LR: {
                     include: {
                         Vehicle: true,
