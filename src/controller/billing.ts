@@ -767,7 +767,7 @@ export const getBillByPage = async (req: Request, res: Response) => {
             Admin: true,
           },
           orderBy: {
-            date: "desc",
+            billNumber: "desc",
           },
         });
         return {
@@ -826,7 +826,7 @@ export const getBillByPageForBranch = async (req: Request, res: Response) => {
         Admin: true,
       },
       orderBy: {
-        date: "desc",
+        billNumber: "desc",
       },
     });
 
