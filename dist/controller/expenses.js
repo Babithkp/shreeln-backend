@@ -329,7 +329,6 @@ const getExpenseByPage = (req, res) => __awaiter(void 0, void 0, void 0, functio
     try {
         const data = yield (0, redis_1.redisGetOrSetFunctions)({
             key: `expense-data-${page}-${skip}`,
-            expiry: "1800",
             fetchFunction: () => __awaiter(void 0, void 0, void 0, function* () {
                 const ExpenseCount = yield prisma.expense.count({
                     where: whereClause,
@@ -509,7 +508,6 @@ const getCreditByPage = (req, res) => __awaiter(void 0, void 0, void 0, function
     try {
         const data = yield (0, redis_1.redisGetOrSetFunctions)({
             key: `credit-data-${page}-${skip}`,
-            expiry: "1800",
             fetchFunction: () => __awaiter(void 0, void 0, void 0, function* () {
                 const creditCount = yield prisma.credit.count({
                     where: whereClause,
@@ -787,7 +785,6 @@ const getAllCredit = (req, res) => __awaiter(void 0, void 0, void 0, function* (
     try {
         const data = yield (0, redis_1.redisGetOrSetFunctions)({
             key: "getAllCredit",
-            expiry: "1800",
             fetchFunction: () => __awaiter(void 0, void 0, void 0, function* () {
                 return yield prisma.credit.findMany({
                     include: {

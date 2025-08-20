@@ -544,7 +544,6 @@ const getDashboardData = (req, res) => __awaiter(void 0, void 0, void 0, functio
     try {
         const data = yield (0, redis_1.redisGetOrSetFunctions)({
             key: "dashboard",
-            expiry: "1800",
             fetchFunction: () => __awaiter(void 0, void 0, void 0, function* () {
                 const branchData = yield prisma.branches.findMany({
                     select: {
@@ -641,7 +640,6 @@ const getDashboardDataForBranch = (req, res) => __awaiter(void 0, void 0, void 0
     try {
         const data = yield (0, redis_1.redisGetOrSetFunctions)({
             key: `dashboard-branch-${branchId}`,
-            expiry: "1800",
             fetchFunction: () => __awaiter(void 0, void 0, void 0, function* () {
                 const billData = yield prisma.bill.findMany({
                     where: {

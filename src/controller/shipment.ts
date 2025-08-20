@@ -236,7 +236,6 @@ export const getLRByPage = async (req: Request, res: Response) => {
   try {
     const data = await redisGetOrSetFunctions({
       key: `LR-data-${page}-${skip}`,
-      expiry: "1800",
       fetchFunction: async () => {
         const LRCount = await prisma.lR.count();
         const LRData = await prisma.lR.findMany({
@@ -966,7 +965,6 @@ export const getFMByPage = async (req: Request, res: Response) => {
   try {
     const data = await redisGetOrSetFunctions({
       key: `FM-data-${page}-${skip}`,
-      expiry: "1800",
       fetchFunction: async () => {
         const FMCount = await prisma.fM.count();
         const FMData = await prisma.fM.findMany({

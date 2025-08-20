@@ -554,7 +554,6 @@ export const getDashboardData = async (req: Request, res: Response) => {
   try {
     const data = await redisGetOrSetFunctions({
       key: "dashboard",
-      expiry: "1800",
       fetchFunction: async () => {
         const branchData = await prisma.branches.findMany({
           select: {
@@ -660,7 +659,6 @@ export const getDashboardDataForBranch = async (
   try {
     const data = await redisGetOrSetFunctions({
       key: `dashboard-branch-${branchId}`,
-      expiry: "1800",
       fetchFunction: async () => {
         const billData = await prisma.bill.findMany({
           where: {

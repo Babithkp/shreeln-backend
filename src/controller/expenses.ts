@@ -369,7 +369,6 @@ export const getExpenseByPage = async (req: Request, res: Response) => {
   try {
     const data = await redisGetOrSetFunctions({
       key: `expense-data-${page}-${skip}`,
-      expiry: "1800",
       fetchFunction: async () => {
         const ExpenseCount = await prisma.expense.count({
           where: whereClause,
@@ -575,7 +574,6 @@ export const getCreditByPage = async (req: Request, res: Response) => {
   try {
     const data = await redisGetOrSetFunctions({
       key: `credit-data-${page}-${skip}`,
-      expiry: "1800",
       fetchFunction: async () => {
         const creditCount = await prisma.credit.count({
           where: whereClause,
@@ -875,7 +873,6 @@ export const getAllCredit = async (req: Request, res: Response) => {
   try {
     const data = await redisGetOrSetFunctions({
       key: "getAllCredit",
-      expiry: "1800",
       fetchFunction: async () => {
         return await prisma.credit.findMany({
           include: {

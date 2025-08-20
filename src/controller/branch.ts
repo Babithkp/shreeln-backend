@@ -281,7 +281,6 @@ export const getAllRecordPayment = async (req: Request, res: Response) => {
   try {
     const data = await redisGetOrSetFunctions({
       key: "getAllRecordPayment",
-      expiry: "1800",
       fetchFunction: async () => {
         return await prisma.paymentRecord.findMany({
           include: {
@@ -541,7 +540,6 @@ export const getRecentPaymentsForPage = async (req: Request, res: Response) => {
   try {
     const data = await redisGetOrSetFunctions({
       key: `recent-payment-${page}-${skip}`,
-      expiry: "1800",
       fetchFunction: async () => {
         const paymentCount = await prisma.paymentRecord.count();
         const paymentRecord = await prisma.paymentRecord.findMany({

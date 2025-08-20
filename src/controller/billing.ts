@@ -1,5 +1,4 @@
-import { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
+import { Request, Response } from "express";import { PrismaClient } from "@prisma/client";
 import {
   billData,
   BillEmailBody,
@@ -745,7 +744,6 @@ export const getBillByPage = async (req: Request, res: Response) => {
   try {
     const data = await redisGetOrSetFunctions({
       key: `bill-data-${page}-${skip}`,
-      expiry: "1800",
       fetchFunction: async () => {
         const BillCount = await prisma.bill.count();
         const BillData = await prisma.bill.findMany({

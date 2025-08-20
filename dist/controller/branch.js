@@ -266,7 +266,6 @@ const getAllRecordPayment = (req, res) => __awaiter(void 0, void 0, void 0, func
     try {
         const data = yield (0, redis_1.redisGetOrSetFunctions)({
             key: "getAllRecordPayment",
-            expiry: "1800",
             fetchFunction: () => __awaiter(void 0, void 0, void 0, function* () {
                 return yield prisma.paymentRecord.findMany({
                     include: {
@@ -514,7 +513,6 @@ const getRecentPaymentsForPage = (req, res) => __awaiter(void 0, void 0, void 0,
     try {
         const data = yield (0, redis_1.redisGetOrSetFunctions)({
             key: `recent-payment-${page}-${skip}`,
-            expiry: "1800",
             fetchFunction: () => __awaiter(void 0, void 0, void 0, function* () {
                 const paymentCount = yield prisma.paymentRecord.count();
                 const paymentRecord = yield prisma.paymentRecord.findMany({

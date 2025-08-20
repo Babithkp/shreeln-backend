@@ -8,11 +8,9 @@ const redisClient = new Redis(redisEnv);
 
 export const redisGetOrSetFunctions = async <T>({
   key,
-  expiry,
   fetchFunction,
 }: {
   key: string;
-  expiry: string;
   fetchFunction: () => Promise<T>;
 }): Promise<T> => {
   const value = await redisClient.get(key);
@@ -20,7 +18,7 @@ export const redisGetOrSetFunctions = async <T>({
     return JSON.parse(value);
   }
   const response = await fetchFunction();
-  await redisClient.setex(key, expiry, JSON.stringify(response));
+  await redisClient.setex(key, 64800000, JSON.stringify(response));
   return response;
 };
 

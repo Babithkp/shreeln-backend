@@ -506,7 +506,6 @@ const getVendorForPage = (req, res) => __awaiter(void 0, void 0, void 0, functio
     try {
         const data = yield (0, redis_1.redisGetOrSetFunctions)({
             key: `vendor-data-${page}-${skip}`,
-            expiry: "1800",
             fetchFunction: () => __awaiter(void 0, void 0, void 0, function* () {
                 const totalVendors = yield prisma.vendors.count();
                 const vendorData = yield prisma.vendors.findMany({
@@ -598,7 +597,6 @@ const getClientForPage = (req, res) => __awaiter(void 0, void 0, void 0, functio
     try {
         const data = yield (0, redis_1.redisGetOrSetFunctions)({
             key: `client-data-${page}-${skip}`,
-            expiry: "1800",
             fetchFunction: () => __awaiter(void 0, void 0, void 0, function* () {
                 const totalClients = yield prisma.client.count();
                 const clientData = yield prisma.client.findMany({

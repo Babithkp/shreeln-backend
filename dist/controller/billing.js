@@ -621,7 +621,6 @@ const getBillByPage = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     try {
         const data = yield (0, redis_1.redisGetOrSetFunctions)({
             key: `bill-data-${page}-${skip}`,
-            expiry: "1800",
             fetchFunction: () => __awaiter(void 0, void 0, void 0, function* () {
                 const BillCount = yield prisma.bill.count();
                 const BillData = yield prisma.bill.findMany({

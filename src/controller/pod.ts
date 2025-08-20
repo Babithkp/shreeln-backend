@@ -422,7 +422,6 @@ export const getPodByPage = async (req: Request, res: Response) => {
   try {
     const data = await redisGetOrSetFunctions({
       key: `POD-data-${page}-${skip}`,
-      expiry: "1800",
       fetchFunction: async () => {
         const PODCount = await prisma.pOD.count({
           where: whereClause,

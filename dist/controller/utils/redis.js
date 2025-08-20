@@ -21,13 +21,13 @@ if (!redisEnv) {
     throw new Error("REDIS_URL is not set");
 }
 const redisClient = new ioredis_1.default(redisEnv);
-const redisGetOrSetFunctions = (_a) => __awaiter(void 0, [_a], void 0, function* ({ key, expiry, fetchFunction, }) {
+const redisGetOrSetFunctions = (_a) => __awaiter(void 0, [_a], void 0, function* ({ key, fetchFunction, }) {
     const value = yield redisClient.get(key);
     if (value) {
         return JSON.parse(value);
     }
     const response = yield fetchFunction();
-    yield redisClient.setex(key, expiry, JSON.stringify(response));
+    yield redisClient.setex(key, 64800000, JSON.stringify(response));
     return response;
 });
 exports.redisGetOrSetFunctions = redisGetOrSetFunctions;

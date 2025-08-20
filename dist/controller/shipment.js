@@ -185,7 +185,6 @@ const getLRByPage = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     try {
         const data = yield (0, redis_1.redisGetOrSetFunctions)({
             key: `LR-data-${page}-${skip}`,
-            expiry: "1800",
             fetchFunction: () => __awaiter(void 0, void 0, void 0, function* () {
                 const LRCount = yield prisma.lR.count();
                 const LRData = yield prisma.lR.findMany({
@@ -808,7 +807,6 @@ const getFMByPage = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     try {
         const data = yield (0, redis_1.redisGetOrSetFunctions)({
             key: `FM-data-${page}-${skip}`,
-            expiry: "1800",
             fetchFunction: () => __awaiter(void 0, void 0, void 0, function* () {
                 const FMCount = yield prisma.fM.count();
                 const FMData = yield prisma.fM.findMany({

@@ -565,7 +565,6 @@ export const getVendorForPage = async (req: Request, res: Response) => {
   try {
     const data = await redisGetOrSetFunctions({
       key: `vendor-data-${page}-${skip}`,
-      expiry: "1800",
       fetchFunction: async () => {
         const totalVendors = await prisma.vendors.count();
         const vendorData = await prisma.vendors.findMany({
@@ -658,7 +657,6 @@ export const getClientForPage = async (req: Request, res: Response) => {
   try {
     const data = await redisGetOrSetFunctions({
       key: `client-data-${page}-${skip}`,
-      expiry: "1800",
       fetchFunction: async () => {
         const totalClients = await prisma.client.count();
         const clientData = await prisma.client.findMany({
