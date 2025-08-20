@@ -1,10 +1,17 @@
-import { Request, Response } from "express";import { PrismaClient } from "@prisma/client";
+import { Request, Response } from "express";
+import { PrismaClient } from "@prisma/client";
 import {
   billData,
   BillEmailBody,
   sendBillEmailToClient,
 } from "./utils/billEmail";
-import { clearAllBillCache, clearDashboardCache, clearGetAllRecordPaymentCache, clearRecentTransactionCache, redisGetOrSetFunctions } from "./utils/redis";
+import {
+  clearAllBillCache,
+  clearDashboardCache,
+  clearGetAllRecordPaymentCache,
+  clearRecentTransactionCache,
+  redisGetOrSetFunctions,
+} from "./utils/redis";
 
 const prisma = new PrismaClient();
 
@@ -16,6 +23,8 @@ export const checkBillExists = async (req: Request, res: Response) => {
         billNumber,
       },
     });
+    console.log(bill);
+
     if (bill) {
       res.status(200).json({
         message: "Bill Exists",
@@ -177,6 +186,152 @@ export const createBill = async (req: Request, res: Response) => {
     await clearAllBillCache();
     res.status(200).json({
       message: "Bill Created",
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+    console.log(error);
+  }
+};
+
+export const updateBillDetails = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const {
+    billNumber,
+    date,
+    dueDate,
+    hsnSacCode,
+    placeOfSupply,
+    state,
+    statecode,
+    lrData,
+    igstRate,
+    cgstRate,
+    sgstRate,
+    subTotal,
+    total,
+    totalInWords,
+    unloading,
+    hamali,
+    extraKmWeight,
+    detention,
+    weightment,
+    others,
+    otherCharges,
+  } = req.body;
+
+  if (
+    !billNumber ||
+    !date ||
+    !hsnSacCode ||
+    !placeOfSupply ||
+    !state ||
+    !statecode ||
+    !Array.isArray(lrData) ||
+    lrData.length === 0 ||
+    !subTotal ||
+    !total ||
+    !totalInWords
+  ) {
+    res.status(400).json({
+      message: "Invalid Bill Details",
+    });
+    return;
+  }
+  try {
+    const oldBill = await prisma.bill.findUnique({
+      where: { id },
+    });
+    if (!oldBill) {
+      res.status(400).json({
+        message: "Bill not found",
+      });
+      return;
+    }
+    const bill = await prisma.bill.update({
+      where: { id },
+      data: {
+        billNumber,
+        date,
+        dueDate,
+        hsnSacCode,
+        placeOfSupply,
+        state,
+        statecode,
+        igstRate,
+        cgstRate,
+        sgstRate,
+        subTotal,
+        total,
+        totalInWords,
+        pendingAmount: subTotal,
+        unloading,
+        hamali,
+        extraKmWeight,
+        detention,
+        weightment,
+        others: null,
+        otherCharges,
+        lrData: {
+          set: [],
+        },
+      },
+    });
+
+    await prisma.bill.update({
+      where: { id },
+      data: {
+        others: others,
+        lrData: {
+          connect: lrData.map((lr: any) => ({ id: lr.id })),
+        },
+      },
+    });
+
+    const client = await prisma.client.findUnique({
+      where: {
+        id: bill.clientId!,
+      },
+    });
+    if (!client) {
+      res.status(400).json({
+        message: "Invalid Client Id",
+      });
+      return;
+    }
+    const oldPendingAmount = client.pendingPayment - oldBill.pendingAmount;
+    const updatedClient = await prisma.client.update({
+      where: {
+        id: client.id,
+      },
+      data: {
+        pendingPayment: oldPendingAmount + parseFloat(subTotal || "0"),
+      },
+    });
+    if (updatedClient?.pendingPayment > updatedClient?.creditLimit) {
+      const admin = await prisma.admin.findFirst();
+      if (!admin) {
+        res.status(400).json({
+          message: "Invalid Admin Id",
+        });
+        return;
+      }
+      await prisma.notification.create({
+        data: {
+          adminId: admin.id,
+          requestId: bill.id,
+          title: "Credit Limit",
+          description: `The credit limit of INR ${updatedClient.creditLimit} for the client ${updatedClient.name} has reached. The current outstanding is INR ${updatedClient.pendingPayment}`,
+          message: "",
+          status: "one-time",
+        },
+      });
+    }
+    await clearDashboardCache();
+    await clearAllBillCache();
+    res.status(200).json({
+      message: "Bill Updated",
     });
   } catch (error) {
     res.status(500).json({
@@ -473,152 +628,6 @@ export const sendBillEmail = async (req: Request, res: Response) => {
   }
 };
 
-export const updateBillDetails = async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const {
-    billNumber,
-    date,
-    dueDate,
-    hsnSacCode,
-    placeOfSupply,
-    state,
-    statecode,
-    lrData,
-    igstRate,
-    cgstRate,
-    sgstRate,
-    subTotal,
-    total,
-    totalInWords,
-    unloading,
-    hamali,
-    extraKmWeight,
-    detention,
-    weightment,
-    others,
-    otherCharges,
-  } = req.body;
-
-  if (
-    !billNumber ||
-    !date ||
-    !hsnSacCode ||
-    !placeOfSupply ||
-    !state ||
-    !statecode ||
-    !Array.isArray(lrData) ||
-    lrData.length === 0 ||
-    !subTotal ||
-    !total ||
-    !totalInWords
-  ) {
-    res.status(400).json({
-      message: "Invalid Bill Details",
-    });
-    return;
-  }
-  try {
-    const oldBill = await prisma.bill.findUnique({
-      where: { id },
-    });
-    if (!oldBill) {
-      res.status(400).json({
-        message: "Bill not found",
-      });
-      return;
-    }
-    const bill = await prisma.bill.update({
-      where: { id },
-      data: {
-        billNumber,
-        date,
-        dueDate,
-        hsnSacCode,
-        placeOfSupply,
-        state,
-        statecode,
-        igstRate,
-        cgstRate,
-        sgstRate,
-        subTotal,
-        total,
-        totalInWords,
-        pendingAmount: subTotal,
-        unloading,
-        hamali,
-        extraKmWeight,
-        detention,
-        weightment,
-        others:null,
-        otherCharges,
-        lrData: {
-          set: [],
-        },
-      },
-    });
-
-    await prisma.bill.update({
-      where: { id },
-      data: {
-        others:others,
-        lrData: {
-          connect: lrData.map((lr: any) => ({ id: lr.id })),
-        },
-      },
-    });
-
-    const client = await prisma.client.findUnique({
-      where: {
-        id: bill.clientId!,
-      },
-    });
-    if (!client) {
-      res.status(400).json({
-        message: "Invalid Client Id",
-      });
-      return;
-    }
-    const oldPendingAmount = client.pendingPayment - oldBill.subTotal;
-    const updatedClient = await prisma.client.update({
-      where: {
-        id: client.id,
-      },
-      data: {
-        pendingPayment: oldPendingAmount + parseFloat(subTotal || "0"),
-      },
-    });
-    if (updatedClient?.pendingPayment > updatedClient?.creditLimit) {
-      const admin = await prisma.admin.findFirst();
-      if (!admin) {
-        res.status(400).json({
-          message: "Invalid Admin Id",
-        });
-        return;
-      }
-      await prisma.notification.create({
-        data: {
-          adminId: admin.id,
-          requestId: bill.id,
-          title: "Credit Limit",
-          description: `The credit limit of INR ${updatedClient.creditLimit} for the client ${updatedClient.name} has reached. The current outstanding is INR ${updatedClient.pendingPayment}`,
-          message: "",
-          status: "one-time",
-        },
-      });
-    }
-    await clearDashboardCache();
-    await clearAllBillCache();
-    res.status(200).json({
-      message: "Bill Updated",
-    });
-  } catch (error) {
-    res.status(500).json({
-      message: "Internal Server Error",
-    });
-    console.log(error);
-  }
-};
-
 export const filterBillBymonth = async (req: Request, res: Response) => {
   const { startDate, endDate } = req.body;
   if (!startDate || !endDate) {
@@ -702,6 +711,7 @@ export const getBillByBranchId = async (req: Request, res: Response) => {
       },
       include: {
         PaymentRecords: true,
+        Client: true,
       },
       orderBy: {
         date: "asc",
@@ -1265,7 +1275,7 @@ export const updateBillByNotification = async (req: Request, res: Response) => {
         subTotal,
         total,
         totalInWords,
-        pendingAmount: total,
+        pendingAmount: subTotal,
         unloading,
         hamali,
         extraKmWeight,
@@ -1299,7 +1309,7 @@ export const updateBillByNotification = async (req: Request, res: Response) => {
       });
       return;
     }
-    const oldPendingAmount = bill.pendingAmount - bill.total;
+    const oldPendingAmount = bill.pendingAmount - bill.subTotal;
     const updatedClient = await prisma.client.update({
       where: {
         id: client.id,
