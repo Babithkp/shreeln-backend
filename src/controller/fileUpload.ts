@@ -7,7 +7,6 @@ import {
   S3Client,
 } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
-import { Readable } from "stream";
 
 const region = process.env.AWS_REGION;
 const bucketName = process.env.AWS_BUCKET_NAME;
@@ -34,7 +33,7 @@ const s3uploadFile = async (files: any) => {
         params: {
           Bucket: bucketName,
           Key: `lorryReceipts/${file.originalname}`,
-          Body: Readable.from(file.buffer), // convert buffer to stream
+          Body: file.buffer,
         },
       });
 

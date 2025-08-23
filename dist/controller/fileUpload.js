@@ -17,7 +17,6 @@ const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 const client_s3_1 = require("@aws-sdk/client-s3");
 const lib_storage_1 = require("@aws-sdk/lib-storage");
-const stream_1 = require("stream");
 const region = process.env.AWS_REGION;
 const bucketName = process.env.AWS_BUCKET_NAME;
 const accessKeyId = process.env.AWS_ACCESS_ID;
@@ -39,7 +38,7 @@ const s3uploadFile = (files) => __awaiter(void 0, void 0, void 0, function* () {
             params: {
                 Bucket: bucketName,
                 Key: `lorryReceipts/${file.originalname}`,
-                Body: stream_1.Readable.from(file.buffer), // convert buffer to stream
+                Body: file.buffer,
             },
         });
         yield upload.done();
