@@ -22,4 +22,5 @@ branchRouter.get("/getAllRecordPaymentForPage", branch_1.getRecentPaymentsForPag
 branchRouter.get("/getAllRecordPaymentForBranchPage", branch_1.getRecentPaymentsForBranchPage);
 branchRouter.get("/filterRecordPaymentByName/:name", branch_1.filterRecordPaymentByName);
 branchRouter.get("/filterRecordPaymentByNameForBranch/:name/:branchId", branch_1.filterRecordPaymentByNameForBranch);
+branchRouter.get("/getStatementsToExport/:date", branch_1.getAllStatements);
 exports.default = branchRouter;

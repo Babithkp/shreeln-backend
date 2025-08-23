@@ -16,6 +16,7 @@ import {
   getRecentPaymentsForBranchPage,
   filterRecordPaymentByNameForBranch,
   getAllRecordPayment,
+  getAllStatements,
 } from "../controller/branch";
 import { updateBillRecordByNotification } from "../controller/billing";
 
@@ -43,5 +44,7 @@ branchRouter.get(
   "/filterRecordPaymentByNameForBranch/:name/:branchId",
   filterRecordPaymentByNameForBranch
 );
+branchRouter.get("/getStatementsToExport/:date", getAllStatements);
+
 
 export default branchRouter;

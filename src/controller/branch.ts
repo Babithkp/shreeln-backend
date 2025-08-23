@@ -1,5 +1,4 @@
-import { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
+import { Request, Response } from "express";import { PrismaClient } from "@prisma/client";
 import { clearClientCache, redisGetOrSetFunctions } from "./utils/redis";
 
 const prisma = new PrismaClient();
@@ -231,7 +230,7 @@ export const updateclientDetails = async (req: Request, res: Response) => {
           creditLimit: parseFloat(creditLimit),
         },
       });
-      await clearClientCache()
+      await clearClientCache();
       res.status(200).json({
         message: "Client Updated",
       });
@@ -264,7 +263,7 @@ export const deleteClient = async (req: Request, res: Response) => {
           id: client.id,
         },
       });
-      await clearClientCache()
+      await clearClientCache();
       res.status(200).json({
         message: "Client Deleted",
       });
@@ -644,6 +643,53 @@ export const filterRecordPaymentByNameForBranch = async (
       },
     });
     res.status(200).json({ data: paymentRecord });
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+    console.log(error);
+  }
+};
+
+export const getAllStatements = async (req: Request, res: Response) => {
+  const { date } = req.params;
+  try {
+    const payments = await prisma.paymentRecord.findMany({
+      where: {
+        date: {
+          gte: date,
+          lte: date,
+        },
+      },
+      include: {
+        Branches: true,
+      },
+      orderBy: {
+        date: "desc",
+      },
+    });
+
+    const credits = await prisma.credit.findMany({
+      where: {
+        date: {
+          gte: date,
+          lte: date,
+        },
+      },
+      include: {
+        Branches: true,
+      },
+      orderBy: {
+        date: "desc",
+      },
+    });
+
+    const data = {
+      payments,
+      credits,
+    };
+
+    res.status(200).json({ data });
   } catch (error) {
     res.status(500).json({
       message: "Internal Server Error",

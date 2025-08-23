@@ -330,6 +330,7 @@ export const getAllClients = async (req: Request, res: Response) => {
   }
 };
 
+
 export const fectchAdminData = async (req: Request, res: Response) => {
   try {
     const admin = await prisma.admin.findFirst({
@@ -348,6 +349,43 @@ export const fectchAdminData = async (req: Request, res: Response) => {
     console.log(error);
   }
 };
+
+export const changeAdminPassword = async (req: Request, res: Response) => {
+  const { adminPassword, newPassword } = req.body;
+  if (!adminPassword || !newPassword) {
+    res.status(400).json({
+      message: "Invalid Credentials",
+    });
+    return;
+  }
+  try {
+    const admin = await prisma.admin.findFirst();
+    if (admin) {
+      if (admin.password !== adminPassword) {
+        res.status(400).json({
+          message: "Invalid Credentials",
+        });
+        return;
+      }
+      await prisma.admin.update({
+        where: {
+          id: admin.id,
+        },
+        data: {
+          password: newPassword,
+        },
+      });
+      res.status(200).json({
+        message: "Password Changed",
+      });
+    }
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+    console.log(error);
+  }
+}
 
 export const getAllAdminNotifications = async (req: Request, res: Response) => {
   try {

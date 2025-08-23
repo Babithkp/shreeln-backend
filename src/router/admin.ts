@@ -1,6 +1,7 @@
 import express from "express";
 import {
   adminLogin,
+  changeAdminPassword,
   changeBranchPassword,
   createBranch,
   createClient,
@@ -38,5 +39,6 @@ adminRouter.get("/admin/getOtherSettings", getOtherSettings);
 adminRouter.patch("/admin/updateOtherSettings", updateOtherSettings);
 adminRouter.get("/admin/getDashboardData", getDashboardData);
 adminRouter.get("/admin/getDashboardDataForBranch/:id", getDashboardDataForBranch);
+adminRouter.patch("/admin/changeAdminPassword", changeAdminPassword);
 
 export default adminRouter;

@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.filterRecordPaymentByNameForBranch = exports.filterRecordPaymentByName = exports.getRecentPaymentsForBranchPage = exports.getRecentPaymentsForPage = exports.createNotificationForBranch = exports.createNotification = exports.getBranchNotifications = exports.filterBranchBymonth = exports.filterRecordPayment = exports.getAllRecordPayment = exports.deleteClient = exports.updateclientDetails = exports.deleteBranch = exports.updateBranchDetails = exports.getAllBranchDetails = exports.branchLogin = void 0;
+exports.getAllStatements = exports.filterRecordPaymentByNameForBranch = exports.filterRecordPaymentByName = exports.getRecentPaymentsForBranchPage = exports.getRecentPaymentsForPage = exports.createNotificationForBranch = exports.createNotification = exports.getBranchNotifications = exports.filterBranchBymonth = exports.filterRecordPayment = exports.getAllRecordPayment = exports.deleteClient = exports.updateclientDetails = exports.deleteBranch = exports.updateBranchDetails = exports.getAllBranchDetails = exports.branchLogin = void 0;
 const client_1 = require("@prisma/client");
 const redis_1 = require("./utils/redis");
 const prisma = new client_1.PrismaClient();
@@ -616,3 +616,48 @@ const filterRecordPaymentByNameForBranch = (req, res) => __awaiter(void 0, void 
     }
 });
 exports.filterRecordPaymentByNameForBranch = filterRecordPaymentByNameForBranch;
+const getAllStatements = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { date } = req.params;
+    try {
+        const payments = yield prisma.paymentRecord.findMany({
+            where: {
+                date: {
+                    gte: date,
+                    lte: date,
+                },
+            },
+            include: {
+                Branches: true,
+            },
+            orderBy: {
+                date: "desc",
+            },
+        });
+        const credits = yield prisma.credit.findMany({
+            where: {
+                date: {
+                    gte: date,
+                    lte: date,
+                },
+            },
+            include: {
+                Branches: true,
+            },
+            orderBy: {
+                date: "desc",
+            },
+        });
+        const data = {
+            payments,
+            credits,
+        };
+        res.status(200).json({ data });
+    }
+    catch (error) {
+        res.status(500).json({
+            message: "Internal Server Error",
+        });
+        console.log(error);
+    }
+});
+exports.getAllStatements = getAllStatements;

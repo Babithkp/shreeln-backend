@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getDashboardDataForBranch = exports.getDashboardData = exports.updateOtherSettings = exports.getOtherSettings = exports.getBillId = exports.getCreditId = exports.getExpenseId = exports.updateNotification = exports.deleteNotification = exports.getAllAdminNotifications = exports.fectchAdminData = exports.getAllClients = exports.createClient = exports.changeBranchPassword = exports.getBrachersNames = exports.createBranch = exports.adminLogin = exports.createAdmin = void 0;
+exports.getDashboardDataForBranch = exports.getDashboardData = exports.updateOtherSettings = exports.getOtherSettings = exports.getBillId = exports.getCreditId = exports.getExpenseId = exports.updateNotification = exports.deleteNotification = exports.getAllAdminNotifications = exports.changeAdminPassword = exports.fectchAdminData = exports.getAllClients = exports.createClient = exports.changeBranchPassword = exports.getBrachersNames = exports.createBranch = exports.adminLogin = exports.createAdmin = void 0;
 const client_1 = require("@prisma/client");
 const redis_1 = require("./utils/redis");
 const prisma = new client_1.PrismaClient();
@@ -331,6 +331,44 @@ const fectchAdminData = (req, res) => __awaiter(void 0, void 0, void 0, function
     }
 });
 exports.fectchAdminData = fectchAdminData;
+const changeAdminPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { adminPassword, newPassword } = req.body;
+    if (!adminPassword || !newPassword) {
+        res.status(400).json({
+            message: "Invalid Credentials",
+        });
+        return;
+    }
+    try {
+        const admin = yield prisma.admin.findFirst();
+        if (admin) {
+            if (admin.password !== adminPassword) {
+                res.status(400).json({
+                    message: "Invalid Credentials",
+                });
+                return;
+            }
+            yield prisma.admin.update({
+                where: {
+                    id: admin.id,
+                },
+                data: {
+                    password: newPassword,
+                },
+            });
+            res.status(200).json({
+                message: "Password Changed",
+            });
+        }
+    }
+    catch (error) {
+        res.status(500).json({
+            message: "Internal Server Error",
+        });
+        console.log(error);
+    }
+});
+exports.changeAdminPassword = changeAdminPassword;
 const getAllAdminNotifications = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const admin = yield prisma.admin.findFirst();
