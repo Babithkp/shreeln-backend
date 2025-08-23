@@ -16,7 +16,7 @@ exports.deleteLRFile = exports.lorryReceiptsFileUpload = void 0;
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 const client_s3_1 = require("@aws-sdk/client-s3");
-const lib_storage_1 = require("@aws-sdk/lib-storage");
+const s3_request_presigner_1 = require("@aws-sdk/s3-request-presigner");
 const region = process.env.AWS_REGION;
 const bucketName = process.env.AWS_BUCKET_NAME;
 const accessKeyId = process.env.AWS_ACCESS_ID;
@@ -31,29 +31,28 @@ const s3Client = new client_s3_1.S3Client({
         secretAccessKey,
     },
 });
-const s3uploadFile = (files) => __awaiter(void 0, void 0, void 0, function* () {
-    return yield Promise.all(files.map((file) => __awaiter(void 0, void 0, void 0, function* () {
-        const upload = new lib_storage_1.Upload({
-            client: s3Client,
-            params: {
-                Bucket: bucketName,
-                Key: `lorryReceipts/${file.originalname}`,
-                Body: file.buffer,
-            },
-        });
-        yield upload.done();
-        // Construct the public URL (optional)
-        return {
-            fileName: file.originalname,
-            url: `https://${bucketName}.s3.${region}.amazonaws.com/lorryReceipts/${file.originalname}`,
-        };
-    })));
-});
 const lorryReceiptsFileUpload = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const response = yield s3uploadFile(req.files);
-        if (response) {
-            res.status(200).json({ data: response });
+        const { filename, contentType } = req.body;
+        if (!filename || !contentType) {
+            res.status(400).json({ error: "filename and contentType required" });
+            return;
+        }
+        const key = `lorryReceipts/${Date.now()}-${filename}`;
+        const command = new client_s3_1.PutObjectCommand({
+            Bucket: bucketName,
+            Key: key,
+            ContentType: contentType,
+        });
+        const signedUrl = yield (0, s3_request_presigner_1.getSignedUrl)(s3Client, command, {
+            expiresIn: 3600,
+        });
+        if (signedUrl) {
+            const data = {
+                uploadUrl: signedUrl,
+                fileUrl: `https://${bucketName}.s3.${region}.amazonaws.com/${key}`,
+            };
+            res.status(200).json({ data });
         }
     }
     catch (err) {

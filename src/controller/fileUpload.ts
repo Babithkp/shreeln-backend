@@ -3,10 +3,10 @@ dotenv.config();
 import {
   DeleteObjectCommand,
   PutObjectCommand,
-  PutObjectCommandInput,
   S3Client,
 } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 const region = process.env.AWS_REGION;
 const bucketName = process.env.AWS_BUCKET_NAME;
@@ -25,34 +25,30 @@ const s3Client = new S3Client({
     secretAccessKey,
   },
 });
-const s3uploadFile = async (files: any) => {
-  return await Promise.all(
-    files.map(async (file: { originalname: string; buffer: Buffer }) => {
-      const upload = new Upload({
-        client: s3Client,
-        params: {
-          Bucket: bucketName,
-          Key: `lorryReceipts/${file.originalname}`,
-          Body: file.buffer,
-        },
-      });
-
-      await upload.done();
-
-      // Construct the public URL (optional)
-      return {
-        fileName: file.originalname,
-        url: `https://${bucketName}.s3.${region}.amazonaws.com/lorryReceipts/${file.originalname}`,
-      };
-    })
-  );
-};
 
 export const lorryReceiptsFileUpload = async (req: Request, res: Response) => {
   try {
-    const response = await s3uploadFile(req.files);
-    if (response) {
-      res.status(200).json({ data: response });
+    const { filename, contentType } = req.body;
+
+    if (!filename || !contentType) {
+      res.status(400).json({ error: "filename and contentType required" });
+      return;
+    }
+    const key = `lorryReceipts/${Date.now()}-${filename}`;
+    const command = new PutObjectCommand({
+      Bucket: bucketName,
+      Key: key,
+      ContentType: contentType as string,
+    });
+    const signedUrl = await getSignedUrl(s3Client as any, command as any, {
+      expiresIn: 3600,
+    });
+    if (signedUrl) {
+      const data = {
+        uploadUrl: signedUrl,
+        fileUrl: `https://${bucketName}.s3.${region}.amazonaws.com/${key}`,
+      };
+      res.status(200).json({ data });
     }
   } catch (err) {
     console.log(err);
