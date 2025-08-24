@@ -93,21 +93,9 @@ exports.createExpense = createExpense;
 const getAllExpenses = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const expenses = yield prisma.expense.findMany({
-            include: {
-                Branches: {
-                    select: {
-                        branchName: true,
-                    },
-                },
-                Admin: {
-                    select: {
-                        branchName: true,
-                    },
-                },
-            },
-            orderBy: {
-                date: "desc",
-            },
+            select: {
+                amount: true,
+            }
         });
         res.status(200).json({ data: expenses });
     }

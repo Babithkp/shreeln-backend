@@ -111,21 +111,9 @@ export const createExpense = async (req: Request, res: Response) => {
 export const getAllExpenses = async (req: Request, res: Response) => {
   try {
     const expenses = await prisma.expense.findMany({
-      include: {
-        Branches: {
-          select: {
-            branchName: true,
-          },
-        },
-        Admin: {
-          select: {
-            branchName: true,
-          },
-        },
-      },
-      orderBy: {
-        date: "desc",
-      },
+      select:{
+        amount: true,
+      }
     });
     res.status(200).json({ data: expenses });
   } catch (error) {
