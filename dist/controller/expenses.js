@@ -497,9 +497,7 @@ const getCreditByPage = (req, res) => __awaiter(void 0, void 0, void 0, function
         const data = yield (0, redis_1.redisGetOrSetFunctions)({
             key: `credit-data-${page}-${skip}`,
             fetchFunction: () => __awaiter(void 0, void 0, void 0, function* () {
-                const creditCount = yield prisma.credit.count({
-                    where: whereClause,
-                });
+                const creditCount = yield prisma.credit.count();
                 const creditData = yield prisma.credit.findMany({
                     skip,
                     take: limit,

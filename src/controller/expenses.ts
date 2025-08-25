@@ -563,9 +563,7 @@ export const getCreditByPage = async (req: Request, res: Response) => {
     const data = await redisGetOrSetFunctions({
       key: `credit-data-${page}-${skip}`,
       fetchFunction: async () => {
-        const creditCount = await prisma.credit.count({
-          where: whereClause,
-        });
+        const creditCount = await prisma.credit.count();
         const creditData = await prisma.credit.findMany({
           skip,
           take: limit,
