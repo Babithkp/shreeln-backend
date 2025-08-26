@@ -1,4 +1,5 @@
-import { Request, Response } from "express";import { PrismaClient } from "@prisma/client";
+import { Request, Response } from "express";
+import { PrismaClient } from "@prisma/client";
 import { LRData, LREmailBody, sendLREmailToClient } from "./utils/LREmail";
 import { FMData, FMEmailBody, sendFMEmailToClient } from "./utils/FMEmail";
 import {
@@ -160,7 +161,7 @@ export const createLR = async (req: Request, res: Response) => {
         clientId: clients.id,
       },
     });
-    await clearLRCache()
+    await clearLRCache();
     res.status(200).json({
       message: "LR Created",
     });
@@ -419,7 +420,7 @@ export const deleteLR = async (req: Request, res: Response) => {
           id: lr.id,
         },
       });
-      await clearLRCache()
+      await clearLRCache();
       res.status(200).json({
         message: "LR Deleted",
       });
@@ -574,7 +575,7 @@ export const updateLR = async (req: Request, res: Response) => {
           clientId: clients.id,
         },
       });
-      await clearLRCache()
+      await clearLRCache();
       res.status(200).json({
         message: "LR Updated",
       });
@@ -1869,7 +1870,7 @@ export const updateLRByNotification = async (req: Request, res: Response) => {
       });
       return;
     }
-    await clearLRCache()
+    await clearLRCache();
     res.status(200).json({
       message: "LR Updated",
     });
@@ -1884,6 +1885,9 @@ export const updateLRByNotification = async (req: Request, res: Response) => {
 export const updateFMByNotification = async (req: Request, res: Response) => {
   const { id } = req.params;
   const { data } = req.body;
+  if (data?.netBalance) {
+    data.outStandingBalance = data.netBalance;
+  }
 
   if (!id) {
     res.status(400).json({
@@ -2011,7 +2015,7 @@ export const deleteLRByNotification = async (req: Request, res: Response) => {
       });
       return;
     }
-    await clearLRCache()
+    await clearLRCache();
     res.status(200).json({
       message: "LR Deleted",
     });

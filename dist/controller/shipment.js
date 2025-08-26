@@ -1615,6 +1615,9 @@ exports.updateLRByNotification = updateLRByNotification;
 const updateFMByNotification = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
     const { data } = req.body;
+    if (data === null || data === void 0 ? void 0 : data.netBalance) {
+        data.outStandingBalance = data.netBalance;
+    }
     if (!id) {
         res.status(400).json({
             message: "Invalid FM Id",
