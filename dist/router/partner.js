@@ -16,7 +16,8 @@ parnterRouter.patch("/partner/updateVehicle/:id", partner_1.updateVehicleDetails
 parnterRouter.delete("/partner/deleteVehicle/:id", partner_1.deleteVehicle);
 parnterRouter.post("/partner/getVehicleById/:id", partner_1.getVehicleById);
 parnterRouter.post("/partner/getBillLRForClient", partner_1.getBillLRForClient);
-parnterRouter.post("/partner/filterFMLRByVendor/:branchId", partner_1.filterFMLRByVendor);
+parnterRouter.post("/partner/filterFMLRByVendor/:branchId", partner_1.filterFMLRByVendorForBranch);
+parnterRouter.post("/partner/filterFMLRByVendor", partner_1.filterFMLRByVendor);
 parnterRouter.get("/partner/getVendorForPage", partner_1.getVendorForPage);
 parnterRouter.get("/partner/filterVendorByName/:name", partner_1.filterVendorByName);
 parnterRouter.get("/partner/getClientForPage", partner_1.getClientForPage);

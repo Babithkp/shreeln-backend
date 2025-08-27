@@ -5,6 +5,7 @@ import express from "express";import {
   deleteVendor,
   filterClientByName,
   filterFMLRByVendor,
+  filterFMLRByVendorForBranch,
   filterVendorByName,
   getAllVehicles,
   getAllVendors,
@@ -27,7 +28,8 @@ parnterRouter.patch("/partner/updateVehicle/:id", updateVehicleDetails);
 parnterRouter.delete("/partner/deleteVehicle/:id", deleteVehicle);
 parnterRouter.post("/partner/getVehicleById/:id", getVehicleById);
 parnterRouter.post("/partner/getBillLRForClient", getBillLRForClient);  
-parnterRouter.post("/partner/filterFMLRByVendor/:branchId", filterFMLRByVendor);
+parnterRouter.post("/partner/filterFMLRByVendor/:branchId", filterFMLRByVendorForBranch);
+parnterRouter.post("/partner/filterFMLRByVendor", filterFMLRByVendor);
 parnterRouter.get("/partner/getVendorForPage", getVendorForPage);
 parnterRouter.get("/partner/filterVendorByName/:name", filterVendorByName);
 parnterRouter.get("/partner/getClientForPage", getClientForPage);

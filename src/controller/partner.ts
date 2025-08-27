@@ -488,7 +488,7 @@ export const getBillLRForClient = async (req: Request, res: Response) => {
   }
 };
 
-export const filterFMLRByVendor = async (req: Request, res: Response) => {
+export const  filterFMLRByVendorForBranch = async (req: Request, res: Response) => {
   const { name, from, to } = req.body;
   const { branchId } = req.params;
 
@@ -505,6 +505,65 @@ export const filterFMLRByVendor = async (req: Request, res: Response) => {
     const FMs = await prisma.fM.findMany({
       where: {
         ...(branchId ? { branchId } : {}),
+        vendorName: vendor.name,
+        ...(from || to
+          ? {
+              date: {
+                ...(from ? { gte: from } : {}),
+                ...(to ? { lte: to } : {}),
+              },
+            }
+          : {}),
+      },
+    });
+    const lrNumbers = FMs.flatMap((fm) =>
+      fm.LRDetails.map((lr) => lr.lrNumber)
+    );
+
+    const LRs = await prisma.lR.findMany({
+      where: {
+        lrNumber: {
+          in: lrNumbers,
+        },
+      },
+      include: {
+        Vehicle: {
+          select: {
+            vehicleNumber: true,
+          },
+        },
+        pod: true,
+      },
+    });
+
+    const data = {
+      FMs,
+      LRs: LRs.filter((lr) => lr.pod.length == 0),
+    };
+
+    res.status(200).json({ data });
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+    console.log(error);
+  }
+};
+export const  filterFMLRByVendor = async (req: Request, res: Response) => {
+  const { name, from, to } = req.body;
+
+  try {
+    const vendor = await prisma.vendors.findUnique({
+      where: { name },
+    });
+
+    if (!vendor) {
+      res.status(404).json({ message: "Vendor not found" });
+      return;
+    }
+
+    const FMs = await prisma.fM.findMany({
+      where: {
         vendorName: vendor.name,
         ...(from || to
           ? {

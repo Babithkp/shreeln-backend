@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.filterClientByName = exports.getClientForPage = exports.filterVendorByName = exports.getVendorForPage = exports.filterFMLRByVendor = exports.getBillLRForClient = exports.deleteVehicle = exports.updateVehicleDetails = exports.getVehicleById = exports.getAllVehicles = exports.createVehicle = exports.deleteVendor = exports.updateVendorDetails = exports.getAllVendors = exports.createVendor = void 0;
+exports.filterClientByName = exports.getClientForPage = exports.filterVendorByName = exports.getVendorForPage = exports.filterFMLRByVendor = exports.filterFMLRByVendorForBranch = exports.getBillLRForClient = exports.deleteVehicle = exports.updateVehicleDetails = exports.getVehicleById = exports.getAllVehicles = exports.createVehicle = exports.deleteVendor = exports.updateVendorDetails = exports.getAllVendors = exports.createVendor = void 0;
 const client_1 = require("@prisma/client");
 const redis_1 = require("./utils/redis");
 const prisma = new client_1.PrismaClient();
@@ -445,7 +445,7 @@ const getBillLRForClient = (req, res) => __awaiter(void 0, void 0, void 0, funct
     }
 });
 exports.getBillLRForClient = getBillLRForClient;
-const filterFMLRByVendor = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const filterFMLRByVendorForBranch = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { name, from, to } = req.body;
     const { branchId } = req.params;
     try {
@@ -458,6 +458,53 @@ const filterFMLRByVendor = (req, res) => __awaiter(void 0, void 0, void 0, funct
         }
         const FMs = yield prisma.fM.findMany({
             where: Object.assign(Object.assign(Object.assign({}, (branchId ? { branchId } : {})), { vendorName: vendor.name }), (from || to
+                ? {
+                    date: Object.assign(Object.assign({}, (from ? { gte: from } : {})), (to ? { lte: to } : {})),
+                }
+                : {})),
+        });
+        const lrNumbers = FMs.flatMap((fm) => fm.LRDetails.map((lr) => lr.lrNumber));
+        const LRs = yield prisma.lR.findMany({
+            where: {
+                lrNumber: {
+                    in: lrNumbers,
+                },
+            },
+            include: {
+                Vehicle: {
+                    select: {
+                        vehicleNumber: true,
+                    },
+                },
+                pod: true,
+            },
+        });
+        const data = {
+            FMs,
+            LRs: LRs.filter((lr) => lr.pod.length == 0),
+        };
+        res.status(200).json({ data });
+    }
+    catch (error) {
+        res.status(500).json({
+            message: "Internal Server Error",
+        });
+        console.log(error);
+    }
+});
+exports.filterFMLRByVendorForBranch = filterFMLRByVendorForBranch;
+const filterFMLRByVendor = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { name, from, to } = req.body;
+    try {
+        const vendor = yield prisma.vendors.findUnique({
+            where: { name },
+        });
+        if (!vendor) {
+            res.status(404).json({ message: "Vendor not found" });
+            return;
+        }
+        const FMs = yield prisma.fM.findMany({
+            where: Object.assign({ vendorName: vendor.name }, (from || to
                 ? {
                     date: Object.assign(Object.assign({}, (from ? { gte: from } : {})), (to ? { lte: to } : {})),
                 }
