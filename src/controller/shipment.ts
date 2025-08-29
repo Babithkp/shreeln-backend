@@ -1883,7 +1883,42 @@ export const updateLRByNotification = async (req: Request, res: Response) => {
 
 export const updateFMByNotification = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { data } = req.body;
+  const {
+    fmNumber,
+    date,
+    from,
+    to,
+    vehicleNo,
+    vehicleType,
+    weight,
+    package: packages,
+    vendorName,
+    ContactPerson,
+    DriverName,
+    contactNumber,
+    ownerName,
+    TDS,
+    insturance,
+    Rc,
+    advance,
+    hire,
+    balance,
+    otherCharges,
+    detentionCharges,
+    rtoCharges,
+    tds,
+    netBalance,
+    amountInwords,
+    dlNumber,
+    driverSignature,
+    LRDetails,
+    vendorsId,
+    payableAt,
+    ftl,
+    sizeL,
+    sizeW,
+    sizeH,
+  } = req.body;
 
   if (!id) {
     res.status(400).json({
@@ -1897,19 +1932,114 @@ export const updateFMByNotification = async (req: Request, res: Response) => {
       where: {
         fmNumber: id,
       },
+      include: {
+        Vendors: true,
+      },
     });
     if (fm) {
-      if (data?.netBalance) {
-        data.outStandingBalance = data.netBalance + fm.outStandingAdvance;
-      }
+      const value =
+        parseFloat(hire || "0") +
+        parseFloat(otherCharges || "0") +
+        parseFloat(detentionCharges || "0") +
+        parseFloat(rtoCharges || "0");
+
+      const finalValue = value - parseFloat(tds || "0");
+      const newOutstanding =
+        finalValue -
+        ((fm.zeroToThirty || 0) +
+          (fm.thirtyToSixty || 0) +
+          (fm.sixtyToNinety || 0) +
+          (fm.ninetyPlus || 0));
+      const updateData: any = {
+        fmNumber,
+        date,
+        from,
+        to,
+        vehicleNo,
+        vehicleType,
+        weight,
+        package: packages,
+        vendorName,
+        ContactPerson,
+        DriverName,
+        contactNumber,
+        ownerName,
+        TDS,
+        insturance,
+        Rc,
+        advance,
+        hire,
+        balance,
+        otherCharges,
+        detentionCharges,
+        rtoCharges,
+        tds,
+        netBalance,
+        payableAt,
+        ftl,
+        sizeL,
+        sizeW,
+        sizeH,
+        outStandingBalance: newOutstanding?.toString() ?? null,
+        outStandingAdvance: advance ? parseFloat(advance) : null,
+        amountInwords,
+        dlNumber,
+        driverSignature,
+        LRDetails,
+      };
+      Object.keys(updateData).forEach(
+        (key) =>
+          (updateData[key] === undefined || updateData[key] === null) &&
+          delete updateData[key]
+      );
       const updated = await prisma.fM.update({
         where: {
           id: fm.id,
         },
+        data: updateData,
+      });
+      const oldValue =
+        parseFloat(fm.hire || "0") +
+        parseFloat(fm.otherCharges || "0") +
+        parseFloat(fm.detentionCharges || "0") +
+        parseFloat(fm.rtoCharges || "0");
+      const finalOldValue = oldValue - parseFloat(fm.tds || "0");
+      const oldOutstanding =
+        (fm.Vendors?.currentOutStanding || 0) - finalOldValue;
+
+      const updatedVendor = await prisma.vendors.update({
+        where: {
+          id: fm.Vendors?.id,
+        },
         data: {
-          ...data,
+          currentOutStanding: oldOutstanding + finalValue,
         },
       });
+      if (updatedVendor?.currentOutStanding > updatedVendor?.outstandingLimit) {
+        const admin = await prisma.admin.findFirst();
+        if (!admin) {
+          res.status(400).json({
+            message: "Invalid Admin Id",
+          });
+          return;
+        }
+        await prisma.notification.create({
+          data: {
+            adminId: admin.id,
+            requestId: fm.id,
+            title: "Outstanding limit",
+            description: `The outstanding limit of INR ${
+              fm.Vendors?.outstandingLimit
+            } for the vendor ${
+              fm.Vendors?.name
+            } has reached. The current outstanding is INR ${fm.Vendors?.currentOutStanding.toFixed(
+              2
+            )}`,
+            message: "",
+            status: "one-time",
+          },
+        });
+      }
       if (updated) {
         await prisma.notification.create({
           data: {
