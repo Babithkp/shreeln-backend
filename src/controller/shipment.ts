@@ -1,5 +1,4 @@
-import { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
+import { Request, Response } from "express";import { PrismaClient } from "@prisma/client";
 import { LRData, LREmailBody, sendLREmailToClient } from "./utils/LREmail";
 import { FMData, FMEmailBody, sendFMEmailToClient } from "./utils/FMEmail";
 import {
@@ -1885,9 +1884,6 @@ export const updateLRByNotification = async (req: Request, res: Response) => {
 export const updateFMByNotification = async (req: Request, res: Response) => {
   const { id } = req.params;
   const { data } = req.body;
-  if (data?.netBalance) {
-    data.outStandingBalance = data.netBalance;
-  }
 
   if (!id) {
     res.status(400).json({
@@ -1895,6 +1891,7 @@ export const updateFMByNotification = async (req: Request, res: Response) => {
     });
     return;
   }
+
   try {
     const fm = await prisma.fM.findUnique({
       where: {
@@ -1902,6 +1899,9 @@ export const updateFMByNotification = async (req: Request, res: Response) => {
       },
     });
     if (fm) {
+      if (data?.netBalance) {
+        data.outStandingBalance = data.netBalance + fm.outStandingAdvance;
+      }
       const updated = await prisma.fM.update({
         where: {
           id: fm.id,
