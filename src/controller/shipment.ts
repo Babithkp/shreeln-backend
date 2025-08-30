@@ -1230,12 +1230,17 @@ export const updateFM = async (req: Request, res: Response) => {
         parseFloat(rtoCharges || "0");
 
       const finalValue = value - parseFloat(tds || "0");
-      const newOutstanding =
-        finalValue -
-        ((fm.zeroToThirty || 0) +
-          (fm.thirtyToSixty || 0) +
-          (fm.sixtyToNinety || 0) +
-          (fm.ninetyPlus || 0));
+      const paidAmount =
+        (fm.zeroToThirty || 0) +
+        (fm.thirtyToSixty || 0) +
+        (fm.sixtyToNinety || 0) +
+        (fm.ninetyPlus || 0);
+      const newOutstanding = finalValue - paidAmount;
+      let newOutstandingAdvance = 0;
+      if (paidAmount <= advance) {
+        const remaining = advance - paidAmount;
+        newOutstandingAdvance = remaining < 0 ? 0 : remaining;
+      }
 
       await prisma.fM.update({
         where: {
@@ -1272,7 +1277,7 @@ export const updateFM = async (req: Request, res: Response) => {
           sizeW,
           sizeH,
           outStandingBalance: newOutstanding.toString(),
-          outStandingAdvance: advance ? parseFloat(advance || "0") : 0,
+          outStandingAdvance: newOutstandingAdvance,
           amountInwords,
           dlNumber,
           driverSignature,
@@ -1912,7 +1917,6 @@ export const updateFMByNotification = async (req: Request, res: Response) => {
     dlNumber,
     driverSignature,
     LRDetails,
-    vendorsId,
     payableAt,
     ftl,
     sizeL,
@@ -1943,13 +1947,21 @@ export const updateFMByNotification = async (req: Request, res: Response) => {
         parseFloat(detentionCharges || "0") +
         parseFloat(rtoCharges || "0");
 
+      const paidAmount =
+        (fm.zeroToThirty || 0) +
+        (fm.thirtyToSixty || 0) +
+        (fm.sixtyToNinety || 0) +
+        (fm.ninetyPlus || 0);
+
       const finalValue = value - parseFloat(tds || "0");
-      const newOutstanding =
-        finalValue -
-        ((fm.zeroToThirty || 0) +
-          (fm.thirtyToSixty || 0) +
-          (fm.sixtyToNinety || 0) +
-          (fm.ninetyPlus || 0));
+      const newOutstanding = finalValue - paidAmount;
+
+      let newOutstandingAdvance = 0;
+      if (paidAmount <= advance) {
+        const remaining = advance - paidAmount;
+        newOutstandingAdvance = remaining < 0 ? 0 : remaining;
+      }
+
       const updateData: any = {
         fmNumber,
         date,
@@ -1981,7 +1993,7 @@ export const updateFMByNotification = async (req: Request, res: Response) => {
         sizeW,
         sizeH,
         outStandingBalance: newOutstanding?.toString() ?? null,
-        outStandingAdvance: advance ? parseFloat(advance) : null,
+        outStandingAdvance: newOutstandingAdvance ?? null,
         amountInwords,
         dlNumber,
         driverSignature,
