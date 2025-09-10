@@ -198,13 +198,13 @@ const updateBillDetails = (req, res) => __awaiter(void 0, void 0, void 0, functi
                 total,
                 totalInWords,
                 pendingAmount: subTotal,
-                unloading,
-                hamali,
-                extraKmWeight,
-                detention,
-                weightment,
+                unloading: null,
+                hamali: null,
+                extraKmWeight: null,
+                detention: null,
+                weightment: null,
                 others: null,
-                otherCharges,
+                otherCharges: null,
                 lrData: {
                     set: [],
                 },
@@ -213,7 +213,13 @@ const updateBillDetails = (req, res) => __awaiter(void 0, void 0, void 0, functi
         yield prisma.bill.update({
             where: { id },
             data: {
-                others: others,
+                unloading,
+                hamali,
+                extraKmWeight,
+                detention,
+                weightment,
+                others,
+                otherCharges,
                 lrData: {
                     connect: lrData.map((lr) => ({ id: lr.id })),
                 },
@@ -1047,6 +1053,7 @@ exports.deletePaymentRecordFromBill = deletePaymentRecordFromBill;
 const updateBillByNotification = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { billId } = req.body;
     const { billNumber, date, dueDate, hsnSacCode, placeOfSupply, state, statecode, lrData, igstRate, cgstRate, sgstRate, subTotal, total, totalInWords, unloading, hamali, extraKmWeight, detention, weightment, others, otherCharges, } = req.body.data;
+    console.log(otherCharges);
     if (!billNumber ||
         !date ||
         !hsnSacCode ||
@@ -1081,6 +1088,22 @@ const updateBillByNotification = (req, res) => __awaiter(void 0, void 0, void 0,
                 total,
                 totalInWords,
                 pendingAmount: subTotal,
+                unloading: null,
+                hamali: null,
+                extraKmWeight: null,
+                detention: null,
+                weightment: null,
+                others: null,
+                otherCharges: null,
+                lrData: {
+                    set: [],
+                },
+            },
+        });
+        console.log(bill);
+        yield prisma.bill.update({
+            where: { billNumber: billId },
+            data: {
                 unloading,
                 hamali,
                 extraKmWeight,
@@ -1088,14 +1111,6 @@ const updateBillByNotification = (req, res) => __awaiter(void 0, void 0, void 0,
                 weightment,
                 others,
                 otherCharges,
-                lrData: {
-                    set: [],
-                },
-            },
-        });
-        yield prisma.bill.update({
-            where: { billNumber: billId },
-            data: {
                 lrData: {
                     connect: lrData.map((lr) => ({ id: lr.id })),
                 },

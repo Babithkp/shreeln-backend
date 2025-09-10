@@ -1889,14 +1889,13 @@ export const updateLRByNotification = async (req: Request, res: Response) => {
 export const updateFMByNotification = async (req: Request, res: Response) => {
   const { id } = req.params;
   const {
-    fmNumber,
     date,
     from,
     to,
     vehicleNo,
     vehicleType,
     weight,
-    package: packages,
+    packages,
     vendorName,
     ContactPerson,
     DriverName,
@@ -1924,22 +1923,25 @@ export const updateFMByNotification = async (req: Request, res: Response) => {
     sizeH,
   } = req.body;
 
-  if (!id) {
-    res.status(400).json({
-      message: "Invalid FM Id",
-    });
-    return;
-  }
+  
 
   try {
     const fm = await prisma.fM.findUnique({
       where: {
         fmNumber: id,
       },
-      include: {
-        Vendors: true,
+    });
+    const vendor = await prisma.vendors.findUnique({
+      where: {
+        id: fm?.vendorsId!,
       },
     });
+    if (!vendor) {
+      res.status(400).json({
+        message: "Invalid Vendor Id",
+      });
+      return;
+    }
     if (fm) {
       const value =
         parseFloat(hire || "0") +
@@ -1947,68 +1949,59 @@ export const updateFMByNotification = async (req: Request, res: Response) => {
         parseFloat(detentionCharges || "0") +
         parseFloat(rtoCharges || "0");
 
+      const finalValue = value - parseFloat(tds || "0");
       const paidAmount =
         (fm.zeroToThirty || 0) +
         (fm.thirtyToSixty || 0) +
         (fm.sixtyToNinety || 0) +
         (fm.ninetyPlus || 0);
-
-      const finalValue = value - parseFloat(tds || "0");
       const newOutstanding = finalValue - paidAmount;
-
       let newOutstandingAdvance = 0;
       if (paidAmount <= advance) {
         const remaining = advance - paidAmount;
         newOutstandingAdvance = remaining < 0 ? 0 : remaining;
       }
 
-      const updateData: any = {
-        fmNumber,
-        date,
-        from,
-        to,
-        vehicleNo,
-        vehicleType,
-        weight,
-        package: packages,
-        vendorName,
-        ContactPerson,
-        DriverName,
-        contactNumber,
-        ownerName,
-        TDS,
-        insturance,
-        Rc,
-        advance,
-        hire,
-        balance,
-        otherCharges,
-        detentionCharges,
-        rtoCharges,
-        tds,
-        netBalance,
-        payableAt,
-        ftl,
-        sizeL,
-        sizeW,
-        sizeH,
-        outStandingBalance: newOutstanding?.toString() ?? null,
-        outStandingAdvance: newOutstandingAdvance ?? null,
-        amountInwords,
-        dlNumber,
-        driverSignature,
-        LRDetails,
-      };
-      Object.keys(updateData).forEach(
-        (key) =>
-          (updateData[key] === undefined || updateData[key] === null) &&
-          delete updateData[key]
-      );
-      const updated = await prisma.fM.update({
+      await prisma.fM.update({
         where: {
           id: fm.id,
         },
-        data: updateData,
+        data: {
+          date,
+          from,
+          to,
+          vehicleNo,
+          vehicleType,
+          weight,
+          package: packages,
+          vendorName,
+          ContactPerson,
+          DriverName,
+          contactNumber,
+          ownerName,
+          TDS,
+          insturance,
+          Rc,
+          advance,
+          hire,
+          balance,
+          otherCharges,
+          detentionCharges,
+          rtoCharges,
+          tds,
+          netBalance,
+          payableAt,
+          ftl,
+          sizeL,
+          sizeW,
+          sizeH,
+          outStandingBalance: newOutstanding.toString(),
+          outStandingAdvance: newOutstandingAdvance,
+          amountInwords,
+          dlNumber,
+          driverSignature,
+          LRDetails,
+        },
       });
       const oldValue =
         parseFloat(fm.hire || "0") +
@@ -2016,12 +2009,11 @@ export const updateFMByNotification = async (req: Request, res: Response) => {
         parseFloat(fm.detentionCharges || "0") +
         parseFloat(fm.rtoCharges || "0");
       const finalOldValue = oldValue - parseFloat(fm.tds || "0");
-      const oldOutstanding =
-        (fm.Vendors?.currentOutStanding || 0) - finalOldValue;
+      const oldOutstanding = vendor.currentOutStanding - finalOldValue;
 
       const updatedVendor = await prisma.vendors.update({
         where: {
-          id: fm.Vendors?.id,
+          id: vendor.id,
         },
         data: {
           currentOutStanding: oldOutstanding + finalValue,
@@ -2041,10 +2033,10 @@ export const updateFMByNotification = async (req: Request, res: Response) => {
             requestId: fm.id,
             title: "Outstanding limit",
             description: `The outstanding limit of INR ${
-              fm.Vendors?.outstandingLimit
+              vendor.outstandingLimit
             } for the vendor ${
-              fm.Vendors?.name
-            } has reached. The current outstanding is INR ${fm.Vendors?.currentOutStanding.toFixed(
+              vendor.name
+            } has reached. The current outstanding is INR ${vendor.currentOutStanding.toFixed(
               2
             )}`,
             message: "",
@@ -2052,24 +2044,8 @@ export const updateFMByNotification = async (req: Request, res: Response) => {
           },
         });
       }
-      if (updated) {
-        await prisma.notification.create({
-          data: {
-            branchesId: fm.branchId,
-            requestId: fm.fmNumber,
-            title: "FM",
-            status: "approved",
-            description: "Approved",
-          },
-        });
-      }
-    } else {
-      res.status(400).json({
-        message: "FM Updated failed",
-      });
-      return;
     }
-    await clearFMCache();
+      await clearFMCache();
     res.status(200).json({
       message: "FM Updated",
     });

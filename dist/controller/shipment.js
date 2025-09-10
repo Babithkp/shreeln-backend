@@ -1618,94 +1618,91 @@ const updateLRByNotification = (req, res) => __awaiter(void 0, void 0, void 0, f
 });
 exports.updateLRByNotification = updateLRByNotification;
 const updateFMByNotification = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c, _d, _e, _f;
     const { id } = req.params;
-    const { fmNumber, date, from, to, vehicleNo, vehicleType, weight, package: packages, vendorName, ContactPerson, DriverName, contactNumber, ownerName, TDS, insturance, Rc, advance, hire, balance, otherCharges, detentionCharges, rtoCharges, tds, netBalance, amountInwords, dlNumber, driverSignature, LRDetails, payableAt, ftl, sizeL, sizeW, sizeH, } = req.body;
-    if (!id) {
-        res.status(400).json({
-            message: "Invalid FM Id",
-        });
-        return;
-    }
+    const { date, from, to, vehicleNo, vehicleType, weight, packages, vendorName, ContactPerson, DriverName, contactNumber, ownerName, TDS, insturance, Rc, advance, hire, balance, otherCharges, detentionCharges, rtoCharges, tds, netBalance, amountInwords, dlNumber, driverSignature, LRDetails, payableAt, ftl, sizeL, sizeW, sizeH, } = req.body;
     try {
         const fm = yield prisma.fM.findUnique({
             where: {
                 fmNumber: id,
             },
-            include: {
-                Vendors: true,
+        });
+        const vendor = yield prisma.vendors.findUnique({
+            where: {
+                id: fm === null || fm === void 0 ? void 0 : fm.vendorsId,
             },
         });
+        if (!vendor) {
+            res.status(400).json({
+                message: "Invalid Vendor Id",
+            });
+            return;
+        }
         if (fm) {
             const value = parseFloat(hire || "0") +
                 parseFloat(otherCharges || "0") +
                 parseFloat(detentionCharges || "0") +
                 parseFloat(rtoCharges || "0");
+            const finalValue = value - parseFloat(tds || "0");
             const paidAmount = (fm.zeroToThirty || 0) +
                 (fm.thirtyToSixty || 0) +
                 (fm.sixtyToNinety || 0) +
                 (fm.ninetyPlus || 0);
-            const finalValue = value - parseFloat(tds || "0");
             const newOutstanding = finalValue - paidAmount;
             let newOutstandingAdvance = 0;
             if (paidAmount <= advance) {
                 const remaining = advance - paidAmount;
                 newOutstandingAdvance = remaining < 0 ? 0 : remaining;
             }
-            const updateData = {
-                fmNumber,
-                date,
-                from,
-                to,
-                vehicleNo,
-                vehicleType,
-                weight,
-                package: packages,
-                vendorName,
-                ContactPerson,
-                DriverName,
-                contactNumber,
-                ownerName,
-                TDS,
-                insturance,
-                Rc,
-                advance,
-                hire,
-                balance,
-                otherCharges,
-                detentionCharges,
-                rtoCharges,
-                tds,
-                netBalance,
-                payableAt,
-                ftl,
-                sizeL,
-                sizeW,
-                sizeH,
-                outStandingBalance: (_a = newOutstanding === null || newOutstanding === void 0 ? void 0 : newOutstanding.toString()) !== null && _a !== void 0 ? _a : null,
-                outStandingAdvance: newOutstandingAdvance !== null && newOutstandingAdvance !== void 0 ? newOutstandingAdvance : null,
-                amountInwords,
-                dlNumber,
-                driverSignature,
-                LRDetails,
-            };
-            Object.keys(updateData).forEach((key) => (updateData[key] === undefined || updateData[key] === null) &&
-                delete updateData[key]);
-            const updated = yield prisma.fM.update({
+            yield prisma.fM.update({
                 where: {
                     id: fm.id,
                 },
-                data: updateData,
+                data: {
+                    date,
+                    from,
+                    to,
+                    vehicleNo,
+                    vehicleType,
+                    weight,
+                    package: packages,
+                    vendorName,
+                    ContactPerson,
+                    DriverName,
+                    contactNumber,
+                    ownerName,
+                    TDS,
+                    insturance,
+                    Rc,
+                    advance,
+                    hire,
+                    balance,
+                    otherCharges,
+                    detentionCharges,
+                    rtoCharges,
+                    tds,
+                    netBalance,
+                    payableAt,
+                    ftl,
+                    sizeL,
+                    sizeW,
+                    sizeH,
+                    outStandingBalance: newOutstanding.toString(),
+                    outStandingAdvance: newOutstandingAdvance,
+                    amountInwords,
+                    dlNumber,
+                    driverSignature,
+                    LRDetails,
+                },
             });
             const oldValue = parseFloat(fm.hire || "0") +
                 parseFloat(fm.otherCharges || "0") +
                 parseFloat(fm.detentionCharges || "0") +
                 parseFloat(fm.rtoCharges || "0");
             const finalOldValue = oldValue - parseFloat(fm.tds || "0");
-            const oldOutstanding = (((_b = fm.Vendors) === null || _b === void 0 ? void 0 : _b.currentOutStanding) || 0) - finalOldValue;
+            const oldOutstanding = vendor.currentOutStanding - finalOldValue;
             const updatedVendor = yield prisma.vendors.update({
                 where: {
-                    id: (_c = fm.Vendors) === null || _c === void 0 ? void 0 : _c.id,
+                    id: vendor.id,
                 },
                 data: {
                     currentOutStanding: oldOutstanding + finalValue,
@@ -1724,29 +1721,12 @@ const updateFMByNotification = (req, res) => __awaiter(void 0, void 0, void 0, f
                         adminId: admin.id,
                         requestId: fm.id,
                         title: "Outstanding limit",
-                        description: `The outstanding limit of INR ${(_d = fm.Vendors) === null || _d === void 0 ? void 0 : _d.outstandingLimit} for the vendor ${(_e = fm.Vendors) === null || _e === void 0 ? void 0 : _e.name} has reached. The current outstanding is INR ${(_f = fm.Vendors) === null || _f === void 0 ? void 0 : _f.currentOutStanding.toFixed(2)}`,
+                        description: `The outstanding limit of INR ${vendor.outstandingLimit} for the vendor ${vendor.name} has reached. The current outstanding is INR ${vendor.currentOutStanding.toFixed(2)}`,
                         message: "",
                         status: "one-time",
                     },
                 });
             }
-            if (updated) {
-                yield prisma.notification.create({
-                    data: {
-                        branchesId: fm.branchId,
-                        requestId: fm.fmNumber,
-                        title: "FM",
-                        status: "approved",
-                        description: "Approved",
-                    },
-                });
-            }
-        }
-        else {
-            res.status(400).json({
-                message: "FM Updated failed",
-            });
-            return;
         }
         yield (0, redis_1.clearFMCache)();
         res.status(200).json({
