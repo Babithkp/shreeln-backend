@@ -41,8 +41,11 @@ export const getAllBranchDetails = async (req: Request, res: Response) => {
   try {
     const branches = await prisma.branches.findMany({
       include: {
-        bill: true,
-        FM: true,
+        bill: {
+          select:{
+            subTotal: true
+          }
+        },
       },
     });
     res.status(200).json({ data: branches });
@@ -283,8 +286,6 @@ export const getAllRecordPayment = async (req: Request, res: Response) => {
       fetchFunction: async () => {
         return await prisma.paymentRecord.findMany({
           include: {
-            FM: true,
-            Bill: true,
             Branches: true,
             Admin: true,
           },

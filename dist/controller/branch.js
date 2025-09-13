@@ -52,8 +52,11 @@ const getAllBranchDetails = (req, res) => __awaiter(void 0, void 0, void 0, func
     try {
         const branches = yield prisma.branches.findMany({
             include: {
-                bill: true,
-                FM: true,
+                bill: {
+                    select: {
+                        subTotal: true
+                    }
+                },
             },
         });
         res.status(200).json({ data: branches });
@@ -269,8 +272,6 @@ const getAllRecordPayment = (req, res) => __awaiter(void 0, void 0, void 0, func
             fetchFunction: () => __awaiter(void 0, void 0, void 0, function* () {
                 return yield prisma.paymentRecord.findMany({
                     include: {
-                        FM: true,
-                        Bill: true,
                         Branches: true,
                         Admin: true,
                     },
