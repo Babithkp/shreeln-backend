@@ -153,6 +153,7 @@ const createBill = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
 });
 exports.createBill = createBill;
 const updateBillDetails = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c;
     const { id } = req.params;
     const { billNumber, date, dueDate, hsnSacCode, placeOfSupply, state, statecode, lrData, igstRate, cgstRate, sgstRate, subTotal, total, totalInWords, unloading, hamali, extraKmWeight, detention, weightment, others, otherCharges, } = req.body;
     if (!billNumber ||
@@ -181,6 +182,16 @@ const updateBillDetails = (req, res) => __awaiter(void 0, void 0, void 0, functi
             });
             return;
         }
+        const paymentTotal = ((_a = oldBill.zeroToThirty) !== null && _a !== void 0 ? _a : 0) +
+            ((_b = oldBill.thirtyToSixty) !== null && _b !== void 0 ? _b : 0) +
+            ((_c = oldBill.sixtyPlus) !== null && _c !== void 0 ? _c : 0);
+        let FinalTotal;
+        if (paymentTotal < subTotal) {
+            FinalTotal = subTotal - paymentTotal;
+        }
+        else {
+            FinalTotal = paymentTotal - subTotal;
+        }
         const bill = yield prisma.bill.update({
             where: { id },
             data: {
@@ -197,7 +208,7 @@ const updateBillDetails = (req, res) => __awaiter(void 0, void 0, void 0, functi
                 subTotal,
                 total,
                 totalInWords,
-                pendingAmount: subTotal,
+                pendingAmount: FinalTotal,
                 unloading: null,
                 hamali: null,
                 extraKmWeight: null,
@@ -242,7 +253,7 @@ const updateBillDetails = (req, res) => __awaiter(void 0, void 0, void 0, functi
                 id: client.id,
             },
             data: {
-                pendingPayment: oldPendingAmount + parseFloat(subTotal || "0"),
+                pendingPayment: oldPendingAmount + FinalTotal
             },
         });
         if ((updatedClient === null || updatedClient === void 0 ? void 0 : updatedClient.pendingPayment) > (updatedClient === null || updatedClient === void 0 ? void 0 : updatedClient.creditLimit)) {

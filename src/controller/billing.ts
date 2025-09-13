@@ -220,7 +220,6 @@ export const updateBillDetails = async (req: Request, res: Response) => {
     otherCharges,
   } = req.body;
 
-
   if (
     !billNumber ||
     !date ||
@@ -249,7 +248,19 @@ export const updateBillDetails = async (req: Request, res: Response) => {
       });
       return;
     }
-    
+
+    const paymentTotal =
+      (oldBill.zeroToThirty ?? 0) +
+      (oldBill.thirtyToSixty ?? 0) +
+      (oldBill.sixtyPlus ?? 0);
+
+    let FinalTotal;
+    if (paymentTotal < subTotal) {
+      FinalTotal = subTotal - paymentTotal;
+    } else {
+      FinalTotal = paymentTotal - subTotal;
+    }
+
     const bill = await prisma.bill.update({
       where: { id },
       data: {
@@ -266,14 +277,14 @@ export const updateBillDetails = async (req: Request, res: Response) => {
         subTotal,
         total,
         totalInWords,
-        pendingAmount: subTotal,
-        unloading:null,
-        hamali:null,
-        extraKmWeight:null,
-        detention:null,
-        weightment:null,
+        pendingAmount: FinalTotal,
+        unloading: null,
+        hamali: null,
+        extraKmWeight: null,
+        detention: null,
+        weightment: null,
         others: null,
-        otherCharges:null,
+        otherCharges: null,
         lrData: {
           set: [],
         },
@@ -313,7 +324,7 @@ export const updateBillDetails = async (req: Request, res: Response) => {
         id: client.id,
       },
       data: {
-        pendingPayment: oldPendingAmount + parseFloat(subTotal || "0"),
+        pendingPayment: oldPendingAmount + FinalTotal
       },
     });
     if (updatedClient?.pendingPayment > updatedClient?.creditLimit) {
@@ -1247,7 +1258,6 @@ export const updateBillByNotification = async (req: Request, res: Response) => {
   } = req.body.data;
 
   console.log(otherCharges);
-  
 
   if (
     !billNumber ||
@@ -1285,20 +1295,19 @@ export const updateBillByNotification = async (req: Request, res: Response) => {
         total,
         totalInWords,
         pendingAmount: subTotal,
-        unloading:null,
-        hamali:null,
-        extraKmWeight:null,
-        detention:null,
-        weightment:null,
-        others:null,
-        otherCharges:null,
+        unloading: null,
+        hamali: null,
+        extraKmWeight: null,
+        detention: null,
+        weightment: null,
+        others: null,
+        otherCharges: null,
         lrData: {
           set: [],
         },
       },
     });
     console.log(bill);
-    
 
     await prisma.bill.update({
       where: { billNumber: billId },

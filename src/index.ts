@@ -1,5 +1,4 @@
-import express from "express";
-import cors from "cors";
+import express from "express";import cors from "cors";
 import adminRouter from "./router/admin";
 import branchRouter from "./router/branch";
 import dotenv from "dotenv";
@@ -51,31 +50,6 @@ app.post("/api/v1/sendBillEmail/:email", upload.any(), sendBillEmail);
 app.post("/api/v1/lorryReceiptsUpload", upload.any(), lorryReceiptsFileUpload);
 // createAdmin()
 
-const getAllBillDeatils = async () => {
-  const bills = await prisma.bill.findMany({
-    include: {
-      PaymentRecords: true,
-    },
-  });
-  const totalBill = bills.reduce((acc, bill) => acc + bill.subTotal, 0);
-
-  // let paymentsTotal = 0;
-  // let pendingTotal = 0;
-  for (const bill of bills) {
-    const paymentsTotal = bill.PaymentRecords.reduce((acc, paymentRecord) => {
-      acc += parseFloat(paymentRecord.amount);
-      return acc;
-    }, 0);
-    const pendingTotal = bill.pendingAmount;
-
-    if (paymentsTotal > 0) {
-      console.log(bill.billNumber);
-      console.log("-------");
-    }
-  }
-};
-
-// getAllBillDeatils();
 
 cron.schedule("0 0 * * *", async () => {
   console.log("🔄 Running FM status checker at midnight...");

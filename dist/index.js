@@ -54,28 +54,6 @@ app.post("/api/v1/sendFMEmail/:email", upload.any(), shipment_1.sendFMEmail);
 app.post("/api/v1/sendBillEmail/:email", upload.any(), billing_2.sendBillEmail);
 app.post("/api/v1/lorryReceiptsUpload", upload.any(), fileUpload_1.lorryReceiptsFileUpload);
 // createAdmin()
-const getAllBillDeatils = () => __awaiter(void 0, void 0, void 0, function* () {
-    const bills = yield prisma.bill.findMany({
-        include: {
-            PaymentRecords: true,
-        },
-    });
-    const totalBill = bills.reduce((acc, bill) => acc + bill.subTotal, 0);
-    // let paymentsTotal = 0;
-    // let pendingTotal = 0;
-    for (const bill of bills) {
-        const paymentsTotal = bill.PaymentRecords.reduce((acc, paymentRecord) => {
-            acc += parseFloat(paymentRecord.amount);
-            return acc;
-        }, 0);
-        const pendingTotal = bill.pendingAmount;
-        if (paymentsTotal > 0) {
-            console.log(bill.billNumber);
-            console.log("-------");
-        }
-    }
-});
-// getAllBillDeatils();
 node_cron_1.default.schedule("0 0 * * *", () => __awaiter(void 0, void 0, void 0, function* () {
     console.log("🔄 Running FM status checker at midnight...");
     yield (0, pod_2.checkPaymentForStatusChange)();
