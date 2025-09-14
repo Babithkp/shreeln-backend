@@ -1,4 +1,5 @@
-import { Request, Response } from "express";import { PrismaClient } from "@prisma/client";
+import { Request, Response } from "express";
+import { PrismaClient } from "@prisma/client";
 import { clearClientCache, redisGetOrSetFunctions } from "./utils/redis";
 
 const prisma = new PrismaClient();
@@ -42,9 +43,9 @@ export const getAllBranchDetails = async (req: Request, res: Response) => {
     const branches = await prisma.branches.findMany({
       include: {
         bill: {
-          select:{
-            subTotal: true
-          }
+          select: {
+            subTotal: true,
+          },
         },
       },
     });
@@ -305,43 +306,26 @@ export const getAllRecordPayment = async (req: Request, res: Response) => {
   }
 };
 
-export const filterRecordPayment = async (req: Request, res: Response) => {
-  const { name, from, to } = req.body;
-
+export const GetRecentTransactions = async (req: Request, res: Response) => {
   try {
-    const whereClause: any = {};
-
-    if (name) {
-      const orConditions: any[] = [
-        { IDNumber: { contains: name, mode: "insensitive" } },
-        { customerName: { contains: name, mode: "insensitive" } },
-      ];
-
-      if (!isNaN(Number(name))) {
-        orConditions.push({
-          amount: { contains: name.toString(), mode: "insensitive" },
+    const data = await redisGetOrSetFunctions({
+      key: "GetRecentTransactions",
+      fetchFunction: async () => {
+        const paymentRecord = await prisma.paymentRecord.findMany({
+          include: {
+            Admin: true,
+            Branches: true,
+          },
+          orderBy: {
+            date: "desc",
+          },
+          take: 10,
         });
-      }
-
-      whereClause.OR = orConditions;
-    }
-
-    if (from && to) {
-      whereClause.date = {
-        gte: from,
-        lte: to,
-      };
-    }
-
-    const paymentRecord = await prisma.paymentRecord.findMany({
-      where: whereClause,
-      include: {
-        Admin: true,
-        Branches: true,
+        return paymentRecord;
       },
     });
 
-    res.status(200).json({ data: paymentRecord });
+    res.status(200).json({ data });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal Server Error" });

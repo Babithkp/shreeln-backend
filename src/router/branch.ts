@@ -5,7 +5,6 @@ import {
   deleteBranch,
   deleteClient,
   filterBranchBymonth,
-  filterRecordPayment,
   getAllBranchDetails,
   getBranchNotifications,
   updateBranchDetails,
@@ -17,8 +16,8 @@ import {
   filterRecordPaymentByNameForBranch,
   getAllRecordPayment,
   getAllStatements,
+  GetRecentTransactions,
 } from "../controller/branch";
-import { updateBillRecordByNotification } from "../controller/billing";
 
 const branchRouter = express.Router();
 
@@ -29,7 +28,7 @@ branchRouter.delete("/deleteBranch/:id", deleteBranch);
 branchRouter.patch("/updateClient/:id", updateclientDetails);
 branchRouter.delete("/deleteClient/:id", deleteClient);
 branchRouter.get("/getAllRecordPayment", getAllRecordPayment);
-branchRouter.post("/filterRecordPayment", filterRecordPayment);
+branchRouter.get("/GetRecentTransactions", GetRecentTransactions);
 branchRouter.post("/filterBranchBymonth", filterBranchBymonth);
 branchRouter.post("/createNotification", createNotification);
 branchRouter.get("/getBranchNotifications/:branchId", getBranchNotifications);

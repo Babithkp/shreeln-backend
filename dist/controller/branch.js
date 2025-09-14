@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getAllStatements = exports.filterRecordPaymentByNameForBranch = exports.filterRecordPaymentByName = exports.getRecentPaymentsForBranchPage = exports.getRecentPaymentsForPage = exports.createNotificationForBranch = exports.createNotification = exports.getBranchNotifications = exports.filterBranchBymonth = exports.filterRecordPayment = exports.getAllRecordPayment = exports.deleteClient = exports.updateclientDetails = exports.deleteBranch = exports.updateBranchDetails = exports.getAllBranchDetails = exports.branchLogin = void 0;
+exports.getAllStatements = exports.filterRecordPaymentByNameForBranch = exports.filterRecordPaymentByName = exports.getRecentPaymentsForBranchPage = exports.getRecentPaymentsForPage = exports.createNotificationForBranch = exports.createNotification = exports.getBranchNotifications = exports.filterBranchBymonth = exports.GetRecentTransactions = exports.getAllRecordPayment = exports.deleteClient = exports.updateclientDetails = exports.deleteBranch = exports.updateBranchDetails = exports.getAllBranchDetails = exports.branchLogin = void 0;
 const client_1 = require("@prisma/client");
 const redis_1 = require("./utils/redis");
 const prisma = new client_1.PrismaClient();
@@ -54,8 +54,8 @@ const getAllBranchDetails = (req, res) => __awaiter(void 0, void 0, void 0, func
             include: {
                 bill: {
                     select: {
-                        subTotal: true
-                    }
+                        subTotal: true,
+                    },
                 },
             },
         });
@@ -291,43 +291,32 @@ const getAllRecordPayment = (req, res) => __awaiter(void 0, void 0, void 0, func
     }
 });
 exports.getAllRecordPayment = getAllRecordPayment;
-const filterRecordPayment = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { name, from, to } = req.body;
+const GetRecentTransactions = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const whereClause = {};
-        if (name) {
-            const orConditions = [
-                { IDNumber: { contains: name, mode: "insensitive" } },
-                { customerName: { contains: name, mode: "insensitive" } },
-            ];
-            if (!isNaN(Number(name))) {
-                orConditions.push({
-                    amount: { contains: name.toString(), mode: "insensitive" },
+        const data = yield (0, redis_1.redisGetOrSetFunctions)({
+            key: "GetRecentTransactions",
+            fetchFunction: () => __awaiter(void 0, void 0, void 0, function* () {
+                const paymentRecord = yield prisma.paymentRecord.findMany({
+                    include: {
+                        Admin: true,
+                        Branches: true,
+                    },
+                    orderBy: {
+                        date: "desc",
+                    },
+                    take: 10,
                 });
-            }
-            whereClause.OR = orConditions;
-        }
-        if (from && to) {
-            whereClause.date = {
-                gte: from,
-                lte: to,
-            };
-        }
-        const paymentRecord = yield prisma.paymentRecord.findMany({
-            where: whereClause,
-            include: {
-                Admin: true,
-                Branches: true,
-            },
+                return paymentRecord;
+            }),
         });
-        res.status(200).json({ data: paymentRecord });
+        res.status(200).json({ data });
     }
     catch (error) {
         console.error(error);
         res.status(500).json({ message: "Internal Server Error" });
     }
 });
-exports.filterRecordPayment = filterRecordPayment;
+exports.GetRecentTransactions = GetRecentTransactions;
 const filterBranchBymonth = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { startDate, endDate } = req.body;
     if (!startDate || !endDate) {

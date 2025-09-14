@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.clearPODCache = exports.clearExpenseCache = exports.clearCreditCache = exports.clearClientCache = exports.clearVendorCache = exports.clearRecentTransactionCache = exports.clearGetAllRecordPaymentCache = exports.clearAllExpenseCache = exports.clearLRCache = exports.clearFMCache = exports.clearAllBillCache = exports.clearDashboardCache = exports.redisGetOrSetFunctions = void 0;
+exports.clearGetRecentTransactionCache = exports.clearPODCache = exports.clearExpenseCache = exports.clearCreditCache = exports.clearClientCache = exports.clearVendorCache = exports.clearRecentTransactionCache = exports.clearGetAllRecordPaymentCache = exports.clearAllExpenseCache = exports.clearLRCache = exports.clearFMCache = exports.clearAllBillCache = exports.clearDashboardCache = exports.redisGetOrSetFunctions = void 0;
 const ioredis_1 = __importDefault(require("ioredis"));
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
@@ -115,3 +115,11 @@ const clearPODCache = () => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.clearPODCache = clearPODCache;
+const clearGetRecentTransactionCache = () => __awaiter(void 0, void 0, void 0, function* () {
+    const pattern = "GetRecentTransactions";
+    const keys = yield redisClient.keys(pattern);
+    if (keys.length > 0) {
+        yield redisClient.del(keys);
+    }
+});
+exports.clearGetRecentTransactionCache = clearGetRecentTransactionCache;

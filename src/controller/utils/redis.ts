@@ -105,3 +105,11 @@ export const clearPODCache = async () => {
     await redisClient.del(keys);
   }
 };
+
+export const clearGetRecentTransactionCache = async () => {
+  const pattern = "GetRecentTransactions";
+  const keys = await redisClient.keys(pattern);
+  if (keys.length > 0) {
+    await redisClient.del(keys);
+  }
+};
