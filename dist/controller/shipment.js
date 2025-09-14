@@ -1366,12 +1366,16 @@ const deletePaymentRecordFromFM = (req, res) => __awaiter(void 0, void 0, void 0
             const correctedBucketAmount = bucketAmount - parseFloat(paymentRecord.amount || "0");
             const updatedOutstanding = parseFloat(fm.outStandingBalance || "0") +
                 parseFloat(paymentRecord.amount || "0");
+            let advanceBalance = fm.outStandingAdvance + parseFloat(paymentRecord.amount || "0");
+            if (advanceBalance > parseFloat(fm.advance || "0")) {
+                advanceBalance = parseFloat(fm.advance || "0");
+            }
             yield prisma.fM.update({
                 where: { id: fm.id },
                 data: {
                     [bucket]: correctedBucketAmount,
                     outStandingBalance: updatedOutstanding.toString(),
-                    outStandingAdvance: parseFloat(paymentRecord.amount || "0") + fm.outStandingAdvance,
+                    outStandingAdvance: advanceBalance,
                 },
             });
             yield prisma.paymentRecord.delete({

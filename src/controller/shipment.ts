@@ -1,4 +1,5 @@
-import { Request, Response } from "express";import { PrismaClient } from "@prisma/client";
+import { Request, Response } from "express";
+import { PrismaClient } from "@prisma/client";
 import { LRData, LREmailBody, sendLREmailToClient } from "./utils/LREmail";
 import { FMData, FMEmailBody, sendFMEmailToClient } from "./utils/FMEmail";
 import {
@@ -1640,13 +1641,21 @@ export const deletePaymentRecordFromFM = async (
       const updatedOutstanding =
         parseFloat(fm.outStandingBalance || "0") +
         parseFloat(paymentRecord.amount || "0");
+
+      let advanceBalance =
+        fm.outStandingAdvance + parseFloat(paymentRecord.amount || "0");
+
+      if(advanceBalance > parseFloat(fm.advance || "0")){
+        advanceBalance = parseFloat(fm.advance || "0");
+      } 
+      
+
       await prisma.fM.update({
         where: { id: fm.id },
         data: {
           [bucket]: correctedBucketAmount,
           outStandingBalance: updatedOutstanding.toString(),
-          outStandingAdvance:
-            parseFloat(paymentRecord.amount || "0") + fm.outStandingAdvance,
+          outStandingAdvance: advanceBalance,
         },
       });
       await prisma.paymentRecord.delete({
@@ -1931,8 +1940,6 @@ export const updateFMByNotification = async (req: Request, res: Response) => {
     sizeH,
   } = req.body;
 
-  
-
   try {
     const fm = await prisma.fM.findUnique({
       where: {
@@ -2053,7 +2060,7 @@ export const updateFMByNotification = async (req: Request, res: Response) => {
         });
       }
     }
-      await clearFMCache();
+    await clearFMCache();
     res.status(200).json({
       message: "FM Updated",
     });
