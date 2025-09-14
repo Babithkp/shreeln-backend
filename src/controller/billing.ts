@@ -1,4 +1,5 @@
-import { Request, Response } from "express";import { PrismaClient } from "@prisma/client";
+import { Request, Response } from "express";
+import { PrismaClient } from "@prisma/client";
 import {
   billData,
   BillEmailBody,
@@ -6,6 +7,7 @@ import {
 } from "./utils/billEmail";
 import {
   clearAllBillCache,
+  clearClientCache,
   clearDashboardCache,
   clearGetAllRecordPaymentCache,
   clearRecentTransactionCache,
@@ -183,6 +185,7 @@ export const createBill = async (req: Request, res: Response) => {
     }
     await clearDashboardCache();
     await clearAllBillCache();
+    await clearClientCache();
     res.status(200).json({
       message: "Bill Created",
     });
@@ -324,7 +327,7 @@ export const updateBillDetails = async (req: Request, res: Response) => {
         id: client.id,
       },
       data: {
-        pendingPayment: oldPendingAmount + FinalTotal
+        pendingPayment: oldPendingAmount + FinalTotal,
       },
     });
     if (updatedClient?.pendingPayment > updatedClient?.creditLimit) {
@@ -348,6 +351,7 @@ export const updateBillDetails = async (req: Request, res: Response) => {
     }
     await clearDashboardCache();
     await clearAllBillCache();
+    await clearClientCache();
     res.status(200).json({
       message: "Bill Updated",
     });
@@ -485,6 +489,7 @@ export const createBillsupplementary = async (req: Request, res: Response) => {
     }
     await clearDashboardCache();
     await clearAllBillCache();
+    await clearClientCache();
     res.status(200).json({
       message: "Bill Created",
     });
@@ -586,6 +591,7 @@ export const deleteBill = async (req: Request, res: Response) => {
       });
       await clearDashboardCache();
       await clearAllBillCache();
+      await clearClientCache();
       res.status(200).json({
         message: "Bill Deleted",
       });
@@ -1133,6 +1139,7 @@ export const addPaymentRecordToBill = async (req: Request, res: Response) => {
     await clearAllBillCache();
     await clearGetAllRecordPaymentCache();
     await clearRecentTransactionCache();
+    await clearClientCache();
     res.status(200).json({ message: "Payment Record Added" });
   } catch (error) {
     console.error("Error adding payment record:", error);
@@ -1224,6 +1231,7 @@ export const deletePaymentRecordFromBill = async (
     await clearAllBillCache();
     await clearGetAllRecordPaymentCache();
     await clearRecentTransactionCache();
+    await clearClientCache();
     res.status(200).json({ message: "Payment Record Deleted" });
   } catch (error) {
     console.error("Error deleting payment record:", error);
@@ -1256,8 +1264,6 @@ export const updateBillByNotification = async (req: Request, res: Response) => {
     others,
     otherCharges,
   } = req.body.data;
-
-  console.log(otherCharges);
 
   if (
     !billNumber ||
@@ -1307,7 +1313,6 @@ export const updateBillByNotification = async (req: Request, res: Response) => {
         },
       },
     });
-    console.log(bill);
 
     await prisma.bill.update({
       where: { billNumber: billId },
@@ -1377,6 +1382,7 @@ export const updateBillByNotification = async (req: Request, res: Response) => {
     await clearDashboardCache();
     await clearAllBillCache();
     await clearRecentTransactionCache();
+    await clearClientCache();
     res.status(200).json({
       message: "Bill Updated",
     });
@@ -1421,6 +1427,7 @@ export const deleteBillByNotification = async (req: Request, res: Response) => {
       });
       await clearDashboardCache();
       await clearAllBillCache();
+      await clearClientCache();
       res.status(200).json({
         message: "Bill Deleted",
       });
@@ -1538,6 +1545,7 @@ export const updateBillRecordByNotification = async (
     await clearAllBillCache();
     await clearGetAllRecordPaymentCache();
     await clearRecentTransactionCache();
+    await clearClientCache();
     res.status(200).json({ message: "Payment Record Updated" });
   } catch (error) {
     res.status(500).json({
@@ -1641,6 +1649,7 @@ export const deleteBillRecordByNotification = async (
     await clearAllBillCache();
     await clearGetAllRecordPaymentCache();
     await clearRecentTransactionCache();
+    await clearClientCache();
     res.status(200).json({ message: "Payment Record Deleted" });
   } catch (error) {
     console.error("Error deleting payment record:", error);
@@ -1673,9 +1682,11 @@ export const updateTdsOfBill = async (req: Request, res: Response) => {
         tds: parseInt(tds),
       },
     });
-      res.status(200).json({
-        message: "TDS Updated",
-      });
+    await clearClientCache();
+    await clearAllBillCache();
+    res.status(200).json({
+      message: "TDS Updated",
+    });
   } catch (error) {
     res.status(500).json({
       message: "Internal Server Error",

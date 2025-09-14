@@ -757,6 +757,7 @@ const createFM = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             });
         }
         yield (0, redis_1.clearFMCache)();
+        yield (0, redis_1.clearVendorCache)();
         res.status(200).json({
             message: "FM Created",
         });
@@ -1113,6 +1114,7 @@ const updateFM = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 });
             }
             yield (0, redis_1.clearFMCache)();
+            yield (0, redis_1.clearVendorCache)();
             res.status(200).json({
                 message: "FM Updated",
             });
@@ -1316,6 +1318,7 @@ const addPaymentRecordToFM = (req, res) => __awaiter(void 0, void 0, void 0, fun
         yield (0, redis_1.clearGetAllRecordPaymentCache)();
         yield (0, redis_1.clearFMCache)();
         yield (0, redis_1.clearGetRecentTransactionCache)();
+        yield (0, redis_1.clearVendorCache)();
         res.status(200).json({ message: "Payment Record Added" });
     }
     catch (error) {
@@ -1392,6 +1395,7 @@ const deletePaymentRecordFromFM = (req, res) => __awaiter(void 0, void 0, void 0
             yield (0, redis_1.clearGetAllRecordPaymentCache)();
             yield (0, redis_1.clearFMCache)();
             yield (0, redis_1.clearGetRecentTransactionCache)();
+            yield (0, redis_1.clearVendorCache)();
             res.status(200).json({ message: "Payment Record Deleted" });
             return;
         }
@@ -1925,6 +1929,7 @@ const updateRecordPaymentByNotification = (req, res) => __awaiter(void 0, void 0
         yield (0, redis_1.clearGetAllRecordPaymentCache)();
         yield (0, redis_1.clearFMCache)();
         yield (0, redis_1.clearGetRecentTransactionCache)();
+        yield (0, redis_1.clearVendorCache)();
         res.status(200).json({
             message: "Payment Record Updated",
         });
@@ -2011,6 +2016,7 @@ const deleteFMRecordByNotification = (req, res) => __awaiter(void 0, void 0, voi
             yield (0, redis_1.clearGetAllRecordPaymentCache)();
             yield (0, redis_1.clearFMCache)();
             yield (0, redis_1.clearGetRecentTransactionCache)();
+            yield (0, redis_1.clearVendorCache)();
             res.status(200).json({ message: "Payment Record Deleted" });
             return;
         }

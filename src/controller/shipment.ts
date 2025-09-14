@@ -6,6 +6,7 @@ import {
   clearGetAllRecordPaymentCache,
   clearGetRecentTransactionCache,
   clearLRCache,
+  clearVendorCache,
   redisGetOrSetFunctions,
 } from "./utils/redis";
 const prisma = new PrismaClient();
@@ -916,6 +917,7 @@ export const createFM = async (req: Request, res: Response) => {
       });
     }
     await clearFMCache();
+    await clearVendorCache();
     res.status(200).json({
       message: "FM Created",
     });
@@ -1327,6 +1329,7 @@ export const updateFM = async (req: Request, res: Response) => {
         });
       }
       await clearFMCache();
+      await clearVendorCache();
       res.status(200).json({
         message: "FM Updated",
       });
@@ -1579,6 +1582,7 @@ export const addPaymentRecordToFM = async (req: Request, res: Response) => {
     await clearGetAllRecordPaymentCache();
     await clearFMCache();
     await clearGetRecentTransactionCache();
+    await clearVendorCache();
     res.status(200).json({ message: "Payment Record Added" });
   } catch (error) {
     console.error("Error adding payment record:", error);
@@ -1667,6 +1671,7 @@ export const deletePaymentRecordFromFM = async (
       await clearGetAllRecordPaymentCache();
       await clearFMCache();
       await clearGetRecentTransactionCache();
+      await clearVendorCache();
       res.status(200).json({ message: "Payment Record Deleted" });
       return;
     }
@@ -2255,6 +2260,7 @@ export const updateRecordPaymentByNotification = async (
     await clearGetAllRecordPaymentCache();
     await clearFMCache();
     await clearGetRecentTransactionCache();
+    await clearVendorCache();
     res.status(200).json({
       message: "Payment Record Updated",
     });
@@ -2353,6 +2359,7 @@ export const deleteFMRecordByNotification = async (
       await clearGetAllRecordPaymentCache();
       await clearFMCache();
       await clearGetRecentTransactionCache();
+      await clearVendorCache();
       res.status(200).json({ message: "Payment Record Deleted" });
       return;
     }

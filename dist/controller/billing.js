@@ -140,6 +140,7 @@ const createBill = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         }
         yield (0, redis_1.clearDashboardCache)();
         yield (0, redis_1.clearAllBillCache)();
+        yield (0, redis_1.clearClientCache)();
         res.status(200).json({
             message: "Bill Created",
         });
@@ -253,7 +254,7 @@ const updateBillDetails = (req, res) => __awaiter(void 0, void 0, void 0, functi
                 id: client.id,
             },
             data: {
-                pendingPayment: oldPendingAmount + FinalTotal
+                pendingPayment: oldPendingAmount + FinalTotal,
             },
         });
         if ((updatedClient === null || updatedClient === void 0 ? void 0 : updatedClient.pendingPayment) > (updatedClient === null || updatedClient === void 0 ? void 0 : updatedClient.creditLimit)) {
@@ -277,6 +278,7 @@ const updateBillDetails = (req, res) => __awaiter(void 0, void 0, void 0, functi
         }
         yield (0, redis_1.clearDashboardCache)();
         yield (0, redis_1.clearAllBillCache)();
+        yield (0, redis_1.clearClientCache)();
         res.status(200).json({
             message: "Bill Updated",
         });
@@ -372,6 +374,7 @@ const createBillsupplementary = (req, res) => __awaiter(void 0, void 0, void 0, 
         }
         yield (0, redis_1.clearDashboardCache)();
         yield (0, redis_1.clearAllBillCache)();
+        yield (0, redis_1.clearClientCache)();
         res.status(200).json({
             message: "Bill Created",
         });
@@ -469,6 +472,7 @@ const deleteBill = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             });
             yield (0, redis_1.clearDashboardCache)();
             yield (0, redis_1.clearAllBillCache)();
+            yield (0, redis_1.clearClientCache)();
             res.status(200).json({
                 message: "Bill Deleted",
             });
@@ -974,6 +978,7 @@ const addPaymentRecordToBill = (req, res) => __awaiter(void 0, void 0, void 0, f
         yield (0, redis_1.clearAllBillCache)();
         yield (0, redis_1.clearGetAllRecordPaymentCache)();
         yield (0, redis_1.clearRecentTransactionCache)();
+        yield (0, redis_1.clearClientCache)();
         res.status(200).json({ message: "Payment Record Added" });
     }
     catch (error) {
@@ -1053,6 +1058,7 @@ const deletePaymentRecordFromBill = (req, res) => __awaiter(void 0, void 0, void
         yield (0, redis_1.clearAllBillCache)();
         yield (0, redis_1.clearGetAllRecordPaymentCache)();
         yield (0, redis_1.clearRecentTransactionCache)();
+        yield (0, redis_1.clearClientCache)();
         res.status(200).json({ message: "Payment Record Deleted" });
     }
     catch (error) {
@@ -1064,7 +1070,6 @@ exports.deletePaymentRecordFromBill = deletePaymentRecordFromBill;
 const updateBillByNotification = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { billId } = req.body;
     const { billNumber, date, dueDate, hsnSacCode, placeOfSupply, state, statecode, lrData, igstRate, cgstRate, sgstRate, subTotal, total, totalInWords, unloading, hamali, extraKmWeight, detention, weightment, others, otherCharges, } = req.body.data;
-    console.log(otherCharges);
     if (!billNumber ||
         !date ||
         !hsnSacCode ||
@@ -1111,7 +1116,6 @@ const updateBillByNotification = (req, res) => __awaiter(void 0, void 0, void 0,
                 },
             },
         });
-        console.log(bill);
         yield prisma.bill.update({
             where: { billNumber: billId },
             data: {
@@ -1178,6 +1182,7 @@ const updateBillByNotification = (req, res) => __awaiter(void 0, void 0, void 0,
         yield (0, redis_1.clearDashboardCache)();
         yield (0, redis_1.clearAllBillCache)();
         yield (0, redis_1.clearRecentTransactionCache)();
+        yield (0, redis_1.clearClientCache)();
         res.status(200).json({
             message: "Bill Updated",
         });
@@ -1221,6 +1226,7 @@ const deleteBillByNotification = (req, res) => __awaiter(void 0, void 0, void 0,
             });
             yield (0, redis_1.clearDashboardCache)();
             yield (0, redis_1.clearAllBillCache)();
+            yield (0, redis_1.clearClientCache)();
             res.status(200).json({
                 message: "Bill Deleted",
             });
@@ -1329,6 +1335,7 @@ const updateBillRecordByNotification = (req, res) => __awaiter(void 0, void 0, v
         yield (0, redis_1.clearAllBillCache)();
         yield (0, redis_1.clearGetAllRecordPaymentCache)();
         yield (0, redis_1.clearRecentTransactionCache)();
+        yield (0, redis_1.clearClientCache)();
         res.status(200).json({ message: "Payment Record Updated" });
     }
     catch (error) {
@@ -1419,6 +1426,7 @@ const deleteBillRecordByNotification = (req, res) => __awaiter(void 0, void 0, v
         yield (0, redis_1.clearAllBillCache)();
         yield (0, redis_1.clearGetAllRecordPaymentCache)();
         yield (0, redis_1.clearRecentTransactionCache)();
+        yield (0, redis_1.clearClientCache)();
         res.status(200).json({ message: "Payment Record Deleted" });
     }
     catch (error) {
@@ -1451,6 +1459,8 @@ const updateTdsOfBill = (req, res) => __awaiter(void 0, void 0, void 0, function
                 tds: parseInt(tds),
             },
         });
+        yield (0, redis_1.clearClientCache)();
+        yield (0, redis_1.clearAllBillCache)();
         res.status(200).json({
             message: "TDS Updated",
         });
