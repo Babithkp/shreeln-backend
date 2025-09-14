@@ -50,6 +50,95 @@ app.post("/api/v1/sendBillEmail/:email", upload.any(), sendBillEmail);
 app.post("/api/v1/lorryReceiptsUpload", upload.any(), lorryReceiptsFileUpload);
 // createAdmin()
 
+const getBranchDetails = async () => {
+  const AllBranches = await prisma.branches.findMany({
+    select: {
+      branchName: true,
+      bill: {
+        select: {
+          total: true,
+          PaymentRecords: {
+            select: {
+              amount: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  for (let branch of AllBranches) {
+    const totalPaidAmount = branch.bill.reduce((billAcc, bill) => {
+      const billTotal = bill.PaymentRecords.reduce((payAcc, payment) => {
+        return payAcc + parseFloat(payment.amount || "0");
+      }, 0);
+      return billAcc + billTotal;
+    }, 0);
+
+    const totalBillAmount = branch.bill.reduce(
+      (billAcc, bill) => (billAcc += bill.total),
+      0
+    );
+
+    console.log(
+      `Branch ${branch.branchName} → Total Paid: ${totalPaidAmount} → Total Bill: ${totalBillAmount}`
+    );
+  }
+};
+
+// getBranchDetails()
+
+const getVendorsDetails = async () => {
+  const AllVendors = await prisma.vendors.findMany({
+    select: {
+      name: true,
+      FM: {
+        include: {
+          PaymentRecords: {
+            select: {
+              amount: true,
+            },
+          },
+        },
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+  let totalPaid = 0;
+  let totalFM = 0;
+  let totalPaidAmount = 0;
+  for (let vendor of AllVendors) {
+    totalPaidAmount += vendor.FM.reduce((acc, data) => {
+      return acc + parseFloat(data.outStandingBalance || "0");
+    }, 0);
+
+    totalFM += vendor.FM.reduce(
+      (acc, data) =>
+        (acc +=
+          parseFloat(data.hire || "0") +
+          parseFloat(data.detentionCharges || "0") +
+          parseFloat(data.rtoCharges || "0") +
+          parseFloat(data.otherCharges || "0") -
+          parseFloat(data.tds || "0")),
+      0
+    );
+
+    totalPaid += vendor.FM.reduce(
+      (acc, data) =>
+        (acc += data.PaymentRecords.reduce((payAcc, payment) => {
+          return payAcc + parseFloat(payment.amount || "0");
+        }, 0)),
+      0
+    );
+
+  }
+  console.log(
+    ` Total Pending: ${totalPaidAmount} → Total FM: ${totalFM} → Total Paid: ${totalPaid}`
+  );
+};
+// getVendorsDetails();
 
 cron.schedule("0 0 * * *", async () => {
   console.log("🔄 Running FM status checker at midnight...");

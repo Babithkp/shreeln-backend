@@ -1,6 +1,9 @@
-import { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
-import { clearClientCache, clearDashboardCache, redisGetOrSetFunctions } from "./utils/redis";
+import { Request, Response } from "express";import { PrismaClient } from "@prisma/client";
+import {
+  clearClientCache,
+  clearDashboardCache,
+  redisGetOrSetFunctions,
+} from "./utils/redis";
 
 const prisma = new PrismaClient();
 
@@ -285,7 +288,7 @@ export const createClient = async (req: Request, res: Response) => {
       });
       return;
     }
-    await clearClientCache()
+    await clearClientCache();
     res.status(400).json({
       message: "Client Not Found",
     });
@@ -310,10 +313,15 @@ export const getAllClients = async (req: Request, res: Response) => {
         city: true,
         state: true,
         contactPerson: true,
-        createdAt:true,
+        createdAt: true,
         LR: {
           include: {
             Vehicle: true,
+          },
+        },
+        bill: {
+          select: {
+            pendingAmount: true,
           },
         },
       },
@@ -329,7 +337,6 @@ export const getAllClients = async (req: Request, res: Response) => {
     console.log(error);
   }
 };
-
 
 export const fectchAdminData = async (req: Request, res: Response) => {
   try {
@@ -385,7 +392,7 @@ export const changeAdminPassword = async (req: Request, res: Response) => {
     });
     console.log(error);
   }
-}
+};
 
 export const getAllAdminNotifications = async (req: Request, res: Response) => {
   try {
