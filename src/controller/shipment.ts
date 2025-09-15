@@ -1444,9 +1444,6 @@ export const addPaymentRecordToFM = async (req: Request, res: Response) => {
       // 2. Parse old & new amounts
       const prevAmount = parseFloat(existingRecord.amount || "0");
       const newAmount = parseFloat(amount || "0");
-      const oldOutStandingBalance = parseFloat(fm.outStandingBalance || "0");
-      const prevAdvanceOutstanding =
-        parseFloat(existingRecord.amount || "0") + fm.outStandingAdvance;
 
       // 3. Find which bucket old record belonged to
       const prevDate = new Date(existingRecord.date);
@@ -1470,16 +1467,11 @@ export const addPaymentRecordToFM = async (req: Request, res: Response) => {
       // 4. Subtract the previous amount from old bucket
       const oldAmount = Number(fm[oldBucket] || 0);
       const correctedOldAmount = oldAmount - prevAmount + newAmount;
-      const newOutstanding = parseFloat(
-        (oldOutStandingBalance + (prevAmount - newAmount)).toFixed(2)
-      );
-      const outstandingAdv = prevAdvanceOutstanding - parseFloat(amount);
+
       const FM = await prisma.fM.update({
         where: { id: fm.id },
         data: {
           [oldBucket]: correctedOldAmount,
-          outStandingBalance: newOutstanding.toString(),
-          outStandingAdvance: outstandingAdv < 0 ? 0 : outstandingAdv,
         },
       });
 
@@ -1497,27 +1489,7 @@ export const addPaymentRecordToFM = async (req: Request, res: Response) => {
           remarks,
         },
       });
-      const vendor = await prisma.vendors.findUnique({
-        where: {
-          id: FM?.vendorsId!,
-        },
-      });
-
-      const vendorCurrentOutstanding = vendor?.currentOutStanding!;
-      const oldPaymentAmount = parseFloat(existingRecord.amount || "0");
-      const updatedPaymentAmount = parseFloat(amount || "0");
-
-      const newCurrentOutStanding =
-        vendorCurrentOutstanding + oldPaymentAmount - updatedPaymentAmount;
-
-      await prisma.vendors.update({
-        where: {
-          id: vendor?.id!,
-        },
-        data: {
-          currentOutStanding: newCurrentOutStanding,
-        },
-      });
+      updateFMDetails(FM.fmNumber);
     } else {
       const newRecord = await prisma.paymentRecord.create({
         data: {
@@ -1638,45 +1610,18 @@ export const deletePaymentRecordFromFM = async (
       const bucketAmount = Number(fm[bucket] || 0);
       const correctedBucketAmount =
         bucketAmount - parseFloat(paymentRecord.amount || "0");
-      const updatedOutstanding =
-        parseFloat(fm.outStandingBalance || "0") +
-        parseFloat(paymentRecord.amount || "0");
-
-      let advanceBalance =
-        fm.outStandingAdvance + parseFloat(paymentRecord.amount || "0");
-
-      if(advanceBalance > parseFloat(fm.advance || "0")){
-        advanceBalance = parseFloat(fm.advance || "0");
-      } 
-      
 
       await prisma.fM.update({
         where: { id: fm.id },
         data: {
           [bucket]: correctedBucketAmount,
-          outStandingBalance: updatedOutstanding.toString(),
-          outStandingAdvance: advanceBalance,
         },
       });
       await prisma.paymentRecord.delete({
         where: { id },
       });
 
-      const vendor = await prisma.vendors.findUnique({
-        where: {
-          id: fm.vendorsId!,
-        },
-      });
-      if (!vendor) return;
-      await prisma.vendors.update({
-        where: {
-          id: vendor.id,
-        },
-        data: {
-          currentOutStanding:
-            vendor.currentOutStanding - parseFloat(paymentRecord.amount || "0"),
-        },
-      });
+      await updateFMDetails(fm.fmNumber);
       await clearGetAllRecordPaymentCache();
       await clearFMCache();
       await clearGetRecentTransactionCache();
@@ -2375,5 +2320,92 @@ export const deleteFMRecordByNotification = async (
     console.error("Error adding payment record:", error);
     res.status(500).json({ message: "Internal Server Error" });
     return;
+  }
+};
+
+const updateFMDetails = async (fmNumber: string) => {
+  
+  try {
+    const fm = await prisma.fM.findUnique({
+      where: {
+        fmNumber,
+      },
+    });
+
+    if (fm) {
+      const vendor = await prisma.vendors.findUnique({
+        where: {
+          id: fm.vendorsId!,
+        },
+      });
+      if (!vendor) return;
+      const value =
+        parseFloat(fm.hire || "0") +
+        parseFloat(fm.otherCharges || "0") +
+        parseFloat(fm.detentionCharges || "0") +
+        parseFloat(fm.rtoCharges || "0");
+
+      const finalValue = value - parseFloat(fm.tds || "0");
+      const paidAmount =
+        (fm.zeroToThirty || 0) +
+        (fm.thirtyToSixty || 0) +
+        (fm.sixtyToNinety || 0) +
+        (fm.ninetyPlus || 0);
+      const newOutstanding = finalValue - paidAmount;
+      let newOutstandingAdvance = 0;
+      if (paidAmount <= parseFloat(fm.advance || "0")) {
+        const remaining = parseFloat(fm.advance || "0") - paidAmount;
+        newOutstandingAdvance = remaining < 0 ? 0 : remaining;
+      }
+
+      await prisma.fM.update({
+        where: {
+          id: fm.id,
+        },
+        data: {
+          date: fm.date,
+          from: fm.from,
+          to: fm.to,
+          vehicleNo: fm.vehicleNo,
+          vehicleType: fm.vehicleType,
+          weight: fm.weight,
+          package: fm.package,
+          vendorName: fm.vendorName,
+          ContactPerson: fm.ContactPerson,
+          DriverName: fm.DriverName,
+          contactNumber: fm.contactNumber,
+          ownerName: fm.ownerName,
+          TDS: fm.TDS,
+          insturance: fm.insturance,
+          Rc: fm.Rc,
+          advance: fm.advance,
+          hire: fm.hire,
+          balance: fm.balance,
+          otherCharges: fm.otherCharges,
+          detentionCharges: fm.detentionCharges,
+          rtoCharges: fm.rtoCharges,
+          tds: fm.tds,
+          netBalance: fm.netBalance,
+          payableAt: fm.payableAt,
+          ftl: fm.ftl,
+          sizeL: fm.sizeL,
+          sizeW: fm.sizeW,
+          sizeH: fm.sizeH,
+          outStandingBalance: newOutstanding.toString(),
+          outStandingAdvance: newOutstandingAdvance,
+          amountInwords: fm.amountInwords,
+          dlNumber: fm.dlNumber,
+          driverSignature: fm.driverSignature,
+          LRDetails: fm.LRDetails,
+        },
+      });
+
+
+
+      await clearFMCache();
+      await clearVendorCache();
+    }
+  } catch (error) {
+    console.log(error);
   }
 };
