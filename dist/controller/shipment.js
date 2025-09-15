@@ -1828,7 +1828,6 @@ const updateRecordPaymentByNotification = (req, res) => __awaiter(void 0, void 0
         if (data.amount) {
             const prevAmount = parseFloat(paymentRecord.amount || "0");
             const newAmount = parseFloat(data.amount || "0");
-            const oldOutStandingBalance = parseFloat(FM.outStandingBalance || "0");
             const prevDate = new Date(paymentRecord.date);
             const prevDiff = prevDate.getTime() - new Date(FM.createdAt).getTime();
             let oldBucket;
@@ -1847,12 +1846,10 @@ const updateRecordPaymentByNotification = (req, res) => __awaiter(void 0, void 0
             // 4. Subtract the previous amount from old bucket
             const oldAmount = Number(FM[oldBucket] || 0);
             const correctedOldAmount = oldAmount - prevAmount + newAmount;
-            const newOutstanding = parseFloat((oldOutStandingBalance + (prevAmount - newAmount)).toFixed(2));
             yield prisma.fM.update({
                 where: { id: FM.id },
                 data: {
                     [oldBucket]: correctedOldAmount,
-                    outStandingBalance: newOutstanding.toString(),
                 },
             });
             if (!FM.vendorsId)
@@ -1886,6 +1883,7 @@ const updateRecordPaymentByNotification = (req, res) => __awaiter(void 0, void 0
                 description: "Approved",
             },
         });
+        yield updateFMDetails(FM.fmNumber);
         yield (0, redis_1.clearGetAllRecordPaymentCache)();
         yield (0, redis_1.clearFMCache)();
         yield (0, redis_1.clearGetRecentTransactionCache)();

@@ -2140,7 +2140,7 @@ export const updateRecordPaymentByNotification = async (
     if (data.amount) {
       const prevAmount = parseFloat(paymentRecord.amount || "0");
       const newAmount = parseFloat(data.amount || "0");
-      const oldOutStandingBalance = parseFloat(FM.outStandingBalance || "0");
+
 
       const prevDate = new Date(paymentRecord.date);
       const prevDiff = prevDate.getTime() - new Date(FM.createdAt).getTime();
@@ -2163,15 +2163,12 @@ export const updateRecordPaymentByNotification = async (
       // 4. Subtract the previous amount from old bucket
       const oldAmount = Number(FM[oldBucket] || 0);
       const correctedOldAmount = oldAmount - prevAmount + newAmount;
-      const newOutstanding = parseFloat(
-        (oldOutStandingBalance + (prevAmount - newAmount)).toFixed(2)
-      );
+     
 
       await prisma.fM.update({
         where: { id: FM.id },
         data: {
           [oldBucket]: correctedOldAmount,
-          outStandingBalance: newOutstanding.toString(),
         },
       });
 
@@ -2209,6 +2206,7 @@ export const updateRecordPaymentByNotification = async (
         description: "Approved",
       },
     });
+    await updateFMDetails(FM.fmNumber);
     await clearGetAllRecordPaymentCache();
     await clearFMCache();
     await clearGetRecentTransactionCache();
