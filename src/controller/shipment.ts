@@ -2267,14 +2267,11 @@ export const deleteFMRecordByNotification = async (
       const bucketAmount = Number(fm[bucket] || 0);
       const correctedBucketAmount =
         bucketAmount - parseFloat(paymentRecord.amount || "0");
-      const updatedOutstanding =
-        parseFloat(fm.outStandingBalance || "0") +
-        parseFloat(paymentRecord.amount || "0");
+
       await prisma.fM.update({
         where: { id: fm.id },
         data: {
           [bucket]: correctedBucketAmount,
-          outStandingBalance: updatedOutstanding.toString(),
         },
       });
       await prisma.paymentRecord.delete({
@@ -2306,6 +2303,7 @@ export const deleteFMRecordByNotification = async (
           description: "Approved",
         },
       });
+      await updateFMDetails(fm.fmNumber);
       await clearGetAllRecordPaymentCache();
       await clearFMCache();
       await clearGetRecentTransactionCache();

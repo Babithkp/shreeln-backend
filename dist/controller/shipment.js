@@ -1935,13 +1935,10 @@ const deleteFMRecordByNotification = (req, res) => __awaiter(void 0, void 0, voi
             }
             const bucketAmount = Number(fm[bucket] || 0);
             const correctedBucketAmount = bucketAmount - parseFloat(paymentRecord.amount || "0");
-            const updatedOutstanding = parseFloat(fm.outStandingBalance || "0") +
-                parseFloat(paymentRecord.amount || "0");
             yield prisma.fM.update({
                 where: { id: fm.id },
                 data: {
                     [bucket]: correctedBucketAmount,
-                    outStandingBalance: updatedOutstanding.toString(),
                 },
             });
             yield prisma.paymentRecord.delete({
@@ -1971,6 +1968,7 @@ const deleteFMRecordByNotification = (req, res) => __awaiter(void 0, void 0, voi
                     description: "Approved",
                 },
             });
+            yield updateFMDetails(fm.fmNumber);
             yield (0, redis_1.clearGetAllRecordPaymentCache)();
             yield (0, redis_1.clearFMCache)();
             yield (0, redis_1.clearGetRecentTransactionCache)();
