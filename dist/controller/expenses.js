@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getAllCredit = exports.updateCreditByNotification = exports.deleteCreditByNotification = exports.filterCreditsByTitle = exports.deleteCredit = exports.updateCreditDetails = exports.getCreditByPage = exports.createCredit = exports.filterExpensesByTitle = exports.getExpenseByPage = exports.deleteExpenseByNotification = exports.updateExpenseByNotification = exports.updateExpenseDetails = exports.deleteExpense = exports.getAllExpenses = exports.createExpense = void 0;
+exports.filterCreditByDateForBranch = exports.filterCreditByDate = exports.filterExpensesByDateForBranch = exports.filterExpensesByDate = exports.getAllCredit = exports.updateCreditByNotification = exports.deleteCreditByNotification = exports.filterCreditsByTitle = exports.deleteCredit = exports.updateCreditDetails = exports.getCreditByPage = exports.createCredit = exports.filterExpensesByTitle = exports.getExpenseByPage = exports.deleteExpenseByNotification = exports.updateExpenseByNotification = exports.updateExpenseDetails = exports.deleteExpense = exports.getAllExpenses = exports.createExpense = void 0;
 const client_1 = require("@prisma/client");
 const redis_1 = require("./utils/redis");
 const prisma = new client_1.PrismaClient();
@@ -95,7 +95,7 @@ const getAllExpenses = (req, res) => __awaiter(void 0, void 0, void 0, function*
         const expenses = yield prisma.expense.findMany({
             select: {
                 amount: true,
-            }
+            },
         });
         res.status(200).json({ data: expenses });
     }
@@ -801,3 +801,133 @@ const getAllCredit = (req, res) => __awaiter(void 0, void 0, void 0, function* (
     }
 });
 exports.getAllCredit = getAllCredit;
+const filterExpensesByDate = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { from, to } = req.body;
+    try {
+        const expenses = yield prisma.expense.findMany({
+            where: Object.assign({}, (from || to
+                ? {
+                    date: Object.assign(Object.assign({}, (from ? { gte: from } : {})), (to ? { lte: to } : {})),
+                }
+                : {})),
+            include: {
+                Branches: {
+                    select: {
+                        branchName: true,
+                    },
+                },
+                Admin: {
+                    select: {
+                        branchName: true,
+                    },
+                },
+            },
+        });
+        res.status(200).json({ data: expenses });
+    }
+    catch (error) {
+        res.status(500).json({
+            message: "Internal Server Error",
+        });
+        console.log(error);
+    }
+});
+exports.filterExpensesByDate = filterExpensesByDate;
+const filterExpensesByDateForBranch = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { from, to } = req.body;
+    const { branchId } = req.params;
+    try {
+        const expenses = yield prisma.expense.findMany({
+            where: Object.assign(Object.assign({}, (branchId ? { branchesId: branchId } : {})), (from || to
+                ? {
+                    date: Object.assign(Object.assign({}, (from ? { gte: from } : {})), (to ? { lte: to } : {})),
+                }
+                : {})),
+            include: {
+                Branches: {
+                    select: {
+                        branchName: true,
+                    },
+                },
+                Admin: {
+                    select: {
+                        branchName: true,
+                    },
+                },
+            },
+        });
+        res.status(200).json({ data: expenses });
+    }
+    catch (error) {
+        res.status(500).json({
+            message: "Internal Server Error",
+        });
+        console.log(error);
+    }
+});
+exports.filterExpensesByDateForBranch = filterExpensesByDateForBranch;
+const filterCreditByDate = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { from, to } = req.body;
+    try {
+        const credit = yield prisma.credit.findMany({
+            where: Object.assign({}, (from || to
+                ? {
+                    date: Object.assign(Object.assign({}, (from ? { gte: from } : {})), (to ? { lte: to } : {})),
+                }
+                : {})),
+            include: {
+                Branches: {
+                    select: {
+                        branchName: true,
+                    },
+                },
+                Admin: {
+                    select: {
+                        branchName: true,
+                    },
+                },
+            },
+        });
+        res.status(200).json({ data: credit });
+    }
+    catch (error) {
+        res.status(500).json({
+            message: "Internal Server Error",
+        });
+        console.log(error);
+    }
+});
+exports.filterCreditByDate = filterCreditByDate;
+const filterCreditByDateForBranch = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { from, to } = req.body;
+    const { branchId } = req.params;
+    try {
+        const credit = yield prisma.credit.findMany({
+            where: Object.assign(Object.assign({}, (branchId ? { branchesId: branchId } : {})), (from || to
+                ? {
+                    date: Object.assign(Object.assign({}, (from ? { gte: from } : {})), (to ? { lte: to } : {})),
+                }
+                : {})),
+            include: {
+                Branches: {
+                    select: {
+                        branchName: true,
+                    },
+                },
+                Admin: {
+                    select: {
+                        branchName: true,
+                    },
+                },
+            },
+        });
+        res.status(200).json({ data: credit });
+    }
+    catch (error) {
+        res.status(500).json({
+            message: "Internal Server Error",
+        });
+        console.log(error);
+    }
+});
+exports.filterCreditByDateForBranch = filterCreditByDateForBranch;

@@ -37,4 +37,5 @@ shipmentRouter.get("/getFMByPage", shipment_1.getFMByPage);
 shipmentRouter.get("/getFMByPageForBranch", shipment_1.getFMByPageForBranch);
 shipmentRouter.get("/filterFMDetails/:text", shipment_1.filterFMDetails);
 shipmentRouter.get("/filterFMDetailsForBranch/:branchId/:text", shipment_1.filterFMDetailsForBranch);
+shipmentRouter.post("/createBulkPayment", shipment_1.createBulkPayment);
 exports.default = shipmentRouter;

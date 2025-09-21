@@ -1,5 +1,6 @@
 import express from "express";import {
   addPaymentRecordToFM,
+    createBulkPayment,
     createFM,
   createLR,
   deleteFM,
@@ -62,5 +63,6 @@ shipmentRouter.get("/getFMByPage", getFMByPage);
 shipmentRouter.get("/getFMByPageForBranch", getFMByPageForBranch);
 shipmentRouter.get("/filterFMDetails/:text", filterFMDetails);
 shipmentRouter.get("/filterFMDetailsForBranch/:branchId/:text", filterFMDetailsForBranch);
+shipmentRouter.post("/createBulkPayment", createBulkPayment);
 
 export default shipmentRouter;

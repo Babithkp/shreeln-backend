@@ -22,4 +22,8 @@ expensesRouter.get("/expenses/filterByTitle/:text/:branchId", expenses_1.filterE
 expensesRouter.get("/credits/filterByTitle/:text/:branchId", expenses_1.filterCreditsByTitle);
 expensesRouter.post("/expenses/credits/create", expenses_1.createCredit);
 expensesRouter.get("/credits/getByPage", expenses_1.getCreditByPage);
+expensesRouter.post("/expenses/filterExpensesByDate", expenses_1.filterExpensesByDate);
+expensesRouter.post("/credit/filterCreditByDate", expenses_1.filterCreditByDate);
+expensesRouter.post("/expenses/filterExpensesByDateForBranch/:branchId", expenses_1.filterExpensesByDateForBranch);
+expensesRouter.post("/credit/filterCreditByDateForBranch/:branchId", expenses_1.filterCreditByDateForBranch);
 exports.default = expensesRouter;

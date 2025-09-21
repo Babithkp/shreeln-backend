@@ -27,4 +27,5 @@ billingRouter.get("/billing/getBillByPageForBranch", billing_1.getBillByPageForB
 billingRouter.get("/billing/filterBillData/:text", billing_1.filterBillData);
 billingRouter.get("/billing/filterBillDetailsForBranch/:branchId/:text", billing_1.filterBillDetailsForBranch);
 billingRouter.post("/billing/tds-update/:id/:tds", billing_1.updateTdsOfBill);
+billingRouter.post("/billing/createBulkPayment", billing_1.createBulkPayment);
 exports.default = billingRouter;

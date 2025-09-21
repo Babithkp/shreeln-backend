@@ -1,5 +1,4 @@
-import { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
+import { Request, Response } from "express";import { PrismaClient } from "@prisma/client";
 import {
   billData,
   BillEmailBody,
@@ -96,6 +95,13 @@ export const createBill = async (req: Request, res: Response) => {
       where: {
         name: clientName,
       },
+      include: {
+        bill: {
+          select: {
+            pendingAmount: true,
+          },
+        },
+      },
     });
     if (!client) {
       res.status(400).json({
@@ -134,14 +140,12 @@ export const createBill = async (req: Request, res: Response) => {
         ...(branchId ? { branchesId: branchId } : {}),
       },
     });
-    const updatedClient = await prisma.client.update({
-      where: {
-        id: client?.id,
-      },
-      data: {
-        pendingPayment: client.pendingPayment + subTotal,
-      },
-    });
+
+    const totalPendingAmount = client.bill.reduce(
+      (acc, data) => acc + data.pendingAmount,
+      0
+    );
+
     const admin = await prisma.admin.findFirst();
     if (!admin) {
       res.status(400).json({
@@ -149,17 +153,17 @@ export const createBill = async (req: Request, res: Response) => {
       });
       return;
     }
-    if (updatedClient?.pendingPayment > updatedClient?.creditLimit) {
+    if (totalPendingAmount > client?.creditLimit) {
       await prisma.notification.create({
         data: {
           adminId: admin.id,
           requestId: bill.id,
           title: "Credit Limit",
           description: `The credit limit of INR ${
-            updatedClient.creditLimit
+            client.creditLimit
           } for the client ${
-            updatedClient.name
-          } has reached. The current outstanding is INR ${updatedClient.pendingPayment.toFixed(
+            client.name
+          } has reached. The current outstanding is INR ${client.pendingPayment.toFixed(
             2
           )}`,
           message: "",
@@ -314,6 +318,13 @@ export const updateBillDetails = async (req: Request, res: Response) => {
       where: {
         id: bill.clientId!,
       },
+      include: {
+        bill: {
+          select: {
+            pendingAmount: true,
+          },
+        },
+      },
     });
     if (!client) {
       res.status(400).json({
@@ -321,16 +332,13 @@ export const updateBillDetails = async (req: Request, res: Response) => {
       });
       return;
     }
-    const oldPendingAmount = client.pendingPayment - oldBill.pendingAmount;
-    const updatedClient = await prisma.client.update({
-      where: {
-        id: client.id,
-      },
-      data: {
-        pendingPayment: oldPendingAmount + FinalTotal,
-      },
-    });
-    if (updatedClient?.pendingPayment > updatedClient?.creditLimit) {
+
+    const totalPendingAmount = client.bill.reduce(
+      (acc, data) => acc + data.pendingAmount,
+      0
+    );
+
+    if (totalPendingAmount > client?.creditLimit) {
       const admin = await prisma.admin.findFirst();
       if (!admin) {
         res.status(400).json({
@@ -343,7 +351,7 @@ export const updateBillDetails = async (req: Request, res: Response) => {
           adminId: admin.id,
           requestId: bill.id,
           title: "Credit Limit",
-          description: `The credit limit of INR ${updatedClient.creditLimit} for the client ${updatedClient.name} has reached. The current outstanding is INR ${updatedClient.pendingPayment}`,
+          description: `The credit limit of INR ${client.creditLimit} for the client ${client.name} has reached. The current outstanding is INR ${totalPendingAmount}`,
           message: "",
           status: "one-time",
         },
@@ -416,6 +424,13 @@ export const createBillsupplementary = async (req: Request, res: Response) => {
       where: {
         name: clientName,
       },
+      include: {
+        bill: {
+          select: {
+            pendingAmount: true,
+          },
+        },
+      },
     });
     if (!client) {
       res.status(400).json({
@@ -454,14 +469,14 @@ export const createBillsupplementary = async (req: Request, res: Response) => {
         ...(branchId ? { branchesId: branchId } : {}),
       },
     });
-    const updatedClient = await prisma.client.update({
-      where: {
-        id: client?.id,
-      },
-      data: {
-        pendingPayment: client.pendingPayment + subTotal,
-      },
-    });
+
+
+
+    const totalPendingAmount = client.bill.reduce(
+      (acc, data) => acc + data.pendingAmount,
+      0
+    );  
+    
     const admin = await prisma.admin.findFirst();
     if (!admin) {
       res.status(400).json({
@@ -469,17 +484,17 @@ export const createBillsupplementary = async (req: Request, res: Response) => {
       });
       return;
     }
-    if (updatedClient?.pendingPayment > updatedClient?.creditLimit) {
+    if (totalPendingAmount > client?.creditLimit) {
       await prisma.notification.create({
         data: {
           adminId: admin.id,
           requestId: bill.id,
           title: "Credit Limit",
           description: `The credit limit of INR ${
-            updatedClient.creditLimit
+            client.creditLimit
           } for the client ${
-            updatedClient.name
-          } has reached. The current outstanding is INR ${updatedClient.pendingPayment.toFixed(
+            client.name
+          } has reached. The current outstanding is INR ${totalPendingAmount.toFixed(
             2
           )}`,
           message: "",
@@ -785,6 +800,13 @@ export const getBillByPage = async (req: Request, res: Response) => {
                 date: "desc",
               },
             },
+            WriteOff: {
+              select: {
+                id: true,
+                checked: true,
+                reason: true,
+              },
+            },
             Client: true,
             Branches: true,
             Admin: true,
@@ -842,6 +864,13 @@ export const getBillByPageForBranch = async (req: Request, res: Response) => {
         PaymentRecords: {
           orderBy: {
             date: "asc",
+          },
+        },
+        WriteOff: {
+          select: {
+            id: true,
+            checked: true,
+            reason: true,
           },
         },
         Client: true,
@@ -1120,20 +1149,6 @@ export const addPaymentRecordToBill = async (req: Request, res: Response) => {
         },
       });
 
-      const client = await prisma.client.findUnique({
-        where: {
-          id: bill.Client?.id,
-        },
-      });
-      if (!client) return;
-      await prisma.client.update({
-        where: {
-          id: client.id,
-        },
-        data: {
-          pendingPayment: client.pendingPayment - parseFloat(amount || "0"),
-        },
-      });
     }
     await clearDashboardCache();
     await clearAllBillCache();
@@ -1212,21 +1227,6 @@ export const deletePaymentRecordFromBill = async (
       where: { id: paymentRecord.id },
     });
 
-    const client = await prisma.client.findUnique({
-      where: {
-        id: bill.clientId!,
-      },
-    });
-    if (!client) return;
-    await prisma.client.update({
-      where: {
-        id: client.id,
-      },
-      data: {
-        pendingPayment:
-          client.pendingPayment + parseFloat(paymentRecord.amount || "0"),
-      },
-    });
     await clearDashboardCache();
     await clearAllBillCache();
     await clearGetAllRecordPaymentCache();
@@ -1334,6 +1334,13 @@ export const updateBillByNotification = async (req: Request, res: Response) => {
       where: {
         id: bill.clientId!,
       },
+      include: {
+        bill: {
+          select: {
+            pendingAmount: true,
+          },
+        },
+      },
     });
     if (!client) {
       res.status(400).json({
@@ -1341,16 +1348,14 @@ export const updateBillByNotification = async (req: Request, res: Response) => {
       });
       return;
     }
-    const oldPendingAmount = bill.pendingAmount - bill.subTotal;
-    const updatedClient = await prisma.client.update({
-      where: {
-        id: client.id,
-      },
-      data: {
-        pendingPayment: oldPendingAmount - parseFloat(total || "0"),
-      },
-    });
-    if (updatedClient?.pendingPayment > updatedClient?.creditLimit) {
+
+    const totalPendingAmount = client.bill.reduce(
+      (acc, data) => acc + data.pendingAmount,
+      0
+    );
+
+
+    if (totalPendingAmount > client?.creditLimit) {
       const admin = await prisma.admin.findFirst();
       if (!admin) {
         res.status(400).json({
@@ -1363,7 +1368,7 @@ export const updateBillByNotification = async (req: Request, res: Response) => {
           adminId: admin.id,
           requestId: bill.id,
           title: "Credit Limit",
-          description: `The credit limit of INR ${updatedClient.creditLimit} for the client ${updatedClient.name} has reached. The current outstanding is INR ${updatedClient.pendingPayment}`,
+          description: `The credit limit of INR ${client.creditLimit} for the client ${client.name} has reached. The current outstanding is INR ${totalPendingAmount}`,
           message: "",
           status: "one-time",
         },
@@ -1507,23 +1512,6 @@ export const updateBillRecordByNotification = async (
         },
       });
 
-      const client = await prisma.client.findUnique({
-        where: {
-          id: bill.clientId!,
-        },
-      });
-      if (!client) return;
-      await prisma.client.update({
-        where: {
-          id: client.id,
-        },
-        data: {
-          pendingPayment:
-            client.pendingPayment -
-            parseFloat(existingRecord.amount) +
-            parseFloat(data.amount || "0"),
-        },
-      });
     } else {
       await prisma.paymentRecord.update({
         where: { id },
@@ -1620,21 +1608,7 @@ export const deleteBillRecordByNotification = async (
       where: { id: paymentRecord.id },
     });
 
-    const client = await prisma.client.findUnique({
-      where: {
-        id: bill.clientId!,
-      },
-    });
-    if (!client) return;
-    await prisma.client.update({
-      where: {
-        id: client.id,
-      },
-      data: {
-        pendingPayment:
-          client.pendingPayment - parseFloat(paymentRecord.amount || "0"),
-      },
-    });
+
 
     await prisma.notification.create({
       data: {
@@ -1686,6 +1660,88 @@ export const updateTdsOfBill = async (req: Request, res: Response) => {
     await clearAllBillCache();
     res.status(200).json({
       message: "TDS Updated",
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+    console.log(error);
+  }
+};
+
+export const createBulkPayment = async (req: Request, res: Response) => {
+  const {
+    date,
+    transactionNumber,
+    paymentMode,
+    remarks,
+    branchId,
+    adminId,
+    billData,
+  } = req.body;
+  if (!date || !transactionNumber || !paymentMode || !remarks || !billData) {
+    res.status(400).json({
+      message: "Invalid Payment Record Details",
+    });
+    return;
+  }
+  try {
+    await Promise.all(
+      billData.map(async (data: any) => {
+        await prisma.paymentRecord.create({
+          data: {
+            IDNumber: data.billNumber,
+            date,
+            customerName: "",
+            amount: data.amount,
+            amountInWords: data.amountInWords,
+            pendingAmount: data.pendingAmount,
+            transactionNumber,
+            paymentMode,
+            remarks,
+            Bill: {
+              connect: { billNumber: data.billNumber },
+            },
+            ...(adminId ? { Admin: { connect: { id: adminId } } } : {}),
+            ...(branchId ? { Branches: { connect: { id: branchId } } } : {}),
+          },
+        });
+
+        const bill = await prisma.bill.findUnique({
+          where: { billNumber: data.billNumber },
+        });
+        if (!bill) return;
+        const dateDiff =
+          new Date(date).getTime() - new Date(bill.createdAt).getTime();
+
+        let settingTo: "zeroToThirty" | "thirtyToSixty" | "sixtyPlus";
+
+        if (dateDiff < 30 * 24 * 60 * 60 * 1000) {
+          settingTo = "zeroToThirty";
+        } else if (dateDiff < 60 * 24 * 60 * 60 * 1000) {
+          settingTo = "thirtyToSixty";
+        } else {
+          settingTo = "sixtyPlus";
+        }
+
+        const updatedAmount =
+          ((bill[settingTo] as number) || 0) + parseFloat(data.amount);
+
+        await prisma.bill.update({
+          where: { id: bill.id },
+          data: {
+            [settingTo]: updatedAmount,
+            pendingAmount: parseFloat(data.pendingAmount),
+          },
+        });
+      })
+    );
+
+    await clearAllBillCache();
+    await clearClientCache();
+    await clearGetAllRecordPaymentCache();
+    res.status(200).json({
+      message: "Successfully updated Bill details",
     });
   } catch (error) {
     res.status(500).json({

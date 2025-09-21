@@ -3,6 +3,7 @@ import express from "express";import {
   checkBillExists,
   createBill,
   createBillsupplementary,
+  createBulkPayment,
   deleteBill,
   deleteBillByNotification,
   deleteBillRecordByNotification,
@@ -67,5 +68,7 @@ billingRouter.get(
   filterBillDetailsForBranch
 );
 billingRouter.post("/billing/tds-update/:id/:tds", updateTdsOfBill);
+billingRouter.post("/billing/createBulkPayment", createBulkPayment);
+
 
 export default billingRouter;

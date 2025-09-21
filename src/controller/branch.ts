@@ -429,7 +429,7 @@ export const getBranchNotifications = async (req: Request, res: Response) => {
         branchesId: branchId,
       },
       orderBy: {
-        createdAt: "asc",
+        createdAt: "desc",
       },
     });
     res.status(200).json({ data: notifications });

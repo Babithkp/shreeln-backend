@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.filterClientByName = exports.getClientForPage = exports.filterVendorByName = exports.getVendorForPage = exports.filterFMLRByVendor = exports.filterFMLRByVendorForBranch = exports.getBillLRForClient = exports.deleteVehicle = exports.updateVehicleDetails = exports.getVehicleById = exports.getAllVehicles = exports.createVehicle = exports.deleteVendor = exports.updateVendorDetails = exports.getAllVendors = exports.createVendor = void 0;
+exports.filterLRForClientForBranch = exports.filterLRForClient = exports.filterBillLRByClientForBranch = exports.filterBillLRByClient = exports.filterClientByName = exports.getClientForPage = exports.filterVendorByName = exports.getVendorForPage = exports.filterFMLRByVendor = exports.filterFMLRByVendorForBranch = exports.getBillLRForClient = exports.deleteVehicle = exports.updateVehicleDetails = exports.getVehicleById = exports.getAllVehicles = exports.createVehicle = exports.deleteVendor = exports.updateVendorDetails = exports.getAllVendors = exports.createVendor = void 0;
 const client_1 = require("@prisma/client");
 const redis_1 = require("./utils/redis");
 const prisma = new client_1.PrismaClient();
@@ -449,15 +449,8 @@ const filterFMLRByVendorForBranch = (req, res) => __awaiter(void 0, void 0, void
     const { name, from, to } = req.body;
     const { branchId } = req.params;
     try {
-        const vendor = yield prisma.vendors.findUnique({
-            where: { name },
-        });
-        if (!vendor) {
-            res.status(404).json({ message: "Vendor not found" });
-            return;
-        }
         const FMs = yield prisma.fM.findMany({
-            where: Object.assign(Object.assign(Object.assign({}, (branchId ? { branchId } : {})), { vendorName: vendor.name }), (from || to
+            where: Object.assign(Object.assign(Object.assign({}, (branchId ? { branchId } : {})), { vendorName: name === "All" ? {} : name }), (from || to
                 ? {
                     date: Object.assign(Object.assign({}, (from ? { gte: from } : {})), (to ? { lte: to } : {})),
                 }
@@ -496,15 +489,8 @@ exports.filterFMLRByVendorForBranch = filterFMLRByVendorForBranch;
 const filterFMLRByVendor = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { name, from, to } = req.body;
     try {
-        const vendor = yield prisma.vendors.findUnique({
-            where: { name },
-        });
-        if (!vendor) {
-            res.status(404).json({ message: "Vendor not found" });
-            return;
-        }
         const FMs = yield prisma.fM.findMany({
-            where: Object.assign({ vendorName: vendor.name }, (from || to
+            where: Object.assign({ vendorName: name === "All" ? {} : name }, (from || to
                 ? {
                     date: Object.assign(Object.assign({}, (from ? { gte: from } : {})), (to ? { lte: to } : {})),
                 }
@@ -723,3 +709,176 @@ const filterClientByName = (req, res) => __awaiter(void 0, void 0, void 0, funct
     }
 });
 exports.filterClientByName = filterClientByName;
+const filterBillLRByClient = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { name, from, to } = req.body;
+    try {
+        const bills = yield prisma.bill.findMany({
+            where: Object.assign({ Client: Object.assign({}, (name === "All" ? {} : { name })) }, (from || to
+                ? {
+                    date: Object.assign(Object.assign({}, (from ? { gte: from } : {})), (to ? { lte: to } : {})),
+                }
+                : {})),
+            include: {
+                lrData: true,
+                Client: {
+                    select: {
+                        name: true,
+                    },
+                },
+                PaymentRecords: {
+                    select: {
+                        amount: true,
+                    },
+                },
+            },
+        });
+        const LRs = yield prisma.lR.findMany({
+            where: {
+                client: Object.assign({}, (name === "All" ? {} : { name })),
+            },
+            include: {
+                Vehicle: {
+                    select: {
+                        vehicleNumber: true,
+                    },
+                },
+            },
+        });
+        const data = {
+            bills,
+            LRs: LRs.filter((lr) => lr.billId == null),
+        };
+        res.status(200).json({ data });
+    }
+    catch (error) {
+        res.status(500).json({
+            message: "Internal Server Error",
+        });
+        console.log(error);
+    }
+});
+exports.filterBillLRByClient = filterBillLRByClient;
+const filterBillLRByClientForBranch = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { name, from, to } = req.body;
+    const { branchId } = req.params;
+    try {
+        const client = yield prisma.client.findUnique({
+            where: { name },
+        });
+        if (!client) {
+            res.status(404).json({ message: "Vendor not found" });
+            return;
+        }
+        const bills = yield prisma.bill.findMany({
+            where: Object.assign(Object.assign(Object.assign({}, (branchId ? { branchId } : {})), { Client: {
+                    name: client.name,
+                } }), (from || to
+                ? {
+                    date: Object.assign(Object.assign({}, (from ? { gte: from } : {})), (to ? { lte: to } : {})),
+                }
+                : {})),
+            include: {
+                lrData: true,
+                Client: {
+                    select: {
+                        name: true,
+                    },
+                },
+                PaymentRecords: {
+                    select: {
+                        amount: true,
+                    },
+                },
+            },
+        });
+        const LRs = yield prisma.lR.findMany({
+            where: {
+                clientId: client.id,
+            },
+            include: {
+                Vehicle: {
+                    select: {
+                        vehicleNumber: true,
+                    },
+                },
+            },
+        });
+        const data = {
+            bills,
+            LRs: LRs.filter((lr) => lr.billId == null),
+        };
+        res.status(200).json({ data });
+    }
+    catch (error) {
+        res.status(500).json({
+            message: "Internal Server Error",
+        });
+        console.log(error);
+    }
+});
+exports.filterBillLRByClientForBranch = filterBillLRByClientForBranch;
+const filterLRForClient = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { from, to, name } = req.body;
+    try {
+        const LRs = yield prisma.lR.findMany({
+            where: Object.assign(Object.assign({}, (name === "All" ? {} : { client: { name } })), (from || to
+                ? {
+                    date: Object.assign(Object.assign({}, (from ? { gte: from } : {})), (to ? { lte: to } : {})),
+                }
+                : {})),
+            include: {
+                Vehicle: {
+                    select: {
+                        vehicleNumber: true,
+                    },
+                },
+                client: {
+                    select: {
+                        name: true
+                    }
+                }
+            },
+        });
+        res.status(200).json({ data: LRs });
+    }
+    catch (error) {
+        res.status(500).json({
+            message: "Internal Server Error",
+        });
+        console.log(error);
+    }
+});
+exports.filterLRForClient = filterLRForClient;
+const filterLRForClientForBranch = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { from, to, name } = req.body;
+    const { branchId } = req.params;
+    try {
+        const LRs = yield prisma.lR.findMany({
+            where: Object.assign(Object.assign(Object.assign({}, (branchId ? { branchId } : {})), (name === "All" ? {} : { client: { name } })), (from || to
+                ? {
+                    date: Object.assign(Object.assign({}, (from ? { gte: from } : {})), (to ? { lte: to } : {})),
+                }
+                : {})),
+            include: {
+                Vehicle: {
+                    select: {
+                        vehicleNumber: true,
+                    },
+                },
+                client: {
+                    select: {
+                        name: true
+                    }
+                }
+            },
+        });
+        res.status(200).json({ data: LRs });
+    }
+    catch (error) {
+        res.status(500).json({
+            message: "Internal Server Error",
+        });
+        console.log(error);
+    }
+});
+exports.filterLRForClientForBranch = filterLRForClientForBranch;

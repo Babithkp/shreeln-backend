@@ -1,5 +1,4 @@
-import { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
+import { Request, Response } from "express";import { PrismaClient } from "@prisma/client";
 import { LRData, LREmailBody, sendLREmailToClient } from "./utils/LREmail";
 import { FMData, FMEmailBody, sendFMEmailToClient } from "./utils/FMEmail";
 import {
@@ -830,6 +829,13 @@ export const createFM = async (req: Request, res: Response) => {
       where: {
         name: vendorName,
       },
+      include: {
+        FM: {
+          select: {
+            outStandingBalance: true,
+          },
+        },
+      },
     });
     if (!vendor) {
       res.status(400).json({
@@ -890,15 +896,12 @@ export const createFM = async (req: Request, res: Response) => {
       },
     });
 
-    const updatedVendor = await prisma.vendors.update({
-      where: {
-        id: vendor.id,
-      },
-      data: {
-        currentOutStanding: vendor.currentOutStanding + finalValue,
-      },
-    });
-    if (updatedVendor?.currentOutStanding > updatedVendor?.outstandingLimit) {
+    const totaloutStanding = vendor.FM.reduce(
+      (acc, data) => acc + parseFloat(data.outStandingBalance || "0"),
+      0
+    );
+
+    if (totaloutStanding > vendor?.outstandingLimit) {
       const admin = await prisma.admin.findFirst();
       if (!admin) {
         res.status(400).json({
@@ -911,7 +914,7 @@ export const createFM = async (req: Request, res: Response) => {
           adminId: admin.id,
           requestId: fm.id,
           title: "Outstanding limit",
-          description: `The outstanding limit of INR ${updatedVendor.outstandingLimit} for the vendor ${updatedVendor.name} has reached. The current outstanding is INR ${updatedVendor.currentOutStanding}`,
+          description: `The outstanding limit of INR ${vendor.outstandingLimit} for the vendor ${vendor.name} has reached. The current outstanding is INR ${vendor.currentOutStanding}`,
           message: "",
           status: "one-time",
         },
@@ -979,6 +982,13 @@ export const getFMByPage = async (req: Request, res: Response) => {
           },
           include: {
             PaymentRecords: true,
+            WriteOff: {
+              select: {
+                id: true,
+                reason: true,
+                checked: true,
+              },
+            },
           },
         });
         return {
@@ -1023,6 +1033,13 @@ export const getFMByPageForBranch = async (req: Request, res: Response) => {
       },
       include: {
         PaymentRecords: true,
+        WriteOff: {
+          select: {
+            id: true,
+            reason: true,
+            checked: true,
+          },
+        },
       },
     });
 
@@ -1125,33 +1142,6 @@ export const deleteFM = async (req: Request, res: Response) => {
         });
         return;
       }
-      const recordPayments = await prisma.paymentRecord.findMany({
-        where: {
-          fMId: fm.id,
-        },
-      });
-      const vendor = await prisma.vendors.findUnique({
-        where: {
-          id: fm.vendorsId,
-        },
-      });
-
-      const totalRecordPayments = recordPayments.reduce(
-        (acc, data) => acc + parseFloat(data.amount || "0"),
-        0
-      );
-
-      await prisma.vendors.update({
-        where: {
-          id: vendor?.id,
-        },
-        data: {
-          currentOutStanding:
-            (vendor?.currentOutStanding || 0) +
-            totalRecordPayments -
-            parseFloat(fm.balance || "0"),
-        },
-      });
 
       await prisma.fM.delete({
         where: {
@@ -1159,6 +1149,7 @@ export const deleteFM = async (req: Request, res: Response) => {
         },
       });
       await clearFMCache();
+      await clearVendorCache();
       res.status(200).json({
         message: "FM Deleted",
       });
@@ -1529,26 +1520,12 @@ export const addPaymentRecordToFM = async (req: Request, res: Response) => {
       const updatedAmount =
         ((fm[settingTo] as number) || 0) + parseFloat(newRecord.amount);
       const updatedAdvance = fm.outStandingAdvance - parseFloat(amount);
-      const FM = await prisma.fM.update({
+      await prisma.fM.update({
         where: { id: fm.id },
         data: {
           [settingTo]: updatedAmount,
           outStandingBalance: pendingAmount.toString(),
           outStandingAdvance: updatedAdvance < 0 ? 0 : updatedAdvance,
-        },
-      });
-      const vendor = await prisma.vendors.findUnique({
-        where: {
-          id: FM?.vendorsId!,
-        },
-      });
-      await prisma.vendors.update({
-        where: {
-          id: vendor?.id!,
-        },
-        data: {
-          currentOutStanding:
-            vendor?.currentOutStanding! - parseFloat(amount || "0"),
         },
       });
     }
@@ -1895,6 +1872,13 @@ export const updateFMByNotification = async (req: Request, res: Response) => {
       where: {
         id: fm?.vendorsId!,
       },
+      include: {
+        FM: {
+          select: {
+            outStandingBalance: true,
+          },
+        },
+      },
     });
     if (!vendor) {
       res.status(400).json({
@@ -1971,15 +1955,12 @@ export const updateFMByNotification = async (req: Request, res: Response) => {
       const finalOldValue = oldValue - parseFloat(fm.tds || "0");
       const oldOutstanding = vendor.currentOutStanding - finalOldValue;
 
-      const updatedVendor = await prisma.vendors.update({
-        where: {
-          id: vendor.id,
-        },
-        data: {
-          currentOutStanding: oldOutstanding + finalValue,
-        },
-      });
-      if (updatedVendor?.currentOutStanding > updatedVendor?.outstandingLimit) {
+      const totaloutStanding = vendor.FM.reduce(
+        (acc, data) => acc + parseFloat(data.outStandingBalance || "0"),
+        0
+      );
+
+      if (totaloutStanding > vendor?.outstandingLimit) {
         const admin = await prisma.admin.findFirst();
         if (!admin) {
           res.status(400).json({
@@ -2141,7 +2122,6 @@ export const updateRecordPaymentByNotification = async (
       const prevAmount = parseFloat(paymentRecord.amount || "0");
       const newAmount = parseFloat(data.amount || "0");
 
-
       const prevDate = new Date(paymentRecord.date);
       const prevDiff = prevDate.getTime() - new Date(FM.createdAt).getTime();
 
@@ -2163,29 +2143,11 @@ export const updateRecordPaymentByNotification = async (
       // 4. Subtract the previous amount from old bucket
       const oldAmount = Number(FM[oldBucket] || 0);
       const correctedOldAmount = oldAmount - prevAmount + newAmount;
-     
 
       await prisma.fM.update({
         where: { id: FM.id },
         data: {
           [oldBucket]: correctedOldAmount,
-        },
-      });
-
-      if (!FM.vendorsId) return;
-      const vendor = await prisma.vendors.findUnique({
-        where: {
-          id: FM.vendorsId,
-        },
-      });
-      if (!vendor) return;
-      await prisma.vendors.update({
-        where: {
-          id: vendor.id,
-        },
-        data: {
-          currentOutStanding:
-            vendor.currentOutStanding - prevAmount + newAmount,
         },
       });
     }
@@ -2278,22 +2240,6 @@ export const deleteFMRecordByNotification = async (
         where: { id },
       });
 
-      const vendor = await prisma.vendors.findUnique({
-        where: {
-          id: fm.vendorsId!,
-        },
-      });
-      if (!vendor) return;
-      await prisma.vendors.update({
-        where: {
-          id: vendor.id,
-        },
-        data: {
-          currentOutStanding:
-            vendor.currentOutStanding - parseFloat(paymentRecord.amount || "0"),
-        },
-      });
-
       await prisma.notification.create({
         data: {
           branchesId: fm.branchId,
@@ -2319,8 +2265,7 @@ export const deleteFMRecordByNotification = async (
   }
 };
 
-const updateFMDetails = async (fmNumber: string) => {
-  
+export const updateFMDetails = async (fmNumber: string) => {
   try {
     const fm = await prisma.fM.findUnique({
       where: {
@@ -2395,13 +2340,95 @@ const updateFMDetails = async (fmNumber: string) => {
           LRDetails: fm.LRDetails,
         },
       });
-
-
-
-      await clearFMCache();
-      await clearVendorCache();
     }
   } catch (error) {
+    console.log(error);
+  }
+};
+
+export const createBulkPayment = async (req: Request, res: Response) => {
+  const {
+    date,
+    transactionNumber,
+    paymentMode,
+    remarks,
+    branchId,
+    adminId,
+    FmData,
+  } = req.body;
+  if (!date || !transactionNumber || !paymentMode || !remarks || !FmData) {
+    res.status(400).json({
+      message: "Invalid Payment Record Details",
+    });
+    return;
+  }
+  try {
+    await Promise.all(
+      FmData.map(async (data: any) => {
+        await prisma.paymentRecord.create({
+          data: {
+            IDNumber: data.fmNumber,
+            date,
+            customerName: "",
+            amount: data.amount,
+            amountInWords: data.amountInWords,
+            pendingAmount: data.pendingAmount,
+            transactionNumber,
+            paymentMode,
+            remarks,
+            FM: {
+              connect: { fmNumber: data.fmNumber },
+            },
+            ...(adminId ? { Admin: { connect: { id: adminId } } } : {}),
+            ...(branchId ? { Branches: { connect: { id: branchId } } } : {}),
+          },
+        });
+        const fm = await prisma.fM.findUnique({
+          where: { fmNumber: data.fmNumber },
+        });
+        if (!fm) return;
+        const dateDiff =
+          new Date(date).getTime() - new Date(fm.createdAt).getTime();
+
+        let settingTo:
+          | "zeroToThirty"
+          | "thirtyToSixty"
+          | "sixtyToNinety"
+          | "ninetyPlus";
+
+        if (dateDiff < 30 * 24 * 60 * 60 * 1000) {
+          settingTo = "zeroToThirty";
+        } else if (dateDiff < 60 * 24 * 60 * 60 * 1000) {
+          settingTo = "thirtyToSixty";
+        } else if (dateDiff < 90 * 24 * 60 * 60 * 1000) {
+          settingTo = "sixtyToNinety";
+        } else {
+          settingTo = "ninetyPlus";
+        }
+
+        const updatedAmount =
+          ((fm[settingTo] as number) || 0) + parseFloat(data.amount);
+
+        await prisma.fM.update({
+          where: { id: fm.id },
+          data: {
+            [settingTo]: updatedAmount,
+          },
+        });
+        await updateFMDetails(data.fmNumber);
+      })
+    );
+
+    await clearFMCache();
+    await clearVendorCache();
+    await clearGetAllRecordPaymentCache();
+    res.status(200).json({
+      message: "Successfully updated FM details",
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
     console.log(error);
   }
 };

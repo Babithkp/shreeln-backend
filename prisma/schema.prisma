@@ -70,6 +70,7 @@ model Branches {
   expenses       Expense[]
   pod            POD[]
   Credit         Credit[]
+  WriteOff       WriteOff[]
 }
 
 model Client {
@@ -262,6 +263,7 @@ model FM {
   createdAt          DateTime        @default(now())
   Vendors            Vendors?        @relation(fields: [vendorsId], references: [id])
   vendorsId          String?         @db.ObjectId
+  WriteOff           WriteOff?
 }
 
 model Bill {
@@ -300,6 +302,7 @@ model Bill {
   branchesId     String?         @db.ObjectId
   Admin          Admin?          @relation(fields: [adminId], references: [id])
   adminId        String?         @db.ObjectId
+  WriteOff       WriteOff?
 }
 
 model CompanyProfile {
@@ -401,4 +404,21 @@ model Notification {
   adminId     String?   @db.ObjectId
   Branches    Branches? @relation(fields: [branchesId], references: [id], onDelete: Cascade)
   branchesId  String?   @db.ObjectId
+}
+
+model WriteOff {
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  vendorName String
+  date       String
+  IDNumber   String    @unique
+  amount     String
+  reason     String?
+  checked    Boolean   @default(false)
+  FM         FM?       @relation(fields: [fMId], references: [id], onDelete: Cascade)
+  fMId       String?   @unique @db.ObjectId
+  Bill       Bill?     @relation(fields: [billId], references: [id], onDelete: Cascade)
+  billId     String?   @unique @db.ObjectId
+  Branch     Branches? @relation(fields: [branchId], references: [id])
+  branchId   String?   @db.ObjectId
+  createdAt  DateTime  @default(now())
 }

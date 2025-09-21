@@ -96,7 +96,7 @@ export const createExpense = async (req: Request, res: Response) => {
       },
     });
     await clearAllExpenseCache();
-    await clearExpenseCache()
+    await clearExpenseCache();
     res.status(200).json({
       message: "Expense Created",
     });
@@ -111,9 +111,9 @@ export const createExpense = async (req: Request, res: Response) => {
 export const getAllExpenses = async (req: Request, res: Response) => {
   try {
     const expenses = await prisma.expense.findMany({
-      select:{
+      select: {
         amount: true,
-      }
+      },
     });
     res.status(200).json({ data: expenses });
   } catch (error) {
@@ -145,7 +145,7 @@ export const deleteExpense = async (req: Request, res: Response) => {
         },
       });
       await clearAllExpenseCache();
-      await clearExpenseCache()
+      await clearExpenseCache();
       res.status(200).json({
         message: "Expense Deleted",
       });
@@ -214,7 +214,7 @@ export const updateExpenseDetails = async (req: Request, res: Response) => {
       },
     });
     await clearAllExpenseCache();
-    await clearExpenseCache()
+    await clearExpenseCache();
     res.status(200).json({
       message: "Expense Updated",
     });
@@ -268,7 +268,7 @@ export const updateExpenseByNotification = async (
         },
       });
       await clearAllExpenseCache();
-      await clearExpenseCache()
+      await clearExpenseCache();
       res.status(200).json({
         message: "Expense Updated",
       });
@@ -323,7 +323,7 @@ export const deleteExpenseByNotification = async (
         },
       });
       await clearAllExpenseCache();
-      await clearExpenseCache()
+      await clearExpenseCache();
       res.status(200).json({
         message: "Expense Deleted",
       });
@@ -888,4 +888,157 @@ export const getAllCredit = async (req: Request, res: Response) => {
   }
 };
 
+export const filterExpensesByDate = async (req: Request, res: Response) => {
+  const { from, to } = req.body;
 
+  try {
+    const expenses = await prisma.expense.findMany({
+      where: {
+        ...(from || to
+          ? {
+              date: {
+                ...(from ? { gte: from } : {}),
+                ...(to ? { lte: to } : {}),
+              },
+            }
+          : {}),
+      },
+      include: {
+        Branches: {
+          select: {
+            branchName: true,
+          },
+        },
+        Admin: {
+          select: {
+            branchName: true,
+          },
+        },
+      },
+    });
+
+    res.status(200).json({ data: expenses });
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+    console.log(error);
+  }
+};
+export const filterExpensesByDateForBranch = async (
+  req: Request,
+  res: Response
+) => {
+  const { from, to } = req.body;
+  const { branchId } = req.params;
+
+  try {
+    const expenses = await prisma.expense.findMany({
+      where: {
+        ...(branchId ? { branchesId: branchId } : {}),
+        ...(from || to
+          ? {
+              date: {
+                ...(from ? { gte: from } : {}),
+                ...(to ? { lte: to } : {}),
+              },
+            }
+          : {}),
+      },
+      include: {
+        Branches: {
+          select: {
+            branchName: true,
+          },
+        },
+        Admin: {
+          select: {
+            branchName: true,
+          },
+        },
+      },
+    });
+
+    res.status(200).json({ data: expenses });
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+    console.log(error);
+  }
+};
+
+export const filterCreditByDate = async (req: Request, res: Response) => {
+  const { from, to } = req.body;
+
+  try {
+    const credit = await prisma.credit.findMany({
+      where: {
+        ...(from || to
+          ? {
+              date: {
+                ...(from ? { gte: from } : {}),
+                ...(to ? { lte: to } : {}),
+              },
+            }
+          : {}),
+      },
+      include: {
+        Branches: {
+          select: {
+            branchName: true,
+          },
+        },
+        Admin: {
+          select: {
+            branchName: true,
+          },
+        },
+      },
+    });
+    res.status(200).json({ data: credit });
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+    console.log(error);
+  }
+}
+export const filterCreditByDateForBranch = async (req: Request, res: Response) => {
+  const { from, to } = req.body;
+  const { branchId } = req.params;
+
+  try {
+    const credit = await prisma.credit.findMany({
+      where: {
+        ...(branchId ? { branchesId: branchId } : {}),
+        ...(from || to
+          ? {
+              date: {
+                ...(from ? { gte: from } : {}),
+                ...(to ? { lte: to } : {}),
+              },
+            }
+          : {}),
+      },
+      include: {
+        Branches: {
+          select: {
+            branchName: true,
+          },
+        },
+        Admin: {
+          select: {
+            branchName: true,
+          },
+        },
+      },
+    });
+    res.status(200).json({ data: credit });
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+    console.log(error);
+  }
+}

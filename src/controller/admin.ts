@@ -1,4 +1,5 @@
-import { Request, Response } from "express";import { PrismaClient } from "@prisma/client";
+import { Request, Response } from "express";
+import { PrismaClient } from "@prisma/client";
 import {
   clearClientCache,
   clearDashboardCache,
@@ -319,11 +320,7 @@ export const getAllClients = async (req: Request, res: Response) => {
             Vehicle: true,
           },
         },
-        bill: {
-          select: {
-            pendingAmount: true,
-          },
-        },
+        bill: true,
       },
       orderBy: {
         createdAt: "desc",

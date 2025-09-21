@@ -1,4 +1,5 @@
-import { Request, Response } from "express";import { PrismaClient } from "@prisma/client";
+import { Request, Response } from "express";
+import { PrismaClient } from "@prisma/client";
 import { clearVendorCache, redisGetOrSetFunctions } from "./utils/redis";
 const prisma = new PrismaClient();
 
@@ -488,24 +489,18 @@ export const getBillLRForClient = async (req: Request, res: Response) => {
   }
 };
 
-export const  filterFMLRByVendorForBranch = async (req: Request, res: Response) => {
+export const filterFMLRByVendorForBranch = async (
+  req: Request,
+  res: Response
+) => {
   const { name, from, to } = req.body;
   const { branchId } = req.params;
 
   try {
-    const vendor = await prisma.vendors.findUnique({
-      where: { name },
-    });
-
-    if (!vendor) {
-      res.status(404).json({ message: "Vendor not found" });
-      return;
-    }
-
     const FMs = await prisma.fM.findMany({
       where: {
         ...(branchId ? { branchId } : {}),
-        vendorName: vendor.name,
+        ...{ vendorName: name === "All" ? {} : name },
         ...(from || to
           ? {
               date: {
@@ -549,22 +544,13 @@ export const  filterFMLRByVendorForBranch = async (req: Request, res: Response) 
     console.log(error);
   }
 };
-export const  filterFMLRByVendor = async (req: Request, res: Response) => {
+export const filterFMLRByVendor = async (req: Request, res: Response) => {
   const { name, from, to } = req.body;
 
   try {
-    const vendor = await prisma.vendors.findUnique({
-      where: { name },
-    });
-
-    if (!vendor) {
-      res.status(404).json({ message: "Vendor not found" });
-      return;
-    }
-
     const FMs = await prisma.fM.findMany({
       where: {
-        vendorName: vendor.name,
+        ...{ vendorName: name === "All" ? {} : name },
         ...(from || to
           ? {
               date: {
@@ -786,6 +772,216 @@ export const filterClientByName = async (req: Request, res: Response) => {
         data: client,
       });
     }
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+    console.log(error);
+  }
+};
+
+export const filterBillLRByClient = async (req: Request, res: Response) => {
+  const { name, from, to } = req.body;
+  try {
+    const bills = await prisma.bill.findMany({
+      where: {
+        Client: {
+          ...(name === "All" ? {} : { name }),
+        },
+        ...(from || to
+          ? {
+              date: {
+                ...(from ? { gte: from } : {}),
+                ...(to ? { lte: to } : {}),
+              },
+            }
+          : {}),
+      },
+      include: {
+        lrData: true,
+        Client: {
+          select: {
+            name: true,
+          },
+        },
+        PaymentRecords: {
+          select: {
+            amount: true,
+          },
+        },
+      },
+    });
+
+    const LRs = await prisma.lR.findMany({
+      where: {
+        client: {
+          ...(name === "All" ? {} : { name }),
+        },
+      },
+      include: {
+        Vehicle: {
+          select: {
+            vehicleNumber: true,
+          },
+        },
+      },
+    });
+
+    const data = {
+      bills,
+      LRs: LRs.filter((lr) => lr.billId == null),
+    };
+    res.status(200).json({ data });
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+    console.log(error);
+  }
+};
+export const filterBillLRByClientForBranch = async (
+  req: Request,
+  res: Response
+) => {
+  const { name, from, to } = req.body;
+  const { branchId } = req.params;
+  try {
+    const client = await prisma.client.findUnique({
+      where: { name },
+    });
+
+    if (!client) {
+      res.status(404).json({ message: "Vendor not found" });
+      return;
+    }
+
+    const bills = await prisma.bill.findMany({
+      where: {
+        ...(branchId ? { branchId } : {}),
+        Client: {
+          name: client.name,
+        },
+        ...(from || to
+          ? {
+              date: {
+                ...(from ? { gte: from } : {}),
+                ...(to ? { lte: to } : {}),
+              },
+            }
+          : {}),
+      },
+      include: {
+        lrData: true,
+        Client: {
+          select: {
+            name: true,
+          },
+        },
+        PaymentRecords: {
+          select: {
+            amount: true,
+          },
+        },
+      },
+    });
+
+    const LRs = await prisma.lR.findMany({
+      where: {
+        clientId: client.id,
+      },
+      include: {
+        Vehicle: {
+          select: {
+            vehicleNumber: true,
+          },
+        },
+      },
+    });
+
+    const data = {
+      bills,
+      LRs: LRs.filter((lr) => lr.billId == null),
+    };
+    res.status(200).json({ data });
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+    console.log(error);
+  }
+};
+
+export const filterLRForClient = async (req: Request, res: Response) => {
+  const { from, to,name } = req.body;
+
+  try {
+    const LRs = await prisma.lR.findMany({
+      where: {
+        ...(name === "All" ? {} : { client: { name } }),
+        ...(from || to
+          ? {
+              date: {
+                ...(from ? { gte: from } : {}),
+                ...(to ? { lte: to } : {}),
+              },
+            }
+          : {}),
+      },
+      include: {
+        Vehicle: {
+          select: {
+            vehicleNumber: true,
+          },
+        },
+        client:{
+          select:{
+            name:true
+          }
+        }
+      },
+    });
+
+    res.status(200).json({ data: LRs });
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
+    console.log(error);
+  }
+};
+export const filterLRForClientForBranch = async (req: Request, res: Response) => {
+  const { from, to,name } = req.body;
+  const { branchId } = req.params;
+
+  try {
+    const LRs = await prisma.lR.findMany({
+      where: {
+        ...(branchId ? { branchId } : {}),
+        ...(name === "All" ? {} : { client: { name } }),
+        ...(from || to
+          ? {
+              date: {
+                ...(from ? { gte: from } : {}),
+                ...(to ? { lte: to } : {}),
+              },
+            }
+          : {}),
+      },
+      include: {
+        Vehicle: {
+          select: {
+            vehicleNumber: true,
+          },
+        },
+        client:{
+          select:{
+            name:true
+          }
+        }
+      },
+    });
+
+    res.status(200).json({ data: LRs });
   } catch (error) {
     res.status(500).json({
       message: "Internal Server Error",

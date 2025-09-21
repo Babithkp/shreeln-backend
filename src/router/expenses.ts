@@ -5,7 +5,11 @@ import express from "express";import {
   deleteCreditByNotification,
   deleteExpense,
   deleteExpenseByNotification,
+  filterCreditByDate,
+  filterCreditByDateForBranch,
   filterCreditsByTitle,
+  filterExpensesByDate,
+  filterExpensesByDateForBranch,
   filterExpensesByTitle,
   getAllCredit,
   getAllExpenses,
@@ -53,5 +57,10 @@ expensesRouter.get(
 );
 expensesRouter.post("/expenses/credits/create", createCredit);
 expensesRouter.get("/credits/getByPage", getCreditByPage);
+expensesRouter.post("/expenses/filterExpensesByDate", filterExpensesByDate);
+expensesRouter.post("/credit/filterCreditByDate", filterCreditByDate); 
+expensesRouter.post("/expenses/filterExpensesByDateForBranch/:branchId", filterExpensesByDateForBranch);
+expensesRouter.post("/credit/filterCreditByDateForBranch/:branchId", filterCreditByDateForBranch);
+
 
 export default expensesRouter;

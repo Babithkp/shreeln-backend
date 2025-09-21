@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteFMRecordByNotification = exports.updateRecordPaymentByNotification = exports.deleteLRByNotification = exports.deleteFMByNotification = exports.updateFMByNotification = exports.updateLRByNotification = exports.getLRByBranchId = exports.getFMByBranchId = exports.filterFMBymonthForBranch = exports.filterFMBymonth = exports.deletePaymentRecordFromFM = exports.addPaymentRecordToFM = exports.sendFMEmail = exports.updateFM = exports.deleteFM = exports.filterFMDetailsForBranch = exports.filterFMDetails = exports.getFMByPageForBranch = exports.getFMByPage = exports.getFMData = exports.createFM = exports.sendLREmail = exports.filterLRDetailsForBranch = exports.filterLRDetails = exports.updateLR = exports.deleteLR = exports.getLRByLrNumber = exports.getLRByPageForBranch = exports.getLRByPage = exports.getLRData = exports.createLR = void 0;
+exports.createBulkPayment = exports.updateFMDetails = exports.deleteFMRecordByNotification = exports.updateRecordPaymentByNotification = exports.deleteLRByNotification = exports.deleteFMByNotification = exports.updateFMByNotification = exports.updateLRByNotification = exports.getLRByBranchId = exports.getFMByBranchId = exports.filterFMBymonthForBranch = exports.filterFMBymonth = exports.deletePaymentRecordFromFM = exports.addPaymentRecordToFM = exports.sendFMEmail = exports.updateFM = exports.deleteFM = exports.filterFMDetailsForBranch = exports.filterFMDetails = exports.getFMByPageForBranch = exports.getFMByPage = exports.getFMData = exports.createFM = exports.sendLREmail = exports.filterLRDetailsForBranch = exports.filterLRDetails = exports.updateLR = exports.deleteLR = exports.getLRByLrNumber = exports.getLRByPageForBranch = exports.getLRByPage = exports.getLRData = exports.createLR = void 0;
 const client_1 = require("@prisma/client");
 const LREmail_1 = require("./utils/LREmail");
 const FMEmail_1 = require("./utils/FMEmail");
@@ -684,6 +684,13 @@ const createFM = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             where: {
                 name: vendorName,
             },
+            include: {
+                FM: {
+                    select: {
+                        outStandingBalance: true,
+                    },
+                },
+            },
         });
         if (!vendor) {
             res.status(400).json({
@@ -729,15 +736,8 @@ const createFM = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                     connect: { id: vendor.id },
                 } }, (adminId ? { admin: { connect: { id: adminId } } } : {})), (branchId ? { branch: { connect: { id: branchId } } } : {})),
         });
-        const updatedVendor = yield prisma.vendors.update({
-            where: {
-                id: vendor.id,
-            },
-            data: {
-                currentOutStanding: vendor.currentOutStanding + finalValue,
-            },
-        });
-        if ((updatedVendor === null || updatedVendor === void 0 ? void 0 : updatedVendor.currentOutStanding) > (updatedVendor === null || updatedVendor === void 0 ? void 0 : updatedVendor.outstandingLimit)) {
+        const totaloutStanding = vendor.FM.reduce((acc, data) => acc + parseFloat(data.outStandingBalance || "0"), 0);
+        if (totaloutStanding > (vendor === null || vendor === void 0 ? void 0 : vendor.outstandingLimit)) {
             const admin = yield prisma.admin.findFirst();
             if (!admin) {
                 res.status(400).json({
@@ -750,7 +750,7 @@ const createFM = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                     adminId: admin.id,
                     requestId: fm.id,
                     title: "Outstanding limit",
-                    description: `The outstanding limit of INR ${updatedVendor.outstandingLimit} for the vendor ${updatedVendor.name} has reached. The current outstanding is INR ${updatedVendor.currentOutStanding}`,
+                    description: `The outstanding limit of INR ${vendor.outstandingLimit} for the vendor ${vendor.name} has reached. The current outstanding is INR ${vendor.currentOutStanding}`,
                     message: "",
                     status: "one-time",
                 },
@@ -818,6 +818,13 @@ const getFMByPage = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
                     },
                     include: {
                         PaymentRecords: true,
+                        WriteOff: {
+                            select: {
+                                id: true,
+                                reason: true,
+                                checked: true,
+                            },
+                        },
                     },
                 });
                 return {
@@ -861,6 +868,13 @@ const getFMByPageForBranch = (req, res) => __awaiter(void 0, void 0, void 0, fun
             },
             include: {
                 PaymentRecords: true,
+                WriteOff: {
+                    select: {
+                        id: true,
+                        reason: true,
+                        checked: true,
+                    },
+                },
             },
         });
         const data = {
@@ -963,33 +977,13 @@ const deleteFM = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 });
                 return;
             }
-            const recordPayments = yield prisma.paymentRecord.findMany({
-                where: {
-                    fMId: fm.id,
-                },
-            });
-            const vendor = yield prisma.vendors.findUnique({
-                where: {
-                    id: fm.vendorsId,
-                },
-            });
-            const totalRecordPayments = recordPayments.reduce((acc, data) => acc + parseFloat(data.amount || "0"), 0);
-            yield prisma.vendors.update({
-                where: {
-                    id: vendor === null || vendor === void 0 ? void 0 : vendor.id,
-                },
-                data: {
-                    currentOutStanding: ((vendor === null || vendor === void 0 ? void 0 : vendor.currentOutStanding) || 0) +
-                        totalRecordPayments -
-                        parseFloat(fm.balance || "0"),
-                },
-            });
             yield prisma.fM.delete({
                 where: {
                     id: fm.id,
                 },
             });
             yield (0, redis_1.clearFMCache)();
+            yield (0, redis_1.clearVendorCache)();
             res.status(200).json({
                 message: "FM Deleted",
             });
@@ -1243,7 +1237,7 @@ const addPaymentRecordToFM = (req, res) => __awaiter(void 0, void 0, void 0, fun
                     remarks,
                 },
             });
-            updateFMDetails(FM.fmNumber);
+            (0, exports.updateFMDetails)(FM.fmNumber);
         }
         else {
             const newRecord = yield prisma.paymentRecord.create({
@@ -1271,25 +1265,12 @@ const addPaymentRecordToFM = (req, res) => __awaiter(void 0, void 0, void 0, fun
             }
             const updatedAmount = (fm[settingTo] || 0) + parseFloat(newRecord.amount);
             const updatedAdvance = fm.outStandingAdvance - parseFloat(amount);
-            const FM = yield prisma.fM.update({
+            yield prisma.fM.update({
                 where: { id: fm.id },
                 data: {
                     [settingTo]: updatedAmount,
                     outStandingBalance: pendingAmount.toString(),
                     outStandingAdvance: updatedAdvance < 0 ? 0 : updatedAdvance,
-                },
-            });
-            const vendor = yield prisma.vendors.findUnique({
-                where: {
-                    id: FM === null || FM === void 0 ? void 0 : FM.vendorsId,
-                },
-            });
-            yield prisma.vendors.update({
-                where: {
-                    id: vendor === null || vendor === void 0 ? void 0 : vendor.id,
-                },
-                data: {
-                    currentOutStanding: (vendor === null || vendor === void 0 ? void 0 : vendor.currentOutStanding) - parseFloat(amount || "0"),
                 },
             });
         }
@@ -1351,7 +1332,7 @@ const deletePaymentRecordFromFM = (req, res) => __awaiter(void 0, void 0, void 0
             yield prisma.paymentRecord.delete({
                 where: { id },
             });
-            yield updateFMDetails(fm.fmNumber);
+            yield (0, exports.updateFMDetails)(fm.fmNumber);
             yield (0, redis_1.clearGetAllRecordPaymentCache)();
             yield (0, redis_1.clearFMCache)();
             yield (0, redis_1.clearGetRecentTransactionCache)();
@@ -1596,6 +1577,13 @@ const updateFMByNotification = (req, res) => __awaiter(void 0, void 0, void 0, f
             where: {
                 id: fm === null || fm === void 0 ? void 0 : fm.vendorsId,
             },
+            include: {
+                FM: {
+                    select: {
+                        outStandingBalance: true,
+                    },
+                },
+            },
         });
         if (!vendor) {
             res.status(400).json({
@@ -1666,15 +1654,8 @@ const updateFMByNotification = (req, res) => __awaiter(void 0, void 0, void 0, f
                 parseFloat(fm.rtoCharges || "0");
             const finalOldValue = oldValue - parseFloat(fm.tds || "0");
             const oldOutstanding = vendor.currentOutStanding - finalOldValue;
-            const updatedVendor = yield prisma.vendors.update({
-                where: {
-                    id: vendor.id,
-                },
-                data: {
-                    currentOutStanding: oldOutstanding + finalValue,
-                },
-            });
-            if ((updatedVendor === null || updatedVendor === void 0 ? void 0 : updatedVendor.currentOutStanding) > (updatedVendor === null || updatedVendor === void 0 ? void 0 : updatedVendor.outstandingLimit)) {
+            const totaloutStanding = vendor.FM.reduce((acc, data) => acc + parseFloat(data.outStandingBalance || "0"), 0);
+            if (totaloutStanding > (vendor === null || vendor === void 0 ? void 0 : vendor.outstandingLimit)) {
                 const admin = yield prisma.admin.findFirst();
                 if (!admin) {
                     res.status(400).json({
@@ -1852,23 +1833,6 @@ const updateRecordPaymentByNotification = (req, res) => __awaiter(void 0, void 0
                     [oldBucket]: correctedOldAmount,
                 },
             });
-            if (!FM.vendorsId)
-                return;
-            const vendor = yield prisma.vendors.findUnique({
-                where: {
-                    id: FM.vendorsId,
-                },
-            });
-            if (!vendor)
-                return;
-            yield prisma.vendors.update({
-                where: {
-                    id: vendor.id,
-                },
-                data: {
-                    currentOutStanding: vendor.currentOutStanding - prevAmount + newAmount,
-                },
-            });
         }
         yield prisma.paymentRecord.update({
             where: { id: paymentRecord.id },
@@ -1883,7 +1847,7 @@ const updateRecordPaymentByNotification = (req, res) => __awaiter(void 0, void 0
                 description: "Approved",
             },
         });
-        yield updateFMDetails(FM.fmNumber);
+        yield (0, exports.updateFMDetails)(FM.fmNumber);
         yield (0, redis_1.clearGetAllRecordPaymentCache)();
         yield (0, redis_1.clearFMCache)();
         yield (0, redis_1.clearGetRecentTransactionCache)();
@@ -1944,21 +1908,6 @@ const deleteFMRecordByNotification = (req, res) => __awaiter(void 0, void 0, voi
             yield prisma.paymentRecord.delete({
                 where: { id },
             });
-            const vendor = yield prisma.vendors.findUnique({
-                where: {
-                    id: fm.vendorsId,
-                },
-            });
-            if (!vendor)
-                return;
-            yield prisma.vendors.update({
-                where: {
-                    id: vendor.id,
-                },
-                data: {
-                    currentOutStanding: vendor.currentOutStanding - parseFloat(paymentRecord.amount || "0"),
-                },
-            });
             yield prisma.notification.create({
                 data: {
                     branchesId: fm.branchId,
@@ -1968,7 +1917,7 @@ const deleteFMRecordByNotification = (req, res) => __awaiter(void 0, void 0, voi
                     description: "Approved",
                 },
             });
-            yield updateFMDetails(fm.fmNumber);
+            yield (0, exports.updateFMDetails)(fm.fmNumber);
             yield (0, redis_1.clearGetAllRecordPaymentCache)();
             yield (0, redis_1.clearFMCache)();
             yield (0, redis_1.clearGetRecentTransactionCache)();
@@ -2056,11 +2005,70 @@ const updateFMDetails = (fmNumber) => __awaiter(void 0, void 0, void 0, function
                     LRDetails: fm.LRDetails,
                 },
             });
-            yield (0, redis_1.clearFMCache)();
-            yield (0, redis_1.clearVendorCache)();
         }
     }
     catch (error) {
         console.log(error);
     }
 });
+exports.updateFMDetails = updateFMDetails;
+const createBulkPayment = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { date, transactionNumber, paymentMode, remarks, branchId, adminId, FmData, } = req.body;
+    if (!date || !transactionNumber || !paymentMode || !remarks || !FmData) {
+        res.status(400).json({
+            message: "Invalid Payment Record Details",
+        });
+        return;
+    }
+    try {
+        yield Promise.all(FmData.map((data) => __awaiter(void 0, void 0, void 0, function* () {
+            yield prisma.paymentRecord.create({
+                data: Object.assign(Object.assign({ IDNumber: data.fmNumber, date, customerName: "", amount: data.amount, amountInWords: data.amountInWords, pendingAmount: data.pendingAmount, transactionNumber,
+                    paymentMode,
+                    remarks, FM: {
+                        connect: { fmNumber: data.fmNumber },
+                    } }, (adminId ? { Admin: { connect: { id: adminId } } } : {})), (branchId ? { Branches: { connect: { id: branchId } } } : {})),
+            });
+            const fm = yield prisma.fM.findUnique({
+                where: { fmNumber: data.fmNumber },
+            });
+            if (!fm)
+                return;
+            const dateDiff = new Date(date).getTime() - new Date(fm.createdAt).getTime();
+            let settingTo;
+            if (dateDiff < 30 * 24 * 60 * 60 * 1000) {
+                settingTo = "zeroToThirty";
+            }
+            else if (dateDiff < 60 * 24 * 60 * 60 * 1000) {
+                settingTo = "thirtyToSixty";
+            }
+            else if (dateDiff < 90 * 24 * 60 * 60 * 1000) {
+                settingTo = "sixtyToNinety";
+            }
+            else {
+                settingTo = "ninetyPlus";
+            }
+            const updatedAmount = (fm[settingTo] || 0) + parseFloat(data.amount);
+            yield prisma.fM.update({
+                where: { id: fm.id },
+                data: {
+                    [settingTo]: updatedAmount,
+                },
+            });
+            yield (0, exports.updateFMDetails)(data.fmNumber);
+        })));
+        yield (0, redis_1.clearFMCache)();
+        yield (0, redis_1.clearVendorCache)();
+        yield (0, redis_1.clearGetAllRecordPaymentCache)();
+        res.status(200).json({
+            message: "Successfully updated FM details",
+        });
+    }
+    catch (error) {
+        res.status(500).json({
+            message: "Internal Server Error",
+        });
+        console.log(error);
+    }
+});
+exports.createBulkPayment = createBulkPayment;

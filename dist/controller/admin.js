@@ -296,11 +296,7 @@ const getAllClients = (req, res) => __awaiter(void 0, void 0, void 0, function* 
                         Vehicle: true,
                     },
                 },
-                bill: {
-                    select: {
-                        pendingAmount: true,
-                    },
-                },
+                bill: true,
             },
             orderBy: {
                 createdAt: "desc",

@@ -412,7 +412,7 @@ const getBranchNotifications = (req, res) => __awaiter(void 0, void 0, void 0, f
                 branchesId: branchId,
             },
             orderBy: {
-                createdAt: "asc",
+                createdAt: "desc",
             },
         });
         res.status(200).json({ data: notifications });
