@@ -802,6 +802,7 @@ export const filterBillLRByClient = async (req: Request, res: Response) => {
         Client: {
           select: {
             name: true,
+            GSTIN: true,
           },
         },
         PaymentRecords: {
@@ -875,6 +876,7 @@ export const filterBillLRByClientForBranch = async (
         Client: {
           select: {
             name: true,
+            GSTIN: true,
           },
         },
         PaymentRecords: {

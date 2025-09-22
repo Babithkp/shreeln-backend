@@ -723,6 +723,7 @@ const filterBillLRByClient = (req, res) => __awaiter(void 0, void 0, void 0, fun
                 Client: {
                     select: {
                         name: true,
+                        GSTIN: true,
                     },
                 },
                 PaymentRecords: {
@@ -782,6 +783,7 @@ const filterBillLRByClientForBranch = (req, res) => __awaiter(void 0, void 0, vo
                 Client: {
                     select: {
                         name: true,
+                        GSTIN: true,
                     },
                 },
                 PaymentRecords: {
