@@ -739,7 +739,6 @@ const filterBillLRByClient = (req, res) => __awaiter(void 0, void 0, void 0, fun
         const LRs = yield prisma.lR.findMany({
             where: {
                 client: Object.assign({}, (name === "All" ? {} : { name })),
-                billId: null,
             },
             include: {
                 Vehicle: {
@@ -791,8 +790,7 @@ const filterBillLRByClientForBranch = (req, res) => __awaiter(void 0, void 0, vo
         });
         const LRs = yield prisma.lR.findMany({
             where: {
-                client: Object.assign({}, (name === "All" ? {} : { name })),
-                billId: null,
+                client: Object.assign({}, (name === "All" ? {} : { name }))
             },
             include: {
                 Vehicle: {

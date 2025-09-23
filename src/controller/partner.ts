@@ -823,7 +823,6 @@ export const filterBillLRByClient = async (req: Request, res: Response) => {
         client: {
           ...(name === "All" ? {} : { name }),
         },
-        billId: null,
       },
       include: {
         Vehicle: {
@@ -834,9 +833,10 @@ export const filterBillLRByClient = async (req: Request, res: Response) => {
       },
     });
 
+
     const data = {
       bills,
-      LRs: LRs.filter((lr) => lr.billId == null),
+      LRs: LRs.filter((lr) => lr.billId == null ),
     };
     res.status(200).json({ data });
   } catch (error) {
@@ -892,8 +892,7 @@ export const filterBillLRByClientForBranch = async (
       where: {
         client: {
           ...(name === "All" ? {} : { name }),
-        },
-        billId: null,
+        }
       },
       include: {
         Vehicle: {
