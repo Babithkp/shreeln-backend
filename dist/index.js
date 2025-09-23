@@ -30,6 +30,8 @@ const expenses_1 = __importDefault(require("./router/expenses"));
 const node_cron_1 = __importDefault(require("node-cron"));
 const pod_2 = require("./controller/pod");
 const writeoff_1 = __importDefault(require("./router/writeoff"));
+const client_1 = require("@prisma/client");
+const prisma = new client_1.PrismaClient();
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)());

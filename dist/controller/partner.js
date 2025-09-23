@@ -455,6 +455,9 @@ const filterFMLRByVendorForBranch = (req, res) => __awaiter(void 0, void 0, void
                     date: Object.assign(Object.assign({}, (from ? { gte: from } : {})), (to ? { lte: to } : {})),
                 }
                 : {})),
+            include: {
+                PaymentRecords: true
+            }
         });
         const lrNumbers = FMs.flatMap((fm) => fm.LRDetails.map((lr) => lr.lrNumber));
         const LRs = yield prisma.lR.findMany({
@@ -495,14 +498,13 @@ const filterFMLRByVendor = (req, res) => __awaiter(void 0, void 0, void 0, funct
                     date: Object.assign(Object.assign({}, (from ? { gte: from } : {})), (to ? { lte: to } : {})),
                 }
                 : {})),
+            include: {
+                PaymentRecords: true
+            }
         });
         const lrNumbers = FMs.flatMap((fm) => fm.LRDetails.map((lr) => lr.lrNumber));
+        const totalLR = yield prisma.lR.count();
         const LRs = yield prisma.lR.findMany({
-            where: {
-                lrNumber: {
-                    in: lrNumbers,
-                },
-            },
             include: {
                 Vehicle: {
                     select: {
@@ -729,6 +731,7 @@ const filterBillLRByClient = (req, res) => __awaiter(void 0, void 0, void 0, fun
                 PaymentRecords: {
                     select: {
                         amount: true,
+                        date: true
                     },
                 },
             },
@@ -736,6 +739,7 @@ const filterBillLRByClient = (req, res) => __awaiter(void 0, void 0, void 0, fun
         const LRs = yield prisma.lR.findMany({
             where: {
                 client: Object.assign({}, (name === "All" ? {} : { name })),
+                billId: null,
             },
             include: {
                 Vehicle: {
@@ -763,17 +767,8 @@ const filterBillLRByClientForBranch = (req, res) => __awaiter(void 0, void 0, vo
     const { name, from, to } = req.body;
     const { branchId } = req.params;
     try {
-        const client = yield prisma.client.findUnique({
-            where: { name },
-        });
-        if (!client) {
-            res.status(404).json({ message: "Vendor not found" });
-            return;
-        }
         const bills = yield prisma.bill.findMany({
-            where: Object.assign(Object.assign(Object.assign({}, (branchId ? { branchId } : {})), { Client: {
-                    name: client.name,
-                } }), (from || to
+            where: Object.assign(Object.assign(Object.assign({}, (branchId ? { branchesId: branchId } : {})), { Client: Object.assign({}, (name === "All" ? {} : { name })) }), (from || to
                 ? {
                     date: Object.assign(Object.assign({}, (from ? { gte: from } : {})), (to ? { lte: to } : {})),
                 }
@@ -789,13 +784,15 @@ const filterBillLRByClientForBranch = (req, res) => __awaiter(void 0, void 0, vo
                 PaymentRecords: {
                     select: {
                         amount: true,
+                        date: true
                     },
                 },
             },
         });
         const LRs = yield prisma.lR.findMany({
             where: {
-                clientId: client.id,
+                client: Object.assign({}, (name === "All" ? {} : { name })),
+                billId: null,
             },
             include: {
                 Vehicle: {

@@ -1192,7 +1192,6 @@ export const updateFM = async (req: Request, res: Response) => {
     dlNumber,
     driverSignature,
     LRDetails,
-    vendorsId,
     payableAt,
     ftl,
     sizeL,
@@ -1208,7 +1207,7 @@ export const updateFM = async (req: Request, res: Response) => {
     });
     const vendor = await prisma.vendors.findUnique({
       where: {
-        id: vendorsId,
+        id: fm?.vendorsId!,
       },
     });
     if (!vendor) {

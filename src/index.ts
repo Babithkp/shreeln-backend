@@ -17,6 +17,8 @@ import cron from "node-cron";
 import { checkPaymentForStatusChange } from "./controller/pod";
 import { createAdmin } from "./controller/admin";
 import writeOffRouter from "./router/writeoff";
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
 
 dotenv.config();
 
@@ -47,6 +49,9 @@ app.post("/api/v1/sendFMEmail/:email", upload.any(), sendFMEmail);
 app.post("/api/v1/sendBillEmail/:email", upload.any(), sendBillEmail);
 app.post("/api/v1/lorryReceiptsUpload", upload.any(), lorryReceiptsFileUpload);
 // createAdmin()
+
+
+
 
 cron.schedule("0 0 * * *", async () => {
   console.log("🔄 Running FM status checker at midnight...");

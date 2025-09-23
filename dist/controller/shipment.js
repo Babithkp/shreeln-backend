@@ -998,7 +998,7 @@ const deleteFM = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 });
 exports.deleteFM = deleteFM;
 const updateFM = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { fmNumber, date, from, to, vehicleNo, vehicleType, weight, packages, vendorName, ContactPerson, DriverName, contactNumber, ownerName, TDS, insturance, Rc, advance, hire, balance, otherCharges, detentionCharges, rtoCharges, tds, netBalance, amountInwords, dlNumber, driverSignature, LRDetails, vendorsId, payableAt, ftl, sizeL, sizeW, sizeH, } = req.body;
+    const { fmNumber, date, from, to, vehicleNo, vehicleType, weight, packages, vendorName, ContactPerson, DriverName, contactNumber, ownerName, TDS, insturance, Rc, advance, hire, balance, otherCharges, detentionCharges, rtoCharges, tds, netBalance, amountInwords, dlNumber, driverSignature, LRDetails, payableAt, ftl, sizeL, sizeW, sizeH, } = req.body;
     try {
         const fm = yield prisma.fM.findUnique({
             where: {
@@ -1007,7 +1007,7 @@ const updateFM = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         });
         const vendor = yield prisma.vendors.findUnique({
             where: {
-                id: vendorsId,
+                id: fm === null || fm === void 0 ? void 0 : fm.vendorsId,
             },
         });
         if (!vendor) {
