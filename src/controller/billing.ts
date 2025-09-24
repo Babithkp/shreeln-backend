@@ -920,6 +920,7 @@ export const filterBillData = async (req: Request, res: Response) => {
         Client: true,
         Branches: true,
         Admin: true,
+        WriteOff:true
       },
       orderBy: {
         date: "desc",
@@ -968,6 +969,7 @@ export const filterBillDetailsForBranch = async (
         Client: true,
         Branches: true,
         Admin: true,
+        WriteOff:true
       },
       orderBy: {
         createdAt: "desc",

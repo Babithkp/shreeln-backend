@@ -510,9 +510,9 @@ export const filterFMLRByVendorForBranch = async (
             }
           : {}),
       },
-      include:{
-        PaymentRecords:true
-      }
+      include: {
+        PaymentRecords: true,
+      },
     });
     const lrNumbers = FMs.flatMap((fm) =>
       fm.LRDetails.map((lr) => lr.lrNumber)
@@ -533,7 +533,6 @@ export const filterFMLRByVendorForBranch = async (
         pod: true,
       },
     });
-    
 
     const data = {
       FMs,
@@ -564,17 +563,21 @@ export const filterFMLRByVendor = async (req: Request, res: Response) => {
             }
           : {}),
       },
-      include:{
-        PaymentRecords:true
-      }
+      include: {
+        PaymentRecords: true,
+      },
     });
     const lrNumbers = FMs.flatMap((fm) =>
       fm.LRDetails.map((lr) => lr.lrNumber)
     );
 
-    const totalLR = await prisma.lR.count()
 
     const LRs = await prisma.lR.findMany({
+      where: {
+        lrNumber: {
+          in: lrNumbers,
+        },
+      },
       include: {
         Vehicle: {
           select: {
@@ -812,9 +815,10 @@ export const filterBillLRByClient = async (req: Request, res: Response) => {
         PaymentRecords: {
           select: {
             amount: true,
-            date:true
+            date: true,
           },
         },
+        WriteOff: true,
       },
     });
 
@@ -833,10 +837,9 @@ export const filterBillLRByClient = async (req: Request, res: Response) => {
       },
     });
 
-
     const data = {
       bills,
-      LRs: LRs.filter((lr) => lr.billId == null ),
+      LRs: LRs.filter((lr) => lr.billId == null),
     };
     res.status(200).json({ data });
   } catch (error) {
@@ -854,11 +857,9 @@ export const filterBillLRByClientForBranch = async (
   const { name, from, to } = req.body;
   const { branchId } = req.params;
   try {
-
-
     const bills = await prisma.bill.findMany({
       where: {
-        ...(branchId ? { branchesId:branchId } : {}),
+        ...(branchId ? { branchesId: branchId } : {}),
         Client: {
           ...(name === "All" ? {} : { name }),
         },
@@ -882,9 +883,10 @@ export const filterBillLRByClientForBranch = async (
         PaymentRecords: {
           select: {
             amount: true,
-            date:true
+            date: true,
           },
         },
+        WriteOff: true,
       },
     });
 
@@ -892,7 +894,7 @@ export const filterBillLRByClientForBranch = async (
       where: {
         client: {
           ...(name === "All" ? {} : { name }),
-        }
+        },
       },
       include: {
         Vehicle: {
@@ -917,7 +919,7 @@ export const filterBillLRByClientForBranch = async (
 };
 
 export const filterLRForClient = async (req: Request, res: Response) => {
-  const { from, to,name } = req.body;
+  const { from, to, name } = req.body;
 
   try {
     const LRs = await prisma.lR.findMany({
@@ -938,11 +940,11 @@ export const filterLRForClient = async (req: Request, res: Response) => {
             vehicleNumber: true,
           },
         },
-        client:{
-          select:{
-            name:true
-          }
-        }
+        client: {
+          select: {
+            name: true,
+          },
+        },
       },
     });
 
@@ -954,8 +956,11 @@ export const filterLRForClient = async (req: Request, res: Response) => {
     console.log(error);
   }
 };
-export const filterLRForClientForBranch = async (req: Request, res: Response) => {
-  const { from, to,name } = req.body;
+export const filterLRForClientForBranch = async (
+  req: Request,
+  res: Response
+) => {
+  const { from, to, name } = req.body;
   const { branchId } = req.params;
 
   try {
@@ -978,11 +983,11 @@ export const filterLRForClientForBranch = async (req: Request, res: Response) =>
             vehicleNumber: true,
           },
         },
-        client:{
-          select:{
-            name:true
-          }
-        }
+        client: {
+          select: {
+            name: true,
+          },
+        },
       },
     });
 

@@ -456,8 +456,8 @@ const filterFMLRByVendorForBranch = (req, res) => __awaiter(void 0, void 0, void
                 }
                 : {})),
             include: {
-                PaymentRecords: true
-            }
+                PaymentRecords: true,
+            },
         });
         const lrNumbers = FMs.flatMap((fm) => fm.LRDetails.map((lr) => lr.lrNumber));
         const LRs = yield prisma.lR.findMany({
@@ -499,12 +499,16 @@ const filterFMLRByVendor = (req, res) => __awaiter(void 0, void 0, void 0, funct
                 }
                 : {})),
             include: {
-                PaymentRecords: true
-            }
+                PaymentRecords: true,
+            },
         });
         const lrNumbers = FMs.flatMap((fm) => fm.LRDetails.map((lr) => lr.lrNumber));
-        const totalLR = yield prisma.lR.count();
         const LRs = yield prisma.lR.findMany({
+            where: {
+                lrNumber: {
+                    in: lrNumbers,
+                },
+            },
             include: {
                 Vehicle: {
                     select: {
@@ -731,9 +735,10 @@ const filterBillLRByClient = (req, res) => __awaiter(void 0, void 0, void 0, fun
                 PaymentRecords: {
                     select: {
                         amount: true,
-                        date: true
+                        date: true,
                     },
                 },
+                WriteOff: true,
             },
         });
         const LRs = yield prisma.lR.findMany({
@@ -783,14 +788,15 @@ const filterBillLRByClientForBranch = (req, res) => __awaiter(void 0, void 0, vo
                 PaymentRecords: {
                     select: {
                         amount: true,
-                        date: true
+                        date: true,
                     },
                 },
+                WriteOff: true,
             },
         });
         const LRs = yield prisma.lR.findMany({
             where: {
-                client: Object.assign({}, (name === "All" ? {} : { name }))
+                client: Object.assign({}, (name === "All" ? {} : { name })),
             },
             include: {
                 Vehicle: {
@@ -831,9 +837,9 @@ const filterLRForClient = (req, res) => __awaiter(void 0, void 0, void 0, functi
                 },
                 client: {
                     select: {
-                        name: true
-                    }
-                }
+                        name: true,
+                    },
+                },
             },
         });
         res.status(200).json({ data: LRs });
@@ -864,9 +870,9 @@ const filterLRForClientForBranch = (req, res) => __awaiter(void 0, void 0, void 
                 },
                 client: {
                     select: {
-                        name: true
-                    }
-                }
+                        name: true,
+                    },
+                },
             },
         });
         res.status(200).json({ data: LRs });

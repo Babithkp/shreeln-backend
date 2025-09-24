@@ -219,12 +219,17 @@ const deleteBillWriteOff = (req, res) => __awaiter(void 0, void 0, void 0, funct
 exports.deleteBillWriteOff = deleteBillWriteOff;
 const filterWriteOff = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { from, to, clientName, branchId, vendorName } = req.body;
+    console.log(from, to, clientName, branchId, vendorName);
     try {
         const writeOffs = yield prisma.writeOff.findMany({
-            where: Object.assign(Object.assign({ date: { gte: from, lte: to } }, (vendorName === "All"
-                ? { fMId: { not: null } } // only FM results
+            where: Object.assign(Object.assign(Object.assign({}, (from || to
+                ? {
+                    date: Object.assign(Object.assign({}, (from ? { gte: from } : {})), (to ? { lte: to } : {})),
+                }
+                : {})), (vendorName === "All"
+                ? { fMId: { not: null } }
                 : clientName === "All"
-                    ? { billId: { not: null } } // only Bill results
+                    ? { billId: { not: null } }
                     : {
                         vendorName: {
                             contains: vendorName || clientName,
@@ -232,12 +237,10 @@ const filterWriteOff = (req, res) => __awaiter(void 0, void 0, void 0, function*
                         },
                     })), (branchId && { branchId })),
         });
-        if (writeOffs) {
-            res.status(200).json({
-                message: "Write Off Details",
-                data: writeOffs,
-            });
-        }
+        res.status(200).json({
+            message: "Write Off Details",
+            data: writeOffs,
+        });
     }
     catch (error) {
         res.status(500).json({

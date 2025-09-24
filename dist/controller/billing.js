@@ -775,6 +775,7 @@ const filterBillData = (req, res) => __awaiter(void 0, void 0, void 0, function*
                 Client: true,
                 Branches: true,
                 Admin: true,
+                WriteOff: true
             },
             orderBy: {
                 date: "desc",
@@ -820,6 +821,7 @@ const filterBillDetailsForBranch = (req, res) => __awaiter(void 0, void 0, void 
                 Client: true,
                 Branches: true,
                 Admin: true,
+                WriteOff: true
             },
             orderBy: {
                 createdAt: "desc",

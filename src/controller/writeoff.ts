@@ -1,5 +1,4 @@
-import { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
+import { Request, Response } from "express";import { PrismaClient } from "@prisma/client";
 import {
   clearAllBillCache,
   clearClientCache,
@@ -226,14 +225,23 @@ export const deleteBillWriteOff = async (req: Request, res: Response) => {
 export const filterWriteOff = async (req: Request, res: Response) => {
   const { from, to, clientName, branchId, vendorName } = req.body;
 
+  console.log(from, to, clientName, branchId, vendorName);
+
   try {
     const writeOffs = await prisma.writeOff.findMany({
       where: {
-        date: { gte: from, lte: to }, // always filter by date
+        ...(from || to
+          ? {
+              date: {
+                ...(from ? { gte: from } : {}),
+                ...(to ? { lte: to } : {}),
+              },
+            }
+          : {}),
         ...(vendorName === "All"
-          ? { fMId: { not: null } } // only FM results
+          ? { fMId: { not: null } }
           : clientName === "All"
-          ? { billId: { not: null } } // only Bill results
+          ? { billId: { not: null } }
           : {
               vendorName: {
                 contains: vendorName || clientName,
@@ -243,12 +251,10 @@ export const filterWriteOff = async (req: Request, res: Response) => {
         ...(branchId && { branchId }),
       },
     });
-    if (writeOffs) {
-      res.status(200).json({
-        message: "Write Off Details",
-        data: writeOffs,
-      });
-    }
+    res.status(200).json({
+      message: "Write Off Details",
+      data: writeOffs,
+    });
   } catch (error) {
     res.status(500).json({
       message: "Internal Server Error",
