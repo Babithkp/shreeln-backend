@@ -344,7 +344,7 @@ model POD {
   branchesId      String?   @db.ObjectId
   Admin           Admin?    @relation(fields: [adminId], references: [id])
   adminId         String?   @db.ObjectId
-  LR              LR?       @relation(fields: [lRId], references: [id])
+  LR              LR?       @relation(fields: [lRId], references: [id], onDelete: Cascade)
   lRId            String?   @db.ObjectId
 }
 
