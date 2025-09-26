@@ -1,5 +1,4 @@
-import express from "express";
-import cors from "cors";
+import express from "express";import cors from "cors";
 import adminRouter from "./router/admin";
 import branchRouter from "./router/branch";
 import dotenv from "dotenv";
@@ -49,7 +48,6 @@ app.post("/api/v1/sendFMEmail/:email", upload.any(), sendFMEmail);
 app.post("/api/v1/sendBillEmail/:email", upload.any(), sendBillEmail);
 app.post("/api/v1/lorryReceiptsUpload", upload.any(), lorryReceiptsFileUpload);
 // createAdmin()
-
 
 
 
