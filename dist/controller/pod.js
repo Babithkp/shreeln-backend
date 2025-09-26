@@ -384,7 +384,7 @@ const getPodByPage = (req, res) => __awaiter(void 0, void 0, void 0, function* (
     }
     try {
         const data = yield (0, redis_1.redisGetOrSetFunctions)({
-            key: `POD-data-${page}-${skip}`,
+            key: `POD-data-${page}-${skip}-${whereClause.branchesId ? whereClause.branchesId : "null"}`,
             fetchFunction: () => __awaiter(void 0, void 0, void 0, function* () {
                 const PODCount = yield prisma.pOD.count({
                     where: whereClause,

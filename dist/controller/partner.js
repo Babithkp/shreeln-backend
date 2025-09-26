@@ -457,15 +457,19 @@ const filterFMLRByVendorForBranch = (req, res) => __awaiter(void 0, void 0, void
                 : {})),
             include: {
                 PaymentRecords: true,
+                branch: true
             },
         });
-        const lrNumbers = FMs.flatMap((fm) => fm.LRDetails.map((lr) => lr.lrNumber));
         const LRs = yield prisma.lR.findMany({
-            where: {
-                lrNumber: {
-                    in: lrNumbers,
-                },
-            },
+            where: Object.assign(Object.assign(Object.assign({}, (branchId ? { branchId } : {})), { Vehicle: {
+                    vendor: {
+                        name: name === "All" ? {} : name,
+                    },
+                } }), (from || to
+                ? {
+                    date: Object.assign(Object.assign({}, (from ? { gte: from } : {})), (to ? { lte: to } : {})),
+                }
+                : {})),
             include: {
                 Vehicle: {
                     select: {
@@ -473,6 +477,7 @@ const filterFMLRByVendorForBranch = (req, res) => __awaiter(void 0, void 0, void
                     },
                 },
                 pod: true,
+                branch: true
             },
         });
         const data = {
@@ -502,13 +507,16 @@ const filterFMLRByVendor = (req, res) => __awaiter(void 0, void 0, void 0, funct
                 PaymentRecords: true,
             },
         });
-        const lrNumbers = FMs.flatMap((fm) => fm.LRDetails.map((lr) => lr.lrNumber));
         const LRs = yield prisma.lR.findMany({
-            where: {
-                lrNumber: {
-                    in: lrNumbers,
-                },
-            },
+            where: Object.assign({ Vehicle: {
+                    vendor: {
+                        name: name === "All" ? {} : name,
+                    },
+                } }, (from || to
+                ? {
+                    date: Object.assign(Object.assign({}, (from ? { gte: from } : {})), (to ? { lte: to } : {})),
+                }
+                : {})),
             include: {
                 Vehicle: {
                     select: {
@@ -742,9 +750,11 @@ const filterBillLRByClient = (req, res) => __awaiter(void 0, void 0, void 0, fun
             },
         });
         const LRs = yield prisma.lR.findMany({
-            where: {
-                client: Object.assign({}, (name === "All" ? {} : { name })),
-            },
+            where: Object.assign({ client: Object.assign({}, (name === "All" ? {} : { name })) }, (from || to
+                ? {
+                    date: Object.assign(Object.assign({}, (from ? { gte: from } : {})), (to ? { lte: to } : {})),
+                }
+                : {})),
             include: {
                 Vehicle: {
                     select: {
@@ -795,9 +805,11 @@ const filterBillLRByClientForBranch = (req, res) => __awaiter(void 0, void 0, vo
             },
         });
         const LRs = yield prisma.lR.findMany({
-            where: {
-                client: Object.assign({}, (name === "All" ? {} : { name })),
-            },
+            where: Object.assign({ branch: Object.assign({}, (branchId ? { id: branchId } : {})), client: Object.assign({}, (name === "All" ? {} : { name })) }, (from || to
+                ? {
+                    date: Object.assign(Object.assign({}, (from ? { gte: from } : {})), (to ? { lte: to } : {})),
+                }
+                : {})),
             include: {
                 Vehicle: {
                     select: {
