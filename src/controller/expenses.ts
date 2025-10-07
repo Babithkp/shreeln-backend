@@ -356,7 +356,9 @@ export const getExpenseByPage = async (req: Request, res: Response) => {
 
   try {
     const data = await redisGetOrSetFunctions({
-      key: `expense-data-${page}-${skip}`,
+      key: `expense-data-${page}-${skip}-${
+        whereClause.branchesId ? whereClause.branchesId : "null"
+      }`,
       fetchFunction: async () => {
         const ExpenseCount = await prisma.expense.count({
           where: whereClause,
@@ -561,7 +563,9 @@ export const getCreditByPage = async (req: Request, res: Response) => {
 
   try {
     const data = await redisGetOrSetFunctions({
-      key: `credit-data-${page}-${skip}`,
+      key: `credit-data-${page}-${skip}-${
+        whereClause.branchesId ? whereClause.branchesId : "null"
+      }`,
       fetchFunction: async () => {
         const creditCount = await prisma.credit.count();
         const creditData = await prisma.credit.findMany({
@@ -1003,8 +1007,11 @@ export const filterCreditByDate = async (req: Request, res: Response) => {
     });
     console.log(error);
   }
-}
-export const filterCreditByDateForBranch = async (req: Request, res: Response) => {
+};
+export const filterCreditByDateForBranch = async (
+  req: Request,
+  res: Response
+) => {
   const { from, to } = req.body;
   const { branchId } = req.params;
 
@@ -1041,4 +1048,4 @@ export const filterCreditByDateForBranch = async (req: Request, res: Response) =
     });
     console.log(error);
   }
-}
+};
