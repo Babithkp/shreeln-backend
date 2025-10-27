@@ -853,6 +853,7 @@ export const filterBillLRByClient = async (req: Request, res: Response) => {
           : {}),
       },
       include: {
+        branch:true,
         Vehicle: {
           select: {
             vehicleNumber: true,

@@ -757,6 +757,7 @@ const filterBillLRByClient = (req, res) => __awaiter(void 0, void 0, void 0, fun
                 }
                 : {})),
             include: {
+                branch: true,
                 Vehicle: {
                     select: {
                         vehicleNumber: true,
