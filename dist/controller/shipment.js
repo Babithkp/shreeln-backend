@@ -1648,12 +1648,6 @@ const updateFMByNotification = (req, res) => __awaiter(void 0, void 0, void 0, f
                     LRDetails,
                 },
             });
-            const oldValue = parseFloat(fm.hire || "0") +
-                parseFloat(fm.otherCharges || "0") +
-                parseFloat(fm.detentionCharges || "0") +
-                parseFloat(fm.rtoCharges || "0");
-            const finalOldValue = oldValue - parseFloat(fm.tds || "0");
-            const oldOutstanding = vendor.currentOutStanding - finalOldValue;
             const totaloutStanding = vendor.FM.reduce((acc, data) => acc + parseFloat(data.outStandingBalance || "0"), 0);
             if (totaloutStanding > (vendor === null || vendor === void 0 ? void 0 : vendor.outstandingLimit)) {
                 const admin = yield prisma.admin.findFirst();
@@ -1675,6 +1669,15 @@ const updateFMByNotification = (req, res) => __awaiter(void 0, void 0, void 0, f
                 });
             }
         }
+        yield prisma.notification.create({
+            data: {
+                branchesId: (fm === null || fm === void 0 ? void 0 : fm.branchId) || "",
+                requestId: id,
+                title: "FM edit approved",
+                status: "approved",
+                description: "Approved",
+            },
+        });
         yield (0, redis_1.clearFMCache)();
         res.status(200).json({
             message: "FM Updated",

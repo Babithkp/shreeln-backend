@@ -1946,13 +1946,6 @@ export const updateFMByNotification = async (req: Request, res: Response) => {
           LRDetails,
         },
       });
-      const oldValue =
-        parseFloat(fm.hire || "0") +
-        parseFloat(fm.otherCharges || "0") +
-        parseFloat(fm.detentionCharges || "0") +
-        parseFloat(fm.rtoCharges || "0");
-      const finalOldValue = oldValue - parseFloat(fm.tds || "0");
-      const oldOutstanding = vendor.currentOutStanding - finalOldValue;
 
       const totaloutStanding = vendor.FM.reduce(
         (acc, data) => acc + parseFloat(data.outStandingBalance || "0"),
@@ -1985,6 +1978,17 @@ export const updateFMByNotification = async (req: Request, res: Response) => {
         });
       }
     }
+
+    await prisma.notification.create({
+      data: {
+        branchesId: fm?.branchId || "",
+        requestId: id,
+        title: "FM edit approved",
+        status: "approved",
+        description: "Approved",
+      },
+    });
+
     await clearFMCache();
     res.status(200).json({
       message: "FM Updated",
