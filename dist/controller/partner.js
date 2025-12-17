@@ -554,10 +554,29 @@ const getVendorForPage = (req, res) => __awaiter(void 0, void 0, void 0, functio
         const data = yield (0, redis_1.redisGetOrSetFunctions)({
             key: `vendor-data-${page}-${skip}`,
             fetchFunction: () => __awaiter(void 0, void 0, void 0, function* () {
-                const totalVendors = yield prisma.vendors.count();
+                const totalVendors = yield prisma.vendors.count({
+                    where: {
+                        FM: {
+                            some: {
+                                outStandingBalance: {
+                                    gt: '0',
+                                },
+                            },
+                        },
+                    },
+                });
                 const vendorData = yield prisma.vendors.findMany({
                     skip,
                     take: limit,
+                    where: {
+                        FM: {
+                            some: {
+                                outStandingBalance: {
+                                    gt: '0',
+                                },
+                            },
+                        },
+                    },
                     include: {
                         vehicles: {
                             include: {
@@ -645,10 +664,29 @@ const getClientForPage = (req, res) => __awaiter(void 0, void 0, void 0, functio
         const data = yield (0, redis_1.redisGetOrSetFunctions)({
             key: `client-data-${page}-${skip}`,
             fetchFunction: () => __awaiter(void 0, void 0, void 0, function* () {
-                const totalClients = yield prisma.client.count();
+                const totalClients = yield prisma.client.count({
+                    where: {
+                        bill: {
+                            some: {
+                                pendingAmount: {
+                                    gt: 0,
+                                },
+                            },
+                        },
+                    },
+                });
                 const clientData = yield prisma.client.findMany({
                     skip,
                     take: limit,
+                    where: {
+                        bill: {
+                            some: {
+                                pendingAmount: {
+                                    gt: 0,
+                                },
+                            },
+                        },
+                    },
                     include: {
                         bill: {
                             include: {
