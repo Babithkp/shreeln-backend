@@ -633,10 +633,29 @@ export const getVendorForPage = async (req: Request, res: Response) => {
     const data = await redisGetOrSetFunctions({
       key: `vendor-data-${page}-${skip}`,
       fetchFunction: async () => {
-        const totalVendors = await prisma.vendors.count();
+        const totalVendors = await prisma.vendors.count({
+          where: {
+            FM: {
+              some: {
+                outStandingBalance: {
+                  gt: '0',
+                },
+              },
+            },
+          },
+        });
         const vendorData = await prisma.vendors.findMany({
           skip,
           take: limit,
+          where: {
+            FM: {
+              some: {
+                outStandingBalance: {
+                  gt: '0',
+                },
+              },
+            },
+          },
           include: {
             vehicles: {
               include: {
@@ -725,10 +744,29 @@ export const getClientForPage = async (req: Request, res: Response) => {
     const data = await redisGetOrSetFunctions({
       key: `client-data-${page}-${skip}`,
       fetchFunction: async () => {
-        const totalClients = await prisma.client.count();
+        const totalClients = await prisma.client.count({
+          where: {
+            bill: {
+              some: {
+                pendingAmount: {
+                  gt: 0,
+                },
+              },
+            },
+          },
+        });
         const clientData = await prisma.client.findMany({
           skip,
           take: limit,
+          where: {
+            bill: {
+              some: {
+                pendingAmount: {
+                  gt: 0,
+                },
+              },
+            },
+          },
           include: {
             bill: {
               include: {
