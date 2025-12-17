@@ -22,6 +22,7 @@ import {
 
 const adminRouter = express.Router();
 
+
 adminRouter.post("/admin/login", adminLogin);
 adminRouter.post("/admin/createBranch", createBranch);
 adminRouter.get("/admin/getBranches", getBrachersNames);
