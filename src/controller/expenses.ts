@@ -585,7 +585,7 @@ export const getCreditByPage = async (req: Request, res: Response) => {
             },
           },
           orderBy: {
-            creditId: "asc",
+            date: "desc",
           },
         });
         return {

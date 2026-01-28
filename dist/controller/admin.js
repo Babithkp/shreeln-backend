@@ -626,6 +626,7 @@ const getDashboardData = (req, res) => __awaiter(void 0, void 0, void 0, functio
                     select: {
                         date: true,
                         subTotal: true,
+                        pendingAmount: true,
                         PaymentRecords: {
                             select: {
                                 amount: true,

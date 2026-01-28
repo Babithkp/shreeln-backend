@@ -641,6 +641,7 @@ export const getDashboardData = async (req: Request, res: Response) => {
           select: {
             date: true,
             subTotal: true,
+            pendingAmount: true,
             PaymentRecords: {
               select: {
                 amount: true,
@@ -671,7 +672,7 @@ export const getDashboardData = async (req: Request, res: Response) => {
           },
         });
 
-        const vendorCount = await prisma.vendors.count();
+        const vendorCount = await prisma.vendors.count(); 
 
         return {
           clientData,

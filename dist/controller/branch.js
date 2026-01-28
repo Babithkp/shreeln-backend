@@ -293,10 +293,28 @@ const getAllRecordPayment = (req, res) => __awaiter(void 0, void 0, void 0, func
 exports.getAllRecordPayment = getAllRecordPayment;
 const GetRecentTransactions = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
+        const now = new Date();
+        // Start of week (Monday)
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() - now.getDay() + 1);
+        startOfWeek.setHours(0, 0, 0, 0);
+        // End of week (Sunday)
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6);
+        endOfWeek.setHours(23, 59, 59, 999);
+        // Convert to ISO STRING (IMPORTANT)
+        const startOfWeekISO = startOfWeek.toISOString();
+        const endOfWeekISO = endOfWeek.toISOString();
         const data = yield (0, redis_1.redisGetOrSetFunctions)({
-            key: "GetRecentTransactions",
+            key: "GetRecentTransactions_ThisWeek",
             fetchFunction: () => __awaiter(void 0, void 0, void 0, function* () {
                 const paymentRecord = yield prisma.paymentRecord.findMany({
+                    where: {
+                        date: {
+                            gte: startOfWeekISO,
+                            lte: endOfWeekISO,
+                        },
+                    },
                     include: {
                         Admin: true,
                         Branches: true,
@@ -304,7 +322,6 @@ const GetRecentTransactions = (req, res) => __awaiter(void 0, void 0, void 0, fu
                     orderBy: {
                         date: "desc",
                     },
-                    take: 10,
                 });
                 return paymentRecord;
             }),

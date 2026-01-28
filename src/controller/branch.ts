@@ -308,10 +308,31 @@ export const getAllRecordPayment = async (req: Request, res: Response) => {
 
 export const GetRecentTransactions = async (req: Request, res: Response) => {
   try {
+    const now = new Date();
+
+    // Start of week (Monday)
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - now.getDay() + 1);
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    // End of week (Sunday)
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    endOfWeek.setHours(23, 59, 59, 999);
+
+    // Convert to ISO STRING (IMPORTANT)
+    const startOfWeekISO = startOfWeek.toISOString();
+    const endOfWeekISO = endOfWeek.toISOString();
     const data = await redisGetOrSetFunctions({
-      key: "GetRecentTransactions",
+      key: "GetRecentTransactions_ThisWeek",
       fetchFunction: async () => {
         const paymentRecord = await prisma.paymentRecord.findMany({
+          where: {
+            date: {
+              gte: startOfWeekISO,
+              lte: endOfWeekISO,
+            },
+          },
           include: {
             Admin: true,
             Branches: true,
@@ -319,7 +340,6 @@ export const GetRecentTransactions = async (req: Request, res: Response) => {
           orderBy: {
             date: "desc",
           },
-          take: 10,
         });
         return paymentRecord;
       },
