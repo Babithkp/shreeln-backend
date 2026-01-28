@@ -710,6 +710,7 @@ export const getDashboardDataForBranch = async (
           select: {
             date: true,
             subTotal: true,
+            pendingAmount: true,
             PaymentRecords: {
               select: {
                 amount: true,

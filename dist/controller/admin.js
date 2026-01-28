@@ -688,6 +688,7 @@ const getDashboardDataForBranch = (req, res) => __awaiter(void 0, void 0, void 0
                     select: {
                         date: true,
                         subTotal: true,
+                        pendingAmount: true,
                         PaymentRecords: {
                             select: {
                                 amount: true,
