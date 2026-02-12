@@ -316,7 +316,7 @@ export const updatePODByNotification = async (req: Request, res: Response) => {
   }
   try {
     const pod = await prisma.pOD.findUnique({
-      where: { id },
+      where: { lrNumber:id },
       include: {
         Branches: true,
       },
@@ -336,9 +336,10 @@ export const updatePODByNotification = async (req: Request, res: Response) => {
     await prisma.notification.create({
       data: {
         requestId: pod.lrNumber,
-        title: "POD",
-        message: pod.Branches?.branchName,
-        status: "editable",
+        entityType: "POD",
+        actionType: "approved",
+        createdByRole: "Admin",
+        status: "noted",
         branchesId: pod.branchesId,
       },
     });
@@ -364,7 +365,7 @@ export const deletePODByNotification = async (req: Request, res: Response) => {
   }
   try {
     const pod = await prisma.pOD.findUnique({
-      where: { id },
+      where: { lrNumber:id },
       include: {
         Branches: true,
       },
@@ -379,9 +380,10 @@ export const deletePODByNotification = async (req: Request, res: Response) => {
       await prisma.notification.create({
         data: {
           requestId: pod.lrNumber,
-          title: "POD deleted",
-          message: pod.Branches?.branchName,
-          status: "delete",
+          entityType: "POD",
+          actionType: "approved",
+          createdByRole: "Admin",
+          status: "noted",
           branchesId: pod.branchesId,
         },
       });

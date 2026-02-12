@@ -196,7 +196,6 @@ const updateExpenseDetails = (req, res) => __awaiter(void 0, void 0, void 0, fun
 });
 exports.updateExpenseDetails = updateExpenseDetails;
 const updateExpenseByNotification = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
     const { id } = req.params;
     const { data } = req.body;
     if (!id) {
@@ -224,11 +223,11 @@ const updateExpenseByNotification = (req, res) => __awaiter(void 0, void 0, void
             yield prisma.notification.create({
                 data: {
                     requestId: expense.expenseId,
-                    title: "Expense",
-                    message: (_a = expense.Branches) === null || _a === void 0 ? void 0 : _a.branchName,
-                    description: "Approved",
-                    status: "editable",
                     branchesId: expense.branchesId,
+                    entityType: "Expense",
+                    actionType: "approved",
+                    createdByRole: "Admin",
+                    status: "noted",
                 },
             });
             yield (0, redis_1.clearAllExpenseCache)();
@@ -251,7 +250,6 @@ const updateExpenseByNotification = (req, res) => __awaiter(void 0, void 0, void
 });
 exports.updateExpenseByNotification = updateExpenseByNotification;
 const deleteExpenseByNotification = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
     const { id } = req.params;
     if (!id) {
         res.status(400).json({
@@ -277,11 +275,11 @@ const deleteExpenseByNotification = (req, res) => __awaiter(void 0, void 0, void
             yield prisma.notification.create({
                 data: {
                     requestId: expense.expenseId,
-                    title: "Expense deleted",
-                    message: (_a = expense.Branches) === null || _a === void 0 ? void 0 : _a.branchName,
-                    description: "Approved",
-                    status: "editable",
                     branchesId: expense.branchesId,
+                    entityType: "Expense",
+                    actionType: "approved",
+                    createdByRole: "Admin",
+                    status: "noted",
                 },
             });
             yield (0, redis_1.clearAllExpenseCache)();
@@ -666,7 +664,6 @@ const filterCreditsByTitle = (req, res) => __awaiter(void 0, void 0, void 0, fun
 });
 exports.filterCreditsByTitle = filterCreditsByTitle;
 const deleteCreditByNotification = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
     const { id } = req.params;
     if (!id) {
         res.status(400).json({
@@ -692,11 +689,11 @@ const deleteCreditByNotification = (req, res) => __awaiter(void 0, void 0, void 
             yield prisma.notification.create({
                 data: {
                     requestId: credit.creditId,
-                    title: "Credit deleted",
-                    message: (_a = credit.Branches) === null || _a === void 0 ? void 0 : _a.branchName,
-                    description: "Approved",
-                    status: "editable",
                     branchesId: credit.branchesId,
+                    entityType: "Credit",
+                    actionType: "approved",
+                    createdByRole: "Admin",
+                    status: "noted",
                 },
             });
             yield (0, redis_1.clearCreditCache)();
@@ -714,7 +711,6 @@ const deleteCreditByNotification = (req, res) => __awaiter(void 0, void 0, void 
 });
 exports.deleteCreditByNotification = deleteCreditByNotification;
 const updateCreditByNotification = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
     const { id } = req.params;
     const { data } = req.body;
     if (!id) {
@@ -742,11 +738,11 @@ const updateCreditByNotification = (req, res) => __awaiter(void 0, void 0, void 
             yield prisma.notification.create({
                 data: {
                     requestId: expense.creditId,
-                    title: "Credit edited",
-                    message: (_a = expense.Branches) === null || _a === void 0 ? void 0 : _a.branchName,
-                    description: "Approved",
-                    status: "editable",
                     branchesId: expense.branchesId,
+                    entityType: "Credit",
+                    actionType: "approved",
+                    createdByRole: "Admin",
+                    status: "noted",
                 },
             });
             yield (0, redis_1.clearCreditCache)();

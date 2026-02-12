@@ -116,10 +116,11 @@ const createBill = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                 data: {
                     adminId: admin.id,
                     requestId: bill.id,
-                    title: "Credit Limit",
-                    description: `The credit limit of INR ${client.creditLimit} for the client ${client.name} has reached. The current outstanding is INR ${client.pendingPayment.toFixed(2)}`,
-                    message: "",
-                    status: "one-time",
+                    entityType: "Credit Limit",
+                    actionType: "info",
+                    createdByRole: client.name,
+                    message: `The credit limit of INR ${client.creditLimit} for the client ${client.name} has reached. The current outstanding is INR ${client.pendingPayment.toFixed(2)}`,
+                    status: "noted",
                 },
             });
         }
@@ -268,10 +269,11 @@ const updateBillDetails = (req, res) => __awaiter(void 0, void 0, void 0, functi
                 data: {
                     adminId: admin.id,
                     requestId: bill.id,
-                    title: "Credit Limit",
-                    description: `The credit limit of INR ${client.creditLimit} for the client ${client.name} has reached. The current outstanding is INR ${totalPendingAmount}`,
-                    message: "",
-                    status: "one-time",
+                    entityType: "Credit Limit",
+                    actionType: "info",
+                    createdByRole: client.name,
+                    message: `The credit limit of INR ${client.creditLimit} for the client ${client.name} has reached. The current outstanding is INR ${totalPendingAmount}`,
+                    status: "noted",
                 },
             });
         }
@@ -364,10 +366,11 @@ const createBillsupplementary = (req, res) => __awaiter(void 0, void 0, void 0, 
                 data: {
                     adminId: admin.id,
                     requestId: bill.id,
-                    title: "Credit Limit",
-                    description: `The credit limit of INR ${client.creditLimit} for the client ${client.name} has reached. The current outstanding is INR ${totalPendingAmount.toFixed(2)}`,
-                    message: "",
-                    status: "one-time",
+                    entityType: "Credit Limit",
+                    actionType: "info",
+                    createdByRole: client.name,
+                    message: `The credit limit of INR ${client.creditLimit} for the client ${client.name} has reached. The current outstanding is INR ${totalPendingAmount.toFixed(2)}`,
+                    status: "noted",
                 },
             });
         }
@@ -1147,19 +1150,21 @@ const updateBillByNotification = (req, res) => __awaiter(void 0, void 0, void 0,
                 data: {
                     adminId: admin.id,
                     requestId: bill.id,
-                    title: "Credit Limit",
-                    description: `The credit limit of INR ${client.creditLimit} for the client ${client.name} has reached. The current outstanding is INR ${totalPendingAmount}`,
-                    message: "",
-                    status: "one-time",
+                    entityType: "Credit Limit",
+                    actionType: "info",
+                    createdByRole: client.name,
+                    message: `The credit limit of INR ${client.creditLimit} for the client ${client.name} has reached. The current outstanding is INR ${totalPendingAmount}`,
+                    status: "noted",
                 },
             });
         }
         yield prisma.notification.create({
             data: {
-                requestId: bill.id,
-                title: "Bill",
-                status: "approved",
-                description: "Approved",
+                requestId: bill.billNumber,
+                entityType: "Bill",
+                actionType: "approved",
+                createdByRole: "Admin",
+                status: "noted",
                 branchesId: bill.branchesId,
             },
         });
@@ -1203,9 +1208,10 @@ const deleteBillByNotification = (req, res) => __awaiter(void 0, void 0, void 0,
                 data: {
                     branchesId: bill.branchesId,
                     requestId: bill.billNumber,
-                    title: "Bill deleted",
-                    status: "Approved",
-                    description: "Approved",
+                    entityType: "Bill",
+                    actionType: "approved",
+                    createdByRole: "Admin",
+                    status: "noted",
                 },
             });
             yield (0, redis_1.clearDashboardCache)();
@@ -1292,9 +1298,10 @@ const updateBillRecordByNotification = (req, res) => __awaiter(void 0, void 0, v
         yield prisma.notification.create({
             data: {
                 requestId: bill.id,
-                title: "Bill record",
-                status: "approved",
-                description: "Approved",
+                entityType: "Bill record",
+                actionType: "approved",
+                createdByRole: "Admin",
+                status: "noted",
                 branchesId: bill.branchesId,
             },
         });
@@ -1368,10 +1375,11 @@ const deleteBillRecordByNotification = (req, res) => __awaiter(void 0, void 0, v
         yield prisma.notification.create({
             data: {
                 requestId: bill.id,
-                title: "Bill record deleted",
-                status: "approved",
-                description: "Approved",
                 branchesId: bill.branchesId,
+                entityType: "Bill record",
+                actionType: "approved",
+                createdByRole: "Admin",
+                status: "noted",
             },
         });
         yield (0, redis_1.clearDashboardCache)();

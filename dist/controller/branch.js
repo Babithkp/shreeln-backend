@@ -438,8 +438,8 @@ const getBranchNotifications = (req, res) => __awaiter(void 0, void 0, void 0, f
 });
 exports.getBranchNotifications = getBranchNotifications;
 const createNotification = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { requestId, title, message, description, data, status, fileId } = req.body;
-    if (!requestId || !title) {
+    const { entityType, actionType, requestId, status, createdByRole, createdById, data } = req.body;
+    if (!requestId) {
         res.status(400).json({
             message: "Invalid Notification Details",
         });
@@ -449,14 +449,14 @@ const createNotification = (req, res) => __awaiter(void 0, void 0, void 0, funct
         const admin = yield prisma.admin.findFirst();
         yield prisma.notification.create({
             data: {
+                entityType,
+                actionType,
+                createdByRole,
+                createdById,
                 requestId,
-                title,
-                message,
-                description,
                 data: data ? JSON.parse(data) : null,
                 adminId: admin === null || admin === void 0 ? void 0 : admin.id,
                 status,
-                fileId,
             },
         });
         res.status(200).json({
@@ -472,8 +472,8 @@ const createNotification = (req, res) => __awaiter(void 0, void 0, void 0, funct
 });
 exports.createNotification = createNotification;
 const createNotificationForBranch = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { requestId, title, message, description, status, branchId } = req.body;
-    if (!requestId || !title || !branchId) {
+    const { entityType, actionType, requestId, status, createdById } = req.body;
+    if (!requestId || !createdById) {
         res.status(400).json({
             message: "Invalid Notification Details",
         });
@@ -483,11 +483,11 @@ const createNotificationForBranch = (req, res) => __awaiter(void 0, void 0, void
         yield prisma.notification.create({
             data: {
                 requestId,
-                title,
-                message,
-                description,
+                entityType,
+                actionType,
+                createdByRole: "Admin",
                 status,
-                branchesId: branchId,
+                branchesId: createdById,
             },
         });
         res.status(200).json({

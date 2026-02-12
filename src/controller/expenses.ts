@@ -260,11 +260,11 @@ export const updateExpenseByNotification = async (
       await prisma.notification.create({
         data: {
           requestId: expense.expenseId,
-          title: "Expense",
-          message: expense.Branches?.branchName,
-          description: "Approved",
-          status: "editable",
           branchesId: expense.branchesId,
+          entityType: "Expense",
+          actionType: "approved",
+          createdByRole: "Admin",
+          status: "noted",
         },
       });
       await clearAllExpenseCache();
@@ -315,11 +315,11 @@ export const deleteExpenseByNotification = async (
       await prisma.notification.create({
         data: {
           requestId: expense.expenseId,
-          title: "Expense deleted",
-          message: expense.Branches?.branchName,
-          description: "Approved",
-          status: "editable",
           branchesId: expense.branchesId,
+          entityType: "Expense",
+          actionType: "approved",
+          createdByRole: "Admin",
+          status: "noted",
         },
       });
       await clearAllExpenseCache();
@@ -356,9 +356,8 @@ export const getExpenseByPage = async (req: Request, res: Response) => {
 
   try {
     const data = await redisGetOrSetFunctions({
-      key: `expense-data-${page}-${skip}-${
-        whereClause.branchesId ? whereClause.branchesId : "null"
-      }`,
+      key: `expense-data-${page}-${skip}-${whereClause.branchesId ? whereClause.branchesId : "null"
+        }`,
       fetchFunction: async () => {
         const ExpenseCount = await prisma.expense.count({
           where: whereClause,
@@ -563,9 +562,8 @@ export const getCreditByPage = async (req: Request, res: Response) => {
 
   try {
     const data = await redisGetOrSetFunctions({
-      key: `credit-data-${page}-${skip}-${
-        whereClause.branchesId ? whereClause.branchesId : "null"
-      }`,
+      key: `credit-data-${page}-${skip}-${whereClause.branchesId ? whereClause.branchesId : "null"
+        }`,
       fetchFunction: async () => {
         const creditCount = await prisma.credit.count();
         const creditData = await prisma.credit.findMany({
@@ -781,11 +779,11 @@ export const deleteCreditByNotification = async (
       await prisma.notification.create({
         data: {
           requestId: credit.creditId,
-          title: "Credit deleted",
-          message: credit.Branches?.branchName,
-          description: "Approved",
-          status: "editable",
           branchesId: credit.branchesId,
+          entityType: "Credit",
+          actionType: "approved",
+          createdByRole: "Admin",
+          status: "noted",
         },
       });
       await clearCreditCache();
@@ -835,11 +833,11 @@ export const updateCreditByNotification = async (
       await prisma.notification.create({
         data: {
           requestId: expense.creditId,
-          title: "Credit edited",
-          message: expense.Branches?.branchName,
-          description: "Approved",
-          status: "editable",
           branchesId: expense.branchesId,
+          entityType: "Credit",
+          actionType: "approved",
+          createdByRole: "Admin",
+          status: "noted",
         },
       });
       await clearCreditCache();
@@ -900,11 +898,11 @@ export const filterExpensesByDate = async (req: Request, res: Response) => {
       where: {
         ...(from || to
           ? {
-              date: {
-                ...(from ? { gte: from } : {}),
-                ...(to ? { lte: to } : {}),
-              },
-            }
+            date: {
+              ...(from ? { gte: from } : {}),
+              ...(to ? { lte: to } : {}),
+            },
+          }
           : {}),
       },
       include: {
@@ -942,11 +940,11 @@ export const filterExpensesByDateForBranch = async (
         ...(branchId ? { branchesId: branchId } : {}),
         ...(from || to
           ? {
-              date: {
-                ...(from ? { gte: from } : {}),
-                ...(to ? { lte: to } : {}),
-              },
-            }
+            date: {
+              ...(from ? { gte: from } : {}),
+              ...(to ? { lte: to } : {}),
+            },
+          }
           : {}),
       },
       include: {
@@ -980,11 +978,11 @@ export const filterCreditByDate = async (req: Request, res: Response) => {
       where: {
         ...(from || to
           ? {
-              date: {
-                ...(from ? { gte: from } : {}),
-                ...(to ? { lte: to } : {}),
-              },
-            }
+            date: {
+              ...(from ? { gte: from } : {}),
+              ...(to ? { lte: to } : {}),
+            },
+          }
           : {}),
       },
       include: {
@@ -1021,11 +1019,11 @@ export const filterCreditByDateForBranch = async (
         ...(branchId ? { branchesId: branchId } : {}),
         ...(from || to
           ? {
-              date: {
-                ...(from ? { gte: from } : {}),
-                ...(to ? { lte: to } : {}),
-              },
-            }
+            date: {
+              ...(from ? { gte: from } : {}),
+              ...(to ? { lte: to } : {}),
+            },
+          }
           : {}),
       },
       include: {

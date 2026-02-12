@@ -331,7 +331,7 @@ model GeneralSettings {
 
 model POD {
   id              String    @id @default(auto()) @map("_id") @db.ObjectId
-  lrNumber        String
+  lrNumber        String    @unique
   date            String
   from            String
   to              String
@@ -391,19 +391,20 @@ model Credit {
 }
 
 model Notification {
-  id          String    @id @default(auto()) @map("_id") @db.ObjectId
-  requestId   String
-  title       String
-  message     String?
-  description String?
-  data        Json?
-  status      String
-  fileId      String?
-  createdAt   DateTime  @default(now())
-  Admin       Admin?    @relation(fields: [adminId], references: [id])
-  adminId     String?   @db.ObjectId
-  Branches    Branches? @relation(fields: [branchesId], references: [id], onDelete: Cascade)
-  branchesId  String?   @db.ObjectId
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  entityType    String // "LR" | "FM" | "Bill" | "Expense" | "POD" | "Credit"
+  actionType    String // "edit" | "delete" | "approve" | "decline" | "info"
+  requestId     String // LR No / FM No / Bill No
+  status        String // "pending" | "approved" | "declined" | "noted"
+  data          Json?
+  createdByRole String // "admin" | "branch"
+  createdById   String?   @db.ObjectId
+  message       String?
+  createdAt     DateTime  @default(now())
+  admin         Admin?    @relation(fields: [adminId], references: [id])
+  adminId       String?   @db.ObjectId
+  branches      Branches? @relation(fields: [branchesId], references: [id])
+  branchesId      String?   @db.ObjectId
 }
 
 model WriteOff {

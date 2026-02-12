@@ -1,4 +1,4 @@
-import { Request, Response } from "express";import { PrismaClient } from "@prisma/client";
+import { Request, Response } from "express"; import { PrismaClient } from "@prisma/client";
 import {
   billData,
   BillEmailBody,
@@ -158,16 +158,15 @@ export const createBill = async (req: Request, res: Response) => {
         data: {
           adminId: admin.id,
           requestId: bill.id,
-          title: "Credit Limit",
-          description: `The credit limit of INR ${
-            client.creditLimit
-          } for the client ${
-            client.name
-          } has reached. The current outstanding is INR ${client.pendingPayment.toFixed(
-            2
-          )}`,
-          message: "",
-          status: "one-time",
+          entityType: "Credit Limit",
+          actionType: "info",
+          createdByRole: client.name,
+          message: `The credit limit of INR ${client.creditLimit
+            } for the client ${client.name
+            } has reached. The current outstanding is INR ${client.pendingPayment.toFixed(
+              2
+            )}`,
+          status: "noted",
         },
       });
     }
@@ -350,10 +349,11 @@ export const updateBillDetails = async (req: Request, res: Response) => {
         data: {
           adminId: admin.id,
           requestId: bill.id,
-          title: "Credit Limit",
-          description: `The credit limit of INR ${client.creditLimit} for the client ${client.name} has reached. The current outstanding is INR ${totalPendingAmount}`,
-          message: "",
-          status: "one-time",
+          entityType: "Credit Limit",
+          actionType: "info",
+          createdByRole: client.name,
+          message: `The credit limit of INR ${client.creditLimit} for the client ${client.name} has reached. The current outstanding is INR ${totalPendingAmount}`,
+          status: "noted",
         },
       });
     }
@@ -475,8 +475,8 @@ export const createBillsupplementary = async (req: Request, res: Response) => {
     const totalPendingAmount = client.bill.reduce(
       (acc, data) => acc + data.pendingAmount,
       0
-    );  
-    
+    );
+
     const admin = await prisma.admin.findFirst();
     if (!admin) {
       res.status(400).json({
@@ -489,16 +489,15 @@ export const createBillsupplementary = async (req: Request, res: Response) => {
         data: {
           adminId: admin.id,
           requestId: bill.id,
-          title: "Credit Limit",
-          description: `The credit limit of INR ${
-            client.creditLimit
-          } for the client ${
-            client.name
-          } has reached. The current outstanding is INR ${totalPendingAmount.toFixed(
-            2
-          )}`,
-          message: "",
-          status: "one-time",
+          entityType: "Credit Limit",
+          actionType: "info",
+          createdByRole: client.name,
+          message: `The credit limit of INR ${client.creditLimit
+            } for the client ${client.name
+            } has reached. The current outstanding is INR ${totalPendingAmount.toFixed(
+              2
+            )}`,
+          status: "noted",
         },
       });
     }
@@ -920,7 +919,7 @@ export const filterBillData = async (req: Request, res: Response) => {
         Client: true,
         Branches: true,
         Admin: true,
-        WriteOff:true
+        WriteOff: true
       },
       orderBy: {
         date: "desc",
@@ -969,7 +968,7 @@ export const filterBillDetailsForBranch = async (
         Client: true,
         Branches: true,
         Admin: true,
-        WriteOff:true
+        WriteOff: true
       },
       orderBy: {
         createdAt: "desc",
@@ -1369,20 +1368,22 @@ export const updateBillByNotification = async (req: Request, res: Response) => {
         data: {
           adminId: admin.id,
           requestId: bill.id,
-          title: "Credit Limit",
-          description: `The credit limit of INR ${client.creditLimit} for the client ${client.name} has reached. The current outstanding is INR ${totalPendingAmount}`,
-          message: "",
-          status: "one-time",
+          entityType: "Credit Limit",
+          actionType: "info",
+          createdByRole: client.name,
+          message: `The credit limit of INR ${client.creditLimit} for the client ${client.name} has reached. The current outstanding is INR ${totalPendingAmount}`,
+          status: "noted",
         },
       });
     }
 
     await prisma.notification.create({
       data: {
-        requestId: bill.id,
-        title: "Bill",
-        status: "approved",
-        description: "Approved",
+        requestId: bill.billNumber,
+        entityType: "Bill",
+        actionType: "approved",
+        createdByRole: "Admin",
+        status: "noted",
         branchesId: bill.branchesId,
       },
     });
@@ -1427,9 +1428,10 @@ export const deleteBillByNotification = async (req: Request, res: Response) => {
         data: {
           branchesId: bill.branchesId,
           requestId: bill.billNumber,
-          title: "Bill deleted",
-          status: "Approved",
-          description: "Approved",
+          entityType: "Bill",
+          actionType: "approved",
+          createdByRole: "Admin",
+          status: "noted",
         },
       });
       await clearDashboardCache();
@@ -1525,9 +1527,10 @@ export const updateBillRecordByNotification = async (
     await prisma.notification.create({
       data: {
         requestId: bill.id,
-        title: "Bill record",
-        status: "approved",
-        description: "Approved",
+        entityType: "Bill record",
+        actionType: "approved",
+        createdByRole: "Admin",
+        status: "noted",
         branchesId: bill.branchesId,
       },
     });
@@ -1615,10 +1618,11 @@ export const deleteBillRecordByNotification = async (
     await prisma.notification.create({
       data: {
         requestId: bill.id,
-        title: "Bill record deleted",
-        status: "approved",
-        description: "Approved",
         branchesId: bill.branchesId,
+        entityType: "Bill record",
+        actionType: "approved",
+        createdByRole: "Admin",
+        status: "noted",
       },
     });
     await clearDashboardCache();

@@ -378,7 +378,7 @@ const getAllAdminNotifications = (req, res) => __awaiter(void 0, void 0, void 0,
                 adminId: admin === null || admin === void 0 ? void 0 : admin.id,
             },
             include: {
-                Branches: true,
+                branches: true,
             },
             orderBy: {
                 createdAt: "desc",

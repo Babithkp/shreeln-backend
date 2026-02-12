@@ -313,13 +313,13 @@ export const GetRecentTransactions = async (req: Request, res: Response) => {
     const startDate = new Date(now);
     startDate.setDate(now.getDate() - 7);
     startDate.setHours(0, 0, 0, 0);
-    
+
     const endDate = new Date(now);
     endDate.setHours(23, 59, 59, 999);
-    
+
     const startISO = startDate.toISOString();
     const endISO = endDate.toISOString();
-    
+
     const data = await redisGetOrSetFunctions({
       key: "GetRecentTransactions",
       fetchFunction: async () => {
@@ -458,27 +458,32 @@ export const getBranchNotifications = async (req: Request, res: Response) => {
 };
 
 export const createNotification = async (req: Request, res: Response) => {
-  const { requestId, title, message, description, data, status, fileId } =
+  const { entityType,
+    actionType,
+    requestId,
+    status,
+    createdByRole,
+    createdById, data } =
     req.body;
 
-  if (!requestId || !title) {
+  if (!requestId) {
     res.status(400).json({
       message: "Invalid Notification Details",
     });
     return;
-  }
+  }  
   try {
     const admin = await prisma.admin.findFirst();
     await prisma.notification.create({
       data: {
+        entityType,
+        actionType,
+        createdByRole,
+        createdById,
         requestId,
-        title,
-        message,
-        description,
         data: data ? JSON.parse(data) : null,
         adminId: admin?.id,
         status,
-        fileId,
       },
     });
     res.status(200).json({
@@ -496,9 +501,14 @@ export const createNotificationForBranch = async (
   req: Request,
   res: Response
 ) => {
-  const { requestId, title, message, description, status, branchId } = req.body;
+  const { entityType,
+    actionType,
+    requestId,
+    status,
+    createdById } =
+    req.body;
 
-  if (!requestId || !title || !branchId) {
+  if (!requestId || !createdById) {
     res.status(400).json({
       message: "Invalid Notification Details",
     });
@@ -508,11 +518,11 @@ export const createNotificationForBranch = async (
     await prisma.notification.create({
       data: {
         requestId,
-        title,
-        message,
-        description,
+        entityType,
+        actionType,
+        createdByRole: "Admin",
         status,
-        branchesId: branchId,
+        branchesId: createdById,
       },
     });
     res.status(200).json({

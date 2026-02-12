@@ -399,7 +399,7 @@ export const getAllAdminNotifications = async (req: Request, res: Response) => {
         adminId: admin?.id,
       },
       include: {
-        Branches: true,
+        branches: true,
       },
       orderBy: {
         createdAt: "desc",

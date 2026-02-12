@@ -913,10 +913,11 @@ export const createFM = async (req: Request, res: Response) => {
         data: {
           adminId: admin.id,
           requestId: fm.id,
-          title: "Outstanding limit",
-          description: `The outstanding limit of INR ${vendor.outstandingLimit} for the vendor ${vendor.name} has reached. The current outstanding is INR ${vendor.currentOutStanding}`,
-          message: "",
-          status: "one-time",
+          entityType: "Outstanding Limit",
+          actionType: "info",
+          createdByRole: "System",
+          message: `The outstanding limit of INR ${vendor.outstandingLimit} for the vendor ${vendor.name} has reached. The current outstanding is INR ${vendor.currentOutStanding}`,
+          status: "noted",
         },
       });
     }
@@ -1306,16 +1307,17 @@ export const updateFM = async (req: Request, res: Response) => {
           data: {
             adminId: admin.id,
             requestId: fm.id,
-            title: "Outstanding limit",
-            description: `The outstanding limit of INR ${
+            entityType: "Outstanding Limit",
+            actionType: "info",
+            createdByRole: "System",
+            message: `The outstanding limit of INR ${
               vendor.outstandingLimit
             } for the vendor ${
               vendor.name
             } has reached. The current outstanding is INR ${vendor.currentOutStanding.toFixed(
               2
             )}`,
-            message: "",
-            status: "one-time",
+            status: "noted",
           },
         });
       }
@@ -1800,9 +1802,10 @@ export const updateLRByNotification = async (req: Request, res: Response) => {
           data: {
             branchesId: lr.branchId,
             requestId: lr.lrNumber,
-            title: "LR",
-            status: "approved",
-            description: "Approved",
+            entityType: "LR",
+            actionType: "approved",
+            createdByRole: "Admin",
+            status: "noted",
           },
         });
       }
@@ -1964,16 +1967,17 @@ export const updateFMByNotification = async (req: Request, res: Response) => {
           data: {
             adminId: admin.id,
             requestId: fm.id,
-            title: "Outstanding limit",
-            description: `The outstanding limit of INR ${
+            entityType: "Outstanding Limit",
+            actionType: "info",
+            createdByRole: "System",
+            message: `The outstanding limit of INR ${
               vendor.outstandingLimit
             } for the vendor ${
               vendor.name
             } has reached. The current outstanding is INR ${vendor.currentOutStanding.toFixed(
               2
             )}`,
-            message: "",
-            status: "one-time",
+            status: "noted",
           },
         });
       }
@@ -1983,9 +1987,10 @@ export const updateFMByNotification = async (req: Request, res: Response) => {
       data: {
         branchesId: fm?.branchId || "",
         requestId: id,
-        title: "FM edit approved",
-        status: "approved",
-        description: "Approved",
+        entityType: "FM",
+        actionType: "approved",
+        createdByRole: "Admin",
+        status: "noted",
       },
     });
 
@@ -2021,9 +2026,10 @@ export const deleteFMByNotification = async (req: Request, res: Response) => {
           data: {
             branchesId: fm.branchId,
             requestId: fm.fmNumber,
-            title: "FM",
-            status: "deleted",
-            description: "deleted",
+            entityType: "FM",
+            actionType: "approved",
+            createdByRole: "Admin",
+            status: "noted",
           },
         });
       }
@@ -2065,9 +2071,10 @@ export const deleteLRByNotification = async (req: Request, res: Response) => {
           data: {
             branchesId: lr.branchId,
             requestId: lr.lrNumber,
-            title: "LR",
-            status: "deleted",
-            description: "deleted",
+            entityType: "LR",
+            actionType: "approved",
+            createdByRole: "Admin",
+            status: "noted",
           },
         });
       }
@@ -2095,6 +2102,7 @@ export const updateRecordPaymentByNotification = async (
 ) => {
   const { id, LRnumber } = req.params;
   const { data } = req.body;
+  
 
   if (!id) {
     res.status(400).json({
@@ -2166,9 +2174,10 @@ export const updateRecordPaymentByNotification = async (
       data: {
         branchesId: FM.branchId,
         requestId: FM.fmNumber,
-        title: "FM record",
-        status: "Approved",
-        description: "Approved",
+        entityType: "FM",
+        actionType: "approved",
+        createdByRole: "Admin",
+        status: "noted",
       },
     });
     await updateFMDetails(FM.fmNumber);
@@ -2247,9 +2256,10 @@ export const deleteFMRecordByNotification = async (
         data: {
           branchesId: fm.branchId,
           requestId: fm.fmNumber,
-          title: "FM record",
-          status: "Approved",
-          description: "Approved",
+          entityType: "FM",
+          actionType: "approved",
+          createdByRole: "Admin",
+          status: "noted",
         },
       });
       await updateFMDetails(fm.fmNumber);

@@ -270,7 +270,6 @@ const checkPaymentForStatusChange = () => __awaiter(void 0, void 0, void 0, func
 });
 exports.checkPaymentForStatusChange = checkPaymentForStatusChange;
 const updatePODByNotification = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
     const { id } = req.params;
     const { data } = req.body;
     if (!id) {
@@ -281,7 +280,7 @@ const updatePODByNotification = (req, res) => __awaiter(void 0, void 0, void 0, 
     }
     try {
         const pod = yield prisma.pOD.findUnique({
-            where: { id },
+            where: { lrNumber: id },
             include: {
                 Branches: true,
             },
@@ -297,9 +296,10 @@ const updatePODByNotification = (req, res) => __awaiter(void 0, void 0, void 0, 
         yield prisma.notification.create({
             data: {
                 requestId: pod.lrNumber,
-                title: "POD",
-                message: (_a = pod.Branches) === null || _a === void 0 ? void 0 : _a.branchName,
-                status: "editable",
+                entityType: "POD",
+                actionType: "approved",
+                createdByRole: "Admin",
+                status: "noted",
                 branchesId: pod.branchesId,
             },
         });
@@ -317,7 +317,6 @@ const updatePODByNotification = (req, res) => __awaiter(void 0, void 0, void 0, 
 });
 exports.updatePODByNotification = updatePODByNotification;
 const deletePODByNotification = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
     const { id } = req.params;
     if (!id) {
         res.status(400).json({
@@ -327,7 +326,7 @@ const deletePODByNotification = (req, res) => __awaiter(void 0, void 0, void 0, 
     }
     try {
         const pod = yield prisma.pOD.findUnique({
-            where: { id },
+            where: { lrNumber: id },
             include: {
                 Branches: true,
             },
@@ -342,9 +341,10 @@ const deletePODByNotification = (req, res) => __awaiter(void 0, void 0, void 0, 
             yield prisma.notification.create({
                 data: {
                     requestId: pod.lrNumber,
-                    title: "POD deleted",
-                    message: (_a = pod.Branches) === null || _a === void 0 ? void 0 : _a.branchName,
-                    status: "delete",
+                    entityType: "POD",
+                    actionType: "approved",
+                    createdByRole: "Admin",
+                    status: "noted",
                     branchesId: pod.branchesId,
                 },
             });

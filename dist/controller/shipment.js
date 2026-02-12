@@ -749,10 +749,11 @@ const createFM = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 data: {
                     adminId: admin.id,
                     requestId: fm.id,
-                    title: "Outstanding limit",
-                    description: `The outstanding limit of INR ${vendor.outstandingLimit} for the vendor ${vendor.name} has reached. The current outstanding is INR ${vendor.currentOutStanding}`,
-                    message: "",
-                    status: "one-time",
+                    entityType: "Outstanding Limit",
+                    actionType: "info",
+                    createdByRole: "System",
+                    message: `The outstanding limit of INR ${vendor.outstandingLimit} for the vendor ${vendor.name} has reached. The current outstanding is INR ${vendor.currentOutStanding}`,
+                    status: "noted",
                 },
             });
         }
@@ -1100,10 +1101,11 @@ const updateFM = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                     data: {
                         adminId: admin.id,
                         requestId: fm.id,
-                        title: "Outstanding limit",
-                        description: `The outstanding limit of INR ${vendor.outstandingLimit} for the vendor ${vendor.name} has reached. The current outstanding is INR ${vendor.currentOutStanding.toFixed(2)}`,
-                        message: "",
-                        status: "one-time",
+                        entityType: "Outstanding Limit",
+                        actionType: "info",
+                        createdByRole: "System",
+                        message: `The outstanding limit of INR ${vendor.outstandingLimit} for the vendor ${vendor.name} has reached. The current outstanding is INR ${vendor.currentOutStanding.toFixed(2)}`,
+                        status: "noted",
                     },
                 });
             }
@@ -1538,9 +1540,10 @@ const updateLRByNotification = (req, res) => __awaiter(void 0, void 0, void 0, f
                     data: {
                         branchesId: lr.branchId,
                         requestId: lr.lrNumber,
-                        title: "LR",
-                        status: "approved",
-                        description: "Approved",
+                        entityType: "LR",
+                        actionType: "approved",
+                        createdByRole: "Admin",
+                        status: "noted",
                     },
                 });
             }
@@ -1661,10 +1664,11 @@ const updateFMByNotification = (req, res) => __awaiter(void 0, void 0, void 0, f
                     data: {
                         adminId: admin.id,
                         requestId: fm.id,
-                        title: "Outstanding limit",
-                        description: `The outstanding limit of INR ${vendor.outstandingLimit} for the vendor ${vendor.name} has reached. The current outstanding is INR ${vendor.currentOutStanding.toFixed(2)}`,
-                        message: "",
-                        status: "one-time",
+                        entityType: "Outstanding Limit",
+                        actionType: "info",
+                        createdByRole: "System",
+                        message: `The outstanding limit of INR ${vendor.outstandingLimit} for the vendor ${vendor.name} has reached. The current outstanding is INR ${vendor.currentOutStanding.toFixed(2)}`,
+                        status: "noted",
                     },
                 });
             }
@@ -1673,9 +1677,10 @@ const updateFMByNotification = (req, res) => __awaiter(void 0, void 0, void 0, f
             data: {
                 branchesId: (fm === null || fm === void 0 ? void 0 : fm.branchId) || "",
                 requestId: id,
-                title: "FM edit approved",
-                status: "approved",
-                description: "Approved",
+                entityType: "FM",
+                actionType: "approved",
+                createdByRole: "Admin",
+                status: "noted",
             },
         });
         yield (0, redis_1.clearFMCache)();
@@ -1710,9 +1715,10 @@ const deleteFMByNotification = (req, res) => __awaiter(void 0, void 0, void 0, f
                     data: {
                         branchesId: fm.branchId,
                         requestId: fm.fmNumber,
-                        title: "FM",
-                        status: "deleted",
-                        description: "deleted",
+                        entityType: "FM",
+                        actionType: "approved",
+                        createdByRole: "Admin",
+                        status: "noted",
                     },
                 });
             }
@@ -1755,9 +1761,10 @@ const deleteLRByNotification = (req, res) => __awaiter(void 0, void 0, void 0, f
                     data: {
                         branchesId: lr.branchId,
                         requestId: lr.lrNumber,
-                        title: "LR",
-                        status: "deleted",
-                        description: "deleted",
+                        entityType: "LR",
+                        actionType: "approved",
+                        createdByRole: "Admin",
+                        status: "noted",
                     },
                 });
             }
@@ -1845,9 +1852,10 @@ const updateRecordPaymentByNotification = (req, res) => __awaiter(void 0, void 0
             data: {
                 branchesId: FM.branchId,
                 requestId: FM.fmNumber,
-                title: "FM record",
-                status: "Approved",
-                description: "Approved",
+                entityType: "FM",
+                actionType: "approved",
+                createdByRole: "Admin",
+                status: "noted",
             },
         });
         yield (0, exports.updateFMDetails)(FM.fmNumber);
@@ -1915,9 +1923,10 @@ const deleteFMRecordByNotification = (req, res) => __awaiter(void 0, void 0, voi
                 data: {
                     branchesId: fm.branchId,
                     requestId: fm.fmNumber,
-                    title: "FM record",
-                    status: "Approved",
-                    description: "Approved",
+                    entityType: "FM",
+                    actionType: "approved",
+                    createdByRole: "Admin",
+                    status: "noted",
                 },
             });
             yield (0, exports.updateFMDetails)(fm.fmNumber);
