@@ -279,30 +279,35 @@ const createClient = (req, res) => __awaiter(void 0, void 0, void 0, function* (
 exports.createClient = createClient;
 const getAllClients = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const clients = yield prisma.client.findMany({
-            select: {
-                name: true,
-                pendingPayment: true,
-                GSTIN: true,
-                address: true,
-                pincode: true,
-                email: true,
-                city: true,
-                state: true,
-                contactPerson: true,
-                createdAt: true,
-                LR: {
-                    include: {
-                        Vehicle: true,
+        const data = yield (0, redis_1.redisGetOrSetFunctions)({
+            key: `client-data`,
+            fetchFunction: () => __awaiter(void 0, void 0, void 0, function* () {
+                return yield prisma.client.findMany({
+                    select: {
+                        name: true,
+                        pendingPayment: true,
+                        GSTIN: true,
+                        address: true,
+                        pincode: true,
+                        email: true,
+                        city: true,
+                        state: true,
+                        contactPerson: true,
+                        createdAt: true,
+                        LR: {
+                            include: {
+                                Vehicle: true,
+                            },
+                        },
+                        bill: true,
                     },
-                },
-                bill: true,
-            },
-            orderBy: {
-                createdAt: "desc",
-            },
+                    orderBy: {
+                        createdAt: "desc",
+                    },
+                });
+            })
         });
-        res.status(200).json({ data: clients });
+        res.status(200).json({ data });
     }
     catch (error) {
         res.status(500).json({

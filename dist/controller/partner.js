@@ -245,6 +245,7 @@ const createVehicle = (req, res) => __awaiter(void 0, void 0, void 0, function* 
                     vendorId: vendor.id,
                 },
             });
+            yield (0, redis_1.clearGetVehicleCache)();
             res.status(200).json({
                 message: "Vehicle Created",
             });
@@ -350,6 +351,7 @@ const updateVehicleDetails = (req, res) => __awaiter(void 0, void 0, void 0, fun
                     RC,
                 },
             });
+            yield (0, redis_1.clearGetVehicleCache)();
             res.status(200).json({
                 message: "Vehicle Updated",
             });
@@ -383,6 +385,7 @@ const deleteVehicle = (req, res) => __awaiter(void 0, void 0, void 0, function* 
                     id: vehicle.id,
                 },
             });
+            yield (0, redis_1.clearGetVehicleCache)();
             res.status(200).json({
                 message: "Vehicle Deleted",
             });

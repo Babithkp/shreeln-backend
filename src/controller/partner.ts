@@ -1,5 +1,5 @@
 import { Request, Response } from "express"; import { PrismaClient } from "@prisma/client";
-import { clearVendorCache, redisGetOrSetFunctions } from "./utils/redis";
+import { clearGetVehicleCache, clearVendorCache, redisGetOrSetFunctions } from "./utils/redis";
 const prisma = new PrismaClient();
 
 export const createVendor = async (req: Request, res: Response) => {
@@ -274,6 +274,7 @@ export const createVehicle = async (req: Request, res: Response) => {
           vendorId: vendor.id,
         },
       });
+      await clearGetVehicleCache()
       res.status(200).json({
         message: "Vehicle Created",
       });
@@ -388,6 +389,7 @@ export const updateVehicleDetails = async (req: Request, res: Response) => {
           RC,
         },
       });
+      await clearGetVehicleCache()
       res.status(200).json({
         message: "Vehicle Updated",
       });
@@ -420,6 +422,7 @@ export const deleteVehicle = async (req: Request, res: Response) => {
           id: vehicle.id,
         },
       });
+      await clearGetVehicleCache()
       res.status(200).json({
         message: "Vehicle Deleted",
       });

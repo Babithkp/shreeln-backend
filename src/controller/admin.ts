@@ -303,30 +303,35 @@ export const createClient = async (req: Request, res: Response) => {
 
 export const getAllClients = async (req: Request, res: Response) => {
   try {
-    const clients = await prisma.client.findMany({
-      select: {
-        name: true,
-        pendingPayment: true,
-        GSTIN: true,
-        address: true,
-        pincode: true,
-        email: true,
-        city: true,
-        state: true,
-        contactPerson: true,
-        createdAt: true,
-        LR: {
-          include: {
-            Vehicle: true,
+    const data = await redisGetOrSetFunctions({
+      key: `client-data`,
+      fetchFunction: async () => {
+        return await prisma.client.findMany({
+          select: {
+            name: true,
+            pendingPayment: true,
+            GSTIN: true,
+            address: true,
+            pincode: true,
+            email: true,
+            city: true,
+            state: true,
+            contactPerson: true,
+            createdAt: true,
+            LR: {
+              include: {
+                Vehicle: true,
+              },
+            },
+            bill: true,
           },
-        },
-        bill: true,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
-    res.status(200).json({ data: clients });
+          orderBy: {
+            createdAt: "desc",
+          },
+        })
+      }
+    })
+    res.status(200).json({ data });
   } catch (error) {
     res.status(500).json({
       message: "Internal Server Error",
@@ -672,7 +677,7 @@ export const getDashboardData = async (req: Request, res: Response) => {
           },
         });
 
-        const vendorCount = await prisma.vendors.count(); 
+        const vendorCount = await prisma.vendors.count();
 
         return {
           clientData,

@@ -471,7 +471,7 @@ export const createNotification = async (req: Request, res: Response) => {
       message: "Invalid Notification Details",
     });
     return;
-  }  
+  }
   try {
     const admin = await prisma.admin.findFirst();
     await prisma.notification.create({

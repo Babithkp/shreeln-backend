@@ -84,7 +84,7 @@ const clearVendorCache = () => __awaiter(void 0, void 0, void 0, function* () {
 });
 exports.clearVendorCache = clearVendorCache;
 const clearClientCache = () => __awaiter(void 0, void 0, void 0, function* () {
-    const pattern = "client-data-*";
+    const pattern = "client-data*";
     const keys = yield redisClient.keys(pattern);
     if (keys.length > 0) {
         yield redisClient.del(keys);
