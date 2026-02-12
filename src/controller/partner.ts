@@ -1,4 +1,4 @@
-import { Request, Response } from "express";import { PrismaClient } from "@prisma/client";
+import { Request, Response } from "express"; import { PrismaClient } from "@prisma/client";
 import { clearVendorCache, redisGetOrSetFunctions } from "./utils/redis";
 const prisma = new PrismaClient();
 
@@ -288,8 +288,13 @@ export const createVehicle = async (req: Request, res: Response) => {
 
 export const getAllVehicles = async (req: Request, res: Response) => {
   try {
-    const vehicles = await prisma.vehicle.findMany();
-    res.status(200).json({ data: vehicles });
+    const data = await redisGetOrSetFunctions({
+      key: `getVehicle`,
+      fetchFunction: async () => {
+        return await prisma.vehicle.findMany();
+      }
+    })
+    res.status(200).json({ data });
   } catch (error) {
     res.status(500).json({
       message: "Internal Server Error",
@@ -502,16 +507,16 @@ export const filterFMLRByVendorForBranch = async (
         ...{ vendorName: name === "All" ? {} : name },
         ...(from || to
           ? {
-              date: {
-                ...(from ? { gte: from } : {}),
-                ...(to ? { lte: to } : {}),
-              },
-            }
+            date: {
+              ...(from ? { gte: from } : {}),
+              ...(to ? { lte: to } : {}),
+            },
+          }
           : {}),
       },
       include: {
         PaymentRecords: true,
-        branch:true
+        branch: true
       },
     });
 
@@ -525,11 +530,11 @@ export const filterFMLRByVendorForBranch = async (
         },
         ...(from || to
           ? {
-              date: {
-                ...(from ? { gte: from } : {}),
-                ...(to ? { lte: to } : {}),
-              },
-            }
+            date: {
+              ...(from ? { gte: from } : {}),
+              ...(to ? { lte: to } : {}),
+            },
+          }
           : {}),
       },
       include: {
@@ -539,7 +544,7 @@ export const filterFMLRByVendorForBranch = async (
           },
         },
         pod: true,
-        branch:true
+        branch: true
       },
     });
 
@@ -565,11 +570,11 @@ export const filterFMLRByVendor = async (req: Request, res: Response) => {
         ...{ vendorName: name === "All" ? {} : name },
         ...(from || to
           ? {
-              date: {
-                ...(from ? { gte: from } : {}),
-                ...(to ? { lte: to } : {}),
-              },
-            }
+            date: {
+              ...(from ? { gte: from } : {}),
+              ...(to ? { lte: to } : {}),
+            },
+          }
           : {}),
       },
       include: {
@@ -586,11 +591,11 @@ export const filterFMLRByVendor = async (req: Request, res: Response) => {
         },
         ...(from || to
           ? {
-              date: {
-                ...(from ? { gte: from } : {}),
-                ...(to ? { lte: to } : {}),
-              },
-            }
+            date: {
+              ...(from ? { gte: from } : {}),
+              ...(to ? { lte: to } : {}),
+            },
+          }
           : {}),
       },
       include: {
@@ -850,11 +855,11 @@ export const filterBillLRByClient = async (req: Request, res: Response) => {
         },
         ...(from || to
           ? {
-              date: {
-                ...(from ? { gte: from } : {}),
-                ...(to ? { lte: to } : {}),
-              },
-            }
+            date: {
+              ...(from ? { gte: from } : {}),
+              ...(to ? { lte: to } : {}),
+            },
+          }
           : {}),
       },
       include: {
@@ -883,15 +888,15 @@ export const filterBillLRByClient = async (req: Request, res: Response) => {
         },
         ...(from || to
           ? {
-              date: {
-                ...(from ? { gte: from } : {}),
-                ...(to ? { lte: to } : {}),
-              },
-            }
+            date: {
+              ...(from ? { gte: from } : {}),
+              ...(to ? { lte: to } : {}),
+            },
+          }
           : {}),
       },
       include: {
-        branch:true,
+        branch: true,
         Vehicle: {
           select: {
             vehicleNumber: true,
@@ -928,11 +933,11 @@ export const filterBillLRByClientForBranch = async (
         },
         ...(from || to
           ? {
-              date: {
-                ...(from ? { gte: from } : {}),
-                ...(to ? { lte: to } : {}),
-              },
-            }
+            date: {
+              ...(from ? { gte: from } : {}),
+              ...(to ? { lte: to } : {}),
+            },
+          }
           : {}),
       },
       include: {
@@ -951,7 +956,7 @@ export const filterBillLRByClientForBranch = async (
           },
         },
         WriteOff: true,
-        
+
       },
     });
 
@@ -965,11 +970,11 @@ export const filterBillLRByClientForBranch = async (
         },
         ...(from || to
           ? {
-              date: {
-                ...(from ? { gte: from } : {}),
-                ...(to ? { lte: to } : {}),
-              },
-            }
+            date: {
+              ...(from ? { gte: from } : {}),
+              ...(to ? { lte: to } : {}),
+            },
+          }
           : {}),
       },
       include: {
@@ -978,7 +983,7 @@ export const filterBillLRByClientForBranch = async (
             vehicleNumber: true,
           },
         },
-        branch:true
+        branch: true
       },
     });
 
@@ -1005,11 +1010,11 @@ export const filterLRForClient = async (req: Request, res: Response) => {
         ...(name === "All" ? {} : { client: { name } }),
         ...(from || to
           ? {
-              date: {
-                ...(from ? { gte: from } : {}),
-                ...(to ? { lte: to } : {}),
-              },
-            }
+            date: {
+              ...(from ? { gte: from } : {}),
+              ...(to ? { lte: to } : {}),
+            },
+          }
           : {}),
       },
       include: {
@@ -1048,11 +1053,11 @@ export const filterLRForClientForBranch = async (
         ...(name === "All" ? {} : { client: { name } }),
         ...(from || to
           ? {
-              date: {
-                ...(from ? { gte: from } : {}),
-                ...(to ? { lte: to } : {}),
-              },
-            }
+            date: {
+              ...(from ? { gte: from } : {}),
+              ...(to ? { lte: to } : {}),
+            },
+          }
           : {}),
       },
       include: {

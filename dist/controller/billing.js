@@ -1303,6 +1303,7 @@ const updateBillRecordByNotification = (req, res) => __awaiter(void 0, void 0, v
                 createdByRole: "Admin",
                 status: "noted",
                 branchesId: bill.branchesId,
+                data: JSON.stringify({ id: bill.billNumber }),
             },
         });
         yield (0, redis_1.clearDashboardCache)();
@@ -1380,6 +1381,7 @@ const deleteBillRecordByNotification = (req, res) => __awaiter(void 0, void 0, v
                 actionType: "approved",
                 createdByRole: "Admin",
                 status: "noted",
+                data: JSON.stringify({ id: bill.billNumber }),
             },
         });
         yield (0, redis_1.clearDashboardCache)();

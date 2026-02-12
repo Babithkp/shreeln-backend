@@ -260,8 +260,13 @@ const createVehicle = (req, res) => __awaiter(void 0, void 0, void 0, function* 
 exports.createVehicle = createVehicle;
 const getAllVehicles = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const vehicles = yield prisma.vehicle.findMany();
-        res.status(200).json({ data: vehicles });
+        const data = yield (0, redis_1.redisGetOrSetFunctions)({
+            key: `getVehicle`,
+            fetchFunction: () => __awaiter(void 0, void 0, void 0, function* () {
+                return yield prisma.vehicle.findMany();
+            })
+        });
+        res.status(200).json({ data });
     }
     catch (error) {
         res.status(500).json({

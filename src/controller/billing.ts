@@ -1532,6 +1532,7 @@ export const updateBillRecordByNotification = async (
         createdByRole: "Admin",
         status: "noted",
         branchesId: bill.branchesId,
+        data: JSON.stringify({id: bill.billNumber}),
       },
     });
     await clearDashboardCache();
@@ -1623,6 +1624,7 @@ export const deleteBillRecordByNotification = async (
         actionType: "approved",
         createdByRole: "Admin",
         status: "noted",
+        data: JSON.stringify({id: bill.billNumber}),
       },
     });
     await clearDashboardCache();

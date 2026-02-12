@@ -2178,6 +2178,7 @@ export const updateRecordPaymentByNotification = async (
         actionType: "approved",
         createdByRole: "Admin",
         status: "noted",
+        data: JSON.stringify({id: FM.fmNumber}),
       },
     });
     await updateFMDetails(FM.fmNumber);
@@ -2260,6 +2261,7 @@ export const deleteFMRecordByNotification = async (
           actionType: "approved",
           createdByRole: "Admin",
           status: "noted",
+          data: JSON.stringify({id: fm.fmNumber}),
         },
       });
       await updateFMDetails(fm.fmNumber);

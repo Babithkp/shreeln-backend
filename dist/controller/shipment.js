@@ -1856,6 +1856,7 @@ const updateRecordPaymentByNotification = (req, res) => __awaiter(void 0, void 0
                 actionType: "approved",
                 createdByRole: "Admin",
                 status: "noted",
+                data: JSON.stringify({ id: FM.fmNumber }),
             },
         });
         yield (0, exports.updateFMDetails)(FM.fmNumber);
@@ -1927,6 +1928,7 @@ const deleteFMRecordByNotification = (req, res) => __awaiter(void 0, void 0, voi
                     actionType: "approved",
                     createdByRole: "Admin",
                     status: "noted",
+                    data: JSON.stringify({ id: fm.fmNumber }),
                 },
             });
             yield (0, exports.updateFMDetails)(fm.fmNumber);

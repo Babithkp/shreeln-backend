@@ -113,3 +113,10 @@ export const clearGetRecentTransactionCache = async () => {
     await redisClient.del(keys);
   }
 };
+export const clearGetVehicleCache = async () => {
+  const pattern = "getVehicle";
+  const keys = await redisClient.keys(pattern);
+  if (keys.length > 0) {
+    await redisClient.del(keys);
+  }
+};
