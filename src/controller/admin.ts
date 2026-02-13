@@ -284,12 +284,12 @@ export const createClient = async (req: Request, res: Response) => {
         },
       });
       await clearDashboardCache();
+      await clearClientCache();
       res.status(200).json({
         message: "Client Created",
       });
       return;
     }
-    await clearClientCache();
     res.status(400).json({
       message: "Client Not Found",
     });

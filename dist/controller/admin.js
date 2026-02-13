@@ -259,12 +259,12 @@ const createClient = (req, res) => __awaiter(void 0, void 0, void 0, function* (
                 },
             });
             yield (0, redis_1.clearDashboardCache)();
+            yield (0, redis_1.clearClientCache)();
             res.status(200).json({
                 message: "Client Created",
             });
             return;
         }
-        yield (0, redis_1.clearClientCache)();
         res.status(400).json({
             message: "Client Not Found",
         });
