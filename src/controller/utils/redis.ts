@@ -78,7 +78,7 @@ export const clearClientCache = async () => {
   const pattern = "client-data*";
   const keys = await redisClient.keys(pattern);
   if (keys.length > 0) {
-    await redisClient.del(keys);
+    await redisClient.del(...keys);
   }
 };
 
