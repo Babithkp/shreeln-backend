@@ -2,6 +2,7 @@ import { Request, Response } from "express";import { PrismaClient } from "@prism
 import { LRData, LREmailBody, sendLREmailToClient } from "./utils/LREmail";
 import { FMData, FMEmailBody, sendFMEmailToClient } from "./utils/FMEmail";
 import {
+  clearClientCache,
   clearFMCache,
   clearGetAllRecordPaymentCache,
   clearGetRecentTransactionCache,
@@ -163,6 +164,7 @@ export const createLR = async (req: Request, res: Response) => {
       },
     });
     await clearLRCache();
+    await clearClientCache();
     res.status(200).json({
       message: "LR Created",
     });
@@ -422,6 +424,7 @@ export const deleteLR = async (req: Request, res: Response) => {
         },
       });
       await clearLRCache();
+      await clearClientCache();
       res.status(200).json({
         message: "LR Deleted",
       });
@@ -577,6 +580,7 @@ export const updateLR = async (req: Request, res: Response) => {
         },
       });
       await clearLRCache();
+      await clearClientCache();
       res.status(200).json({
         message: "LR Updated",
       });
@@ -1816,6 +1820,7 @@ export const updateLRByNotification = async (req: Request, res: Response) => {
       return;
     }
     await clearLRCache();
+    await clearClientCache();
     res.status(200).json({
       message: "LR Updated",
     });
@@ -2085,6 +2090,7 @@ export const deleteLRByNotification = async (req: Request, res: Response) => {
       return;
     }
     await clearLRCache();
+    await clearClientCache();
     res.status(200).json({
       message: "LR Deleted",
     });

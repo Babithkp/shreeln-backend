@@ -109,6 +109,7 @@ const createLR = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 ewbExpiryDate, totalAmt: parseFloat(totalAmt || "0"), emails, vehicleId: vehicle === null || vehicle === void 0 ? void 0 : vehicle.id, clientId: clients.id }),
         });
         yield (0, redis_1.clearLRCache)();
+        yield (0, redis_1.clearClientCache)();
         res.status(200).json({
             message: "LR Created",
         });
@@ -367,6 +368,7 @@ const deleteLR = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 },
             });
             yield (0, redis_1.clearLRCache)();
+            yield (0, redis_1.clearClientCache)();
             res.status(200).json({
                 message: "LR Deleted",
             });
@@ -478,6 +480,7 @@ const updateLR = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 },
             });
             yield (0, redis_1.clearLRCache)();
+            yield (0, redis_1.clearClientCache)();
             res.status(200).json({
                 message: "LR Updated",
             });
@@ -1555,6 +1558,7 @@ const updateLRByNotification = (req, res) => __awaiter(void 0, void 0, void 0, f
             return;
         }
         yield (0, redis_1.clearLRCache)();
+        yield (0, redis_1.clearClientCache)();
         res.status(200).json({
             message: "LR Updated",
         });
@@ -1776,6 +1780,7 @@ const deleteLRByNotification = (req, res) => __awaiter(void 0, void 0, void 0, f
             return;
         }
         yield (0, redis_1.clearLRCache)();
+        yield (0, redis_1.clearClientCache)();
         res.status(200).json({
             message: "LR Deleted",
         });
