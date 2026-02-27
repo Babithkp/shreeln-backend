@@ -362,6 +362,7 @@ const filterExpensesByTitle = (req, res) => __awaiter(void 0, void 0, void 0, fu
             OR: [
                 { expenseId: { contains: text, mode: "insensitive" } },
                 { title: { contains: text, mode: "insensitive" } },
+                { category: { contains: text, mode: "insensitive" } },
             ],
         };
         if (branchId !== "null") {
@@ -623,6 +624,7 @@ const filterCreditsByTitle = (req, res) => __awaiter(void 0, void 0, void 0, fun
     try {
         const whereClause = {
             OR: [
+                { category: { contains: text, mode: "insensitive" } },
                 { creditId: { contains: text, mode: "insensitive" } },
                 { title: { contains: text, mode: "insensitive" } },
             ],

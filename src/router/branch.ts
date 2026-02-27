@@ -45,5 +45,4 @@ branchRouter.get(
 );
 branchRouter.get("/getStatementsToExport/:date", getAllStatements);
 
-
 export default branchRouter;

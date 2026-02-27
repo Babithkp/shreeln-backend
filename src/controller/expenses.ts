@@ -406,6 +406,7 @@ export const filterExpensesByTitle = async (req: Request, res: Response) => {
       OR: [
         { expenseId: { contains: text, mode: "insensitive" } },
         { title: { contains: text, mode: "insensitive" } },
+        { category: { contains: text, mode: "insensitive" } },
       ],
     };
     if (branchId !== "null") {
@@ -709,6 +710,7 @@ export const filterCreditsByTitle = async (req: Request, res: Response) => {
   try {
     const whereClause: any = {
       OR: [
+        { category: { contains: text, mode: "insensitive" } },
         { creditId: { contains: text, mode: "insensitive" } },
         { title: { contains: text, mode: "insensitive" } },
       ],
@@ -719,6 +721,7 @@ export const filterCreditsByTitle = async (req: Request, res: Response) => {
     const expenses = await prisma.credit.findMany({
       where: whereClause,
       include: {
+        
         Branches: {
           select: {
             branchName: true,
