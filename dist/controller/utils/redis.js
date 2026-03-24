@@ -32,14 +32,18 @@ const redisGetOrSetFunctions = (_a) => __awaiter(void 0, [_a], void 0, function*
 });
 exports.redisGetOrSetFunctions = redisGetOrSetFunctions;
 const clearDashboardCache = () => __awaiter(void 0, void 0, void 0, function* () {
-    yield redisClient.del("dashboard");
+    const pattern = "dashboard*";
+    const keys = yield redisClient.keys(pattern);
+    if (keys.length > 0) {
+        yield redisClient.del(...keys);
+    }
 });
 exports.clearDashboardCache = clearDashboardCache;
 const clearAllBillCache = () => __awaiter(void 0, void 0, void 0, function* () {
     const pattern = "bill-data-*";
     const keys = yield redisClient.keys(pattern);
     if (keys.length > 0) {
-        yield redisClient.del(keys);
+        yield redisClient.del(...keys);
     }
 });
 exports.clearAllBillCache = clearAllBillCache;
@@ -47,7 +51,7 @@ const clearFMCache = () => __awaiter(void 0, void 0, void 0, function* () {
     const pattern = "FM-data-*";
     const keys = yield redisClient.keys(pattern);
     if (keys.length > 0) {
-        yield redisClient.del(keys);
+        yield redisClient.del(...keys);
     }
 });
 exports.clearFMCache = clearFMCache;
@@ -55,7 +59,7 @@ const clearLRCache = () => __awaiter(void 0, void 0, void 0, function* () {
     const pattern = "LR-data-*";
     const keys = yield redisClient.keys(pattern);
     if (keys.length > 0) {
-        yield redisClient.del(keys);
+        yield redisClient.del(...keys);
     }
 });
 exports.clearLRCache = clearLRCache;
@@ -71,7 +75,7 @@ const clearRecentTransactionCache = () => __awaiter(void 0, void 0, void 0, func
     const pattern = "recent-payment-*";
     const keys = yield redisClient.keys(pattern);
     if (keys.length > 0) {
-        yield redisClient.del(keys);
+        yield redisClient.del(...keys);
     }
 });
 exports.clearRecentTransactionCache = clearRecentTransactionCache;
@@ -79,7 +83,7 @@ const clearVendorCache = () => __awaiter(void 0, void 0, void 0, function* () {
     const pattern = "vendor-data-*";
     const keys = yield redisClient.keys(pattern);
     if (keys.length > 0) {
-        yield redisClient.del(keys);
+        yield redisClient.del(...keys);
     }
 });
 exports.clearVendorCache = clearVendorCache;
@@ -95,7 +99,7 @@ const clearCreditCache = () => __awaiter(void 0, void 0, void 0, function* () {
     const pattern = "credit-data-*";
     const keys = yield redisClient.keys(pattern);
     if (keys.length > 0) {
-        yield redisClient.del(keys);
+        yield redisClient.del(...keys);
     }
 });
 exports.clearCreditCache = clearCreditCache;
@@ -103,7 +107,7 @@ const clearExpenseCache = () => __awaiter(void 0, void 0, void 0, function* () {
     const pattern = "expense-data-*";
     const keys = yield redisClient.keys(pattern);
     if (keys.length > 0) {
-        yield redisClient.del(keys);
+        yield redisClient.del(...keys);
     }
 });
 exports.clearExpenseCache = clearExpenseCache;
@@ -111,7 +115,7 @@ const clearPODCache = () => __awaiter(void 0, void 0, void 0, function* () {
     const pattern = "POD-data-*";
     const keys = yield redisClient.keys(pattern);
     if (keys.length > 0) {
-        yield redisClient.del(keys);
+        yield redisClient.del(...keys);
     }
 });
 exports.clearPODCache = clearPODCache;
@@ -119,7 +123,7 @@ const clearGetRecentTransactionCache = () => __awaiter(void 0, void 0, void 0, f
     const pattern = "GetRecentTransactions";
     const keys = yield redisClient.keys(pattern);
     if (keys.length > 0) {
-        yield redisClient.del(keys);
+        yield redisClient.del(...keys);
     }
 });
 exports.clearGetRecentTransactionCache = clearGetRecentTransactionCache;
@@ -127,7 +131,7 @@ const clearGetVehicleCache = () => __awaiter(void 0, void 0, void 0, function* (
     const pattern = "getVehicle";
     const keys = yield redisClient.keys(pattern);
     if (keys.length > 0) {
-        yield redisClient.del(keys);
+        yield redisClient.del(...keys);
     }
 });
 exports.clearGetVehicleCache = clearGetVehicleCache;

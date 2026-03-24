@@ -56,29 +56,6 @@ app.post("/api/v1/sendFMEmail/:email", upload.any(), shipment_1.sendFMEmail);
 app.post("/api/v1/sendBillEmail/:email", upload.any(), billing_2.sendBillEmail);
 app.post("/api/v1/lorryReceiptsUpload", upload.any(), fileUpload_1.lorryReceiptsFileUpload);
 // createAdmin()
-// async function deleteUnUsedPOD() {
-//   const LR = await prisma.lR.findMany({
-//     include: {
-//       pod: true
-//     }
-//   })
-//   const filterLR = LR.filter((lr) => lr.pod.length == 0)
-//   console.log(filterLR.length);
-//   filterLR.forEach(async (lr) => {
-//     const oldlr = await prisma.lR.update({
-//       where: {
-//         id: lr.id
-//       },
-//       data: {
-//         pod: {
-//           set: []
-//         }
-//       }
-//     })
-//     console.log(oldlr.lrNumber);
-//   })
-// }
-// deleteUnUsedPOD()
 node_cron_1.default.schedule("0 0 * * *", () => __awaiter(void 0, void 0, void 0, function* () {
     console.log("🔄 Running FM status checker at midnight...");
     yield (0, pod_2.checkPaymentForStatusChange)();

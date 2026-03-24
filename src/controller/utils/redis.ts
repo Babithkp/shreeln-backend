@@ -1,4 +1,4 @@
-import Redis from "ioredis";import dotenv from "dotenv";
+import Redis from "ioredis"; import dotenv from "dotenv";
 dotenv.config();
 const redisEnv = process.env.REDIS_URL;
 if (!redisEnv) {
@@ -23,14 +23,18 @@ export const redisGetOrSetFunctions = async <T>({
 };
 
 export const clearDashboardCache = async () => {
-  await redisClient.del("dashboard");
+  const pattern = "dashboard*";
+  const keys = await redisClient.keys(pattern);
+  if (keys.length > 0) {
+    await redisClient.del(...keys);
+  }
 };
 
 export const clearAllBillCache = async () => {
   const pattern = "bill-data-*";
   const keys = await redisClient.keys(pattern);
   if (keys.length > 0) {
-    await redisClient.del(keys);
+    await redisClient.del(...keys);
   }
 };
 
@@ -38,7 +42,7 @@ export const clearFMCache = async () => {
   const pattern = "FM-data-*";
   const keys = await redisClient.keys(pattern);
   if (keys.length > 0) {
-    await redisClient.del(keys);
+    await redisClient.del(...keys);
   }
 };
 
@@ -46,7 +50,7 @@ export const clearLRCache = async () => {
   const pattern = "LR-data-*";
   const keys = await redisClient.keys(pattern);
   if (keys.length > 0) {
-    await redisClient.del(keys);
+    await redisClient.del(...keys);
   }
 };
 
@@ -62,7 +66,7 @@ export const clearRecentTransactionCache = async () => {
   const pattern = "recent-payment-*";
   const keys = await redisClient.keys(pattern);
   if (keys.length > 0) {
-    await redisClient.del(keys);
+    await redisClient.del(...keys);
   }
 }
 
@@ -70,7 +74,7 @@ export const clearVendorCache = async () => {
   const pattern = "vendor-data-*";
   const keys = await redisClient.keys(pattern);
   if (keys.length > 0) {
-    await redisClient.del(keys);
+    await redisClient.del(...keys);
   }
 };
 
@@ -86,7 +90,7 @@ export const clearCreditCache = async () => {
   const pattern = "credit-data-*";
   const keys = await redisClient.keys(pattern);
   if (keys.length > 0) {
-    await redisClient.del(keys);
+    await redisClient.del(...keys);
   }
 };
 
@@ -94,7 +98,7 @@ export const clearExpenseCache = async () => {
   const pattern = "expense-data-*";
   const keys = await redisClient.keys(pattern);
   if (keys.length > 0) {
-    await redisClient.del(keys);
+    await redisClient.del(...keys);
   }
 };
 
@@ -102,7 +106,7 @@ export const clearPODCache = async () => {
   const pattern = "POD-data-*";
   const keys = await redisClient.keys(pattern);
   if (keys.length > 0) {
-    await redisClient.del(keys);
+    await redisClient.del(...keys);
   }
 };
 
@@ -110,13 +114,13 @@ export const clearGetRecentTransactionCache = async () => {
   const pattern = "GetRecentTransactions";
   const keys = await redisClient.keys(pattern);
   if (keys.length > 0) {
-    await redisClient.del(keys);
+    await redisClient.del(...keys);
   }
 };
 export const clearGetVehicleCache = async () => {
   const pattern = "getVehicle";
   const keys = await redisClient.keys(pattern);
   if (keys.length > 0) {
-    await redisClient.del(keys);
+    await redisClient.del(...keys);
   }
 };
