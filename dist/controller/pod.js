@@ -129,7 +129,7 @@ const deletePOD = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         if (pod) {
             yield (0, fileUpload_1.deleteLRFile)(pod.documentLink);
             yield prisma.lR.update({
-                where: { id: pod.lrNumber },
+                where: { lrNumber: pod.lrNumber },
                 data: {
                     pod: {
                         disconnect: { id: pod.id },
@@ -342,7 +342,7 @@ const deletePODByNotification = (req, res) => __awaiter(void 0, void 0, void 0, 
         if (pod) {
             yield (0, fileUpload_1.deleteLRFile)(pod.documentLink);
             yield prisma.lR.update({
-                where: { id: pod.lrNumber },
+                where: { lrNumber: pod.lrNumber },
                 data: {
                     pod: {
                         disconnect: { id: pod.id },

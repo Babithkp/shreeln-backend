@@ -147,7 +147,7 @@ export const deletePOD = async (req: Request, res: Response) => {
     if (pod) {
       await deleteLRFile(pod.documentLink);
       await prisma.lR.update({
-        where: { id: pod.lrNumber },
+        where: { lrNumber: pod.lrNumber },
         data: {
           pod: {
             disconnect: { id: pod.id },
@@ -381,7 +381,7 @@ export const deletePODByNotification = async (req: Request, res: Response) => {
     if (pod) {
       await deleteLRFile(pod.documentLink);
       await prisma.lR.update({
-        where: { id: pod.lrNumber },
+        where: { lrNumber: pod.lrNumber },
         data: {
           pod: {
             disconnect: { id: pod.id },
