@@ -723,6 +723,9 @@ export const getDashboardDataForBranch = async (
             },
           },
         });
+        const totalOutStanding = billData.reduce((acc, data) => acc + data.pendingAmount, 0);
+        console.log(totalOutStanding);
+        
 
         const FMData = await prisma.fM.findMany({
           where: {
@@ -759,6 +762,7 @@ export const getDashboardDataForBranch = async (
         };
       },
     });
+    
 
     res.status(200).json({
       message: "Dashboard Data",

@@ -701,6 +701,8 @@ const getDashboardDataForBranch = (req, res) => __awaiter(void 0, void 0, void 0
                         },
                     },
                 });
+                const totalOutStanding = billData.reduce((acc, data) => acc + data.pendingAmount, 0);
+                console.log(totalOutStanding);
                 const FMData = yield prisma.fM.findMany({
                     where: {
                         branchId,

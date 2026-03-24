@@ -146,6 +146,14 @@ export const deletePOD = async (req: Request, res: Response) => {
     });
     if (pod) {
       await deleteLRFile(pod.documentLink);
+      await prisma.lR.update({
+        where: { id: pod.lrNumber },
+        data: {
+          pod: {
+            disconnect: { id: pod.id },
+          },
+        },
+      });
       await prisma.pOD.delete({
         where: {
           id: pod.id,
@@ -316,7 +324,7 @@ export const updatePODByNotification = async (req: Request, res: Response) => {
   }
   try {
     const pod = await prisma.pOD.findUnique({
-      where: { lrNumber:id },
+      where: { lrNumber: id },
       include: {
         Branches: true,
       },
@@ -365,13 +373,21 @@ export const deletePODByNotification = async (req: Request, res: Response) => {
   }
   try {
     const pod = await prisma.pOD.findUnique({
-      where: { lrNumber:id },
+      where: { lrNumber: id },
       include: {
         Branches: true,
       },
     });
     if (pod) {
       await deleteLRFile(pod.documentLink);
+      await prisma.lR.update({
+        where: { id: pod.lrNumber },
+        data: {
+          pod: {
+            disconnect: { id: pod.id },
+          },
+        },
+      });
       await prisma.pOD.delete({
         where: {
           id: pod.id,
@@ -424,9 +440,8 @@ export const getPodByPage = async (req: Request, res: Response) => {
 
   try {
     const data = await redisGetOrSetFunctions({
-      key: `POD-data-${page}-${skip}-${
-        whereClause.branchesId ? whereClause.branchesId : "null"
-      }`,
+      key: `POD-data-${page}-${skip}-${whereClause.branchesId ? whereClause.branchesId : "null"
+        }`,
       fetchFunction: async () => {
         const PODCount = await prisma.pOD.count({
           where: whereClause,

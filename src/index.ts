@@ -1,4 +1,4 @@
-import express from "express";import cors from "cors";
+import express from "express"; import cors from "cors";
 import adminRouter from "./router/admin";
 import branchRouter from "./router/branch";
 import dotenv from "dotenv";
@@ -49,6 +49,33 @@ app.post("/api/v1/sendBillEmail/:email", upload.any(), sendBillEmail);
 app.post("/api/v1/lorryReceiptsUpload", upload.any(), lorryReceiptsFileUpload);
 // createAdmin()
 
+
+// async function deleteUnUsedPOD() {
+//   const LR = await prisma.lR.findMany({
+//     include: {
+//       pod: true
+//     }
+//   })
+//   const filterLR = LR.filter((lr) => lr.pod.length == 0)
+//   console.log(filterLR.length);
+  
+//   filterLR.forEach(async (lr) => {
+//     const oldlr = await prisma.lR.update({
+//       where: {
+//         id: lr.id
+//       },
+//       data: {
+//         pod: {
+//           set: []
+//         }
+//       }
+//     })
+//     console.log(oldlr.lrNumber);
+//   })
+  
+
+// }
+// deleteUnUsedPOD()
 
 
 cron.schedule("0 0 * * *", async () => {
