@@ -649,9 +649,23 @@ const getAllStatements = (req, res) => __awaiter(void 0, void 0, void 0, functio
                 date: "desc",
             },
         });
+        const expenses = yield prisma.expense.findMany({
+            where: {
+                date: {
+                    gte: date,
+                    lte: date,
+                },
+            },
+            include: {
+                Branches: true,
+            },
+            orderBy: {
+                date: "desc",
+            },
+        });
         const data = {
-            payments,
-            credits,
+            payments: [...payments.filter((payment) => payment.fMId), ...expenses],
+            credits: [...payments.filter((credit) => credit.billId), ...credits],
         };
         res.status(200).json({ data });
     }

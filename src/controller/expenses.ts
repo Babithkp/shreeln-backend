@@ -111,9 +111,13 @@ export const createExpense = async (req: Request, res: Response) => {
 export const getAllExpenses = async (req: Request, res: Response) => {
   try {
     const expenses = await prisma.expense.findMany({
-      select: {
-        amount: true,
-      },
+      include:{
+        Branches:{
+          select:{
+            branchName:true
+          }
+        }
+      }
     });
     res.status(200).json({ data: expenses });
   } catch (error) {
@@ -721,7 +725,7 @@ export const filterCreditsByTitle = async (req: Request, res: Response) => {
     const expenses = await prisma.credit.findMany({
       where: whereClause,
       include: {
-        
+
         Branches: {
           select: {
             branchName: true,
