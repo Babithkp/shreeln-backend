@@ -55,6 +55,7 @@ const getAllBranchDetails = (req, res) => __awaiter(void 0, void 0, void 0, func
                 bill: {
                     select: {
                         subTotal: true,
+                        pendingAmount: true,
                     },
                 },
             },

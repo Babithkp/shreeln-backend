@@ -45,6 +45,7 @@ export const getAllBranchDetails = async (req: Request, res: Response) => {
         bill: {
           select: {
             subTotal: true,
+            pendingAmount:true,
           },
         },
       },
