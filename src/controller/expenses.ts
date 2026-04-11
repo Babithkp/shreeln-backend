@@ -111,10 +111,10 @@ export const createExpense = async (req: Request, res: Response) => {
 export const getAllExpenses = async (req: Request, res: Response) => {
   try {
     const expenses = await prisma.expense.findMany({
-      include:{
-        Branches:{
-          select:{
-            branchName:true
+      include: {
+        Branches: {
+          select: {
+            branchName: true
           }
         }
       }
@@ -294,6 +294,7 @@ export const deleteExpenseByNotification = async (
   res: Response
 ) => {
   const { id } = req.params;
+
   if (!id) {
     res.status(400).json({
       message: "Invalid Expense Id",
@@ -331,9 +332,13 @@ export const deleteExpenseByNotification = async (
       res.status(200).json({
         message: "Expense Deleted",
       });
+    } else {
+      res.status(203).json({
+        message: "Expense Not Found",
+      });
     }
   } catch (error) {
-    res.status(500).json({
+    res.status(203).json({
       message: "Internal Server Error",
     });
     console.log(error);

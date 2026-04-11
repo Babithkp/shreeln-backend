@@ -292,9 +292,14 @@ const deleteExpenseByNotification = (req, res) => __awaiter(void 0, void 0, void
                 message: "Expense Deleted",
             });
         }
+        else {
+            res.status(203).json({
+                message: "Expense Not Found",
+            });
+        }
     }
     catch (error) {
-        res.status(500).json({
+        res.status(203).json({
             message: "Internal Server Error",
         });
         console.log(error);
