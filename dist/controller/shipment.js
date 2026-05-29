@@ -822,6 +822,7 @@ const getFMByPage = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
                     },
                     include: {
                         PaymentRecords: true,
+                        Vendors: true,
                         WriteOff: {
                             select: {
                                 id: true,
@@ -872,6 +873,7 @@ const getFMByPageForBranch = (req, res) => __awaiter(void 0, void 0, void 0, fun
             },
             include: {
                 PaymentRecords: true,
+                Vendors: true,
                 WriteOff: {
                     select: {
                         id: true,
@@ -907,6 +909,7 @@ const filterFMDetails = (req, res) => __awaiter(void 0, void 0, void 0, function
             },
             include: {
                 PaymentRecords: true,
+                Vendors: true,
             },
             orderBy: {
                 createdAt: "desc",
@@ -940,6 +943,7 @@ const filterFMDetailsForBranch = (req, res) => __awaiter(void 0, void 0, void 0,
             },
             include: {
                 PaymentRecords: true,
+                Vendors: true,
             },
             orderBy: {
                 createdAt: "desc",

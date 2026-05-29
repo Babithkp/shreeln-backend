@@ -987,6 +987,7 @@ export const getFMByPage = async (req: Request, res: Response) => {
           },
           include: {
             PaymentRecords: true,
+            Vendors:true,
             WriteOff: {
               select: {
                 id: true,
@@ -1003,6 +1004,7 @@ export const getFMByPage = async (req: Request, res: Response) => {
       },
     });
 
+    
     res.status(200).json({ data });
   } catch (error) {
     res.status(500).json({
@@ -1038,6 +1040,7 @@ export const getFMByPageForBranch = async (req: Request, res: Response) => {
       },
       include: {
         PaymentRecords: true,
+        Vendors:true,
         WriteOff: {
           select: {
             id: true,
@@ -1074,6 +1077,7 @@ export const filterFMDetails = async (req: Request, res: Response) => {
       },
       include: {
         PaymentRecords: true,
+        Vendors:true,
       },
       orderBy: {
         createdAt: "desc",
@@ -1107,6 +1111,7 @@ export const filterFMDetailsForBranch = async (req: Request, res: Response) => {
       },
       include: {
         PaymentRecords: true,
+        Vendors:true,
       },
       orderBy: {
         createdAt: "desc",
