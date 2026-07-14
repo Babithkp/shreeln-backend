@@ -1008,7 +1008,6 @@ export const addPaymentRecordToBill = async (req: Request, res: Response) => {
   if (
     !IDNumber ||
     !date ||
-    !customerName ||
     !amount ||
     !amountInWords ||
     !transactionNumber ||

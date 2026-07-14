@@ -292,7 +292,11 @@ export const getAllVehicles = async (req: Request, res: Response) => {
     const data = await redisGetOrSetFunctions({
       key: `getVehicle`,
       fetchFunction: async () => {
-        return await prisma.vehicle.findMany();
+        return await prisma.vehicle.findMany({
+          include:{
+            vendor:true
+          }
+        });
       }
     })
     res.status(200).json({ data });

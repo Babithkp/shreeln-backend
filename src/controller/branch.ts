@@ -290,6 +290,11 @@ export const getAllRecordPayment = async (req: Request, res: Response) => {
           include: {
             Branches: true,
             Admin: true,
+            Bill:{
+              select:{
+                tds:true
+              }
+            }
           },
           orderBy: {
             date: "desc",

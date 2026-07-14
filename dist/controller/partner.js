@@ -264,7 +264,11 @@ const getAllVehicles = (req, res) => __awaiter(void 0, void 0, void 0, function*
         const data = yield (0, redis_1.redisGetOrSetFunctions)({
             key: `getVehicle`,
             fetchFunction: () => __awaiter(void 0, void 0, void 0, function* () {
-                return yield prisma.vehicle.findMany();
+                return yield prisma.vehicle.findMany({
+                    include: {
+                        vendor: true
+                    }
+                });
             })
         });
         res.status(200).json({ data });

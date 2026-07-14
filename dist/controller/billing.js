@@ -850,7 +850,6 @@ const addPaymentRecordToBill = (req, res) => __awaiter(void 0, void 0, void 0, f
     const { date, customerName, amount, amountInWords, pendingAmount, transactionNumber, paymentMode, remarks, branchId, clientId, adminId, IDNumber, id, } = req.body;
     if (!IDNumber ||
         !date ||
-        !customerName ||
         !amount ||
         !amountInWords ||
         !transactionNumber ||

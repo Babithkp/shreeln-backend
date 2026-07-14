@@ -275,6 +275,11 @@ const getAllRecordPayment = (req, res) => __awaiter(void 0, void 0, void 0, func
                     include: {
                         Branches: true,
                         Admin: true,
+                        Bill: {
+                            select: {
+                                tds: true
+                            }
+                        }
                     },
                     orderBy: {
                         date: "desc",
