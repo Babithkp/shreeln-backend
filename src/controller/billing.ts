@@ -1757,3 +1757,126 @@ export const createBulkPayment = async (req: Request, res: Response) => {
     console.log(error);
   }
 };
+
+
+export const updateBill = async (ID:string) => {
+  const payment = await prisma.paymentRecord.findUnique({
+    where: { id: ID },
+  });
+  
+  if (!payment) {
+    throw new Error("Payment record not found");
+  }
+  
+  const {
+    date,
+    customerName,
+    amount,
+    amountInWords,
+    pendingAmount,
+    transactionNumber,
+    paymentMode,
+    remarks,
+    clientId,
+    adminId,
+    IDNumber,
+    id,
+  } = payment;
+
+
+
+  try {
+    const bill = await prisma.bill.findUnique({
+      where: { billNumber: IDNumber },
+      include: {
+        Client: {
+          select: {
+            id: true,
+          },
+        },
+      },
+    });
+
+    if (!bill) {
+      return;
+    }
+    if (id) {
+      const existingRecord = await prisma.paymentRecord.findUnique({
+        where: { id },
+      });
+
+      if (!existingRecord) {
+        return;
+      }
+
+      const prevAmount = parseFloat(existingRecord.amount || "0");
+      const newAmount = parseFloat(amount || "0");
+      const prevDate = new Date(existingRecord.date);
+      const prevDiff = prevDate.getTime() - new Date(bill.createdAt).getTime();
+
+      let oldBucket: "zeroToThirty" | "thirtyToSixty" | "sixtyPlus";
+      if (prevDiff < 30 * 24 * 60 * 60 * 1000) {
+        oldBucket = "zeroToThirty";
+      } else if (prevDiff < 60 * 24 * 60 * 60 * 1000) {
+        oldBucket = "thirtyToSixty";
+      } else {
+        oldBucket = "sixtyPlus";
+      }
+      const oldOutStandingBalance = bill.pendingAmount;
+      const oldAmount = Number(bill[oldBucket] || 0);
+      const correctedOldAmount = oldAmount - prevAmount + newAmount;
+      const newOutstanding = oldOutStandingBalance + prevAmount - newAmount;
+
+      await prisma.bill.update({
+        where: { id: bill.id },
+        data: {
+          [oldBucket]: correctedOldAmount,
+          pendingAmount: newOutstanding,
+        },
+      });
+      await prisma.paymentRecord.update({
+        where: { id },
+        data: {
+          IDNumber,
+          date,
+          customerName,
+          amount,
+          amountInWords,
+          pendingAmount,
+          transactionNumber,
+          paymentMode,
+          remarks,
+        },
+      });
+
+      const client = await prisma.client.findUnique({
+        where: {
+          id: bill.Client?.id,
+        },
+      });
+      if (!client) return;
+      await prisma.client.update({
+        where: {
+          id: client.id,
+        },
+        data: {
+          pendingPayment:
+            client.pendingPayment +
+            parseFloat(existingRecord.amount) -
+            parseFloat(amount || "0"),
+        },
+      });
+    } 
+
+
+    await clearDashboardCache();
+    await clearAllBillCache();
+    await clearGetAllRecordPaymentCache();
+    await clearRecentTransactionCache();
+    await clearClientCache();
+    console.log(bill.billNumber);
+    
+  } catch (error) {
+    console.error("Error adding payment record:", error);
+  }
+};

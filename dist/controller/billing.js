@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createBulkPayment = exports.updateTdsOfBill = exports.deleteBillRecordByNotification = exports.updateBillRecordByNotification = exports.deleteBillByNotification = exports.updateBillByNotification = exports.deletePaymentRecordFromBill = exports.addPaymentRecordToBill = exports.filterBillDetailsForBranch = exports.filterBillData = exports.getBillByPageForBranch = exports.getBillByPage = exports.getBillByBranchId = exports.filterBillBymonthForBranch = exports.filterBillBymonth = exports.sendBillEmail = exports.deleteBill = exports.getBillDetails = exports.createBillsupplementary = exports.updateBillDetails = exports.createBill = exports.checkBillExists = void 0;
+exports.updateBill = exports.createBulkPayment = exports.updateTdsOfBill = exports.deleteBillRecordByNotification = exports.updateBillRecordByNotification = exports.deleteBillByNotification = exports.updateBillByNotification = exports.deletePaymentRecordFromBill = exports.addPaymentRecordToBill = exports.filterBillDetailsForBranch = exports.filterBillData = exports.getBillByPageForBranch = exports.getBillByPage = exports.getBillByBranchId = exports.filterBillBymonthForBranch = exports.filterBillBymonth = exports.sendBillEmail = exports.deleteBill = exports.getBillDetails = exports.createBillsupplementary = exports.updateBillDetails = exports.createBill = exports.checkBillExists = void 0;
 const client_1 = require("@prisma/client");
 const billEmail_1 = require("./utils/billEmail");
 const redis_1 = require("./utils/redis");
@@ -1491,3 +1491,102 @@ const createBulkPayment = (req, res) => __awaiter(void 0, void 0, void 0, functi
     }
 });
 exports.createBulkPayment = createBulkPayment;
+const updateBill = (ID) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const payment = yield prisma.paymentRecord.findUnique({
+        where: { id: ID },
+    });
+    if (!payment) {
+        throw new Error("Payment record not found");
+    }
+    const { date, customerName, amount, amountInWords, pendingAmount, transactionNumber, paymentMode, remarks, clientId, adminId, IDNumber, id, } = payment;
+    try {
+        const bill = yield prisma.bill.findUnique({
+            where: { billNumber: IDNumber },
+            include: {
+                Client: {
+                    select: {
+                        id: true,
+                    },
+                },
+            },
+        });
+        if (!bill) {
+            return;
+        }
+        if (id) {
+            const existingRecord = yield prisma.paymentRecord.findUnique({
+                where: { id },
+            });
+            if (!existingRecord) {
+                return;
+            }
+            const prevAmount = parseFloat(existingRecord.amount || "0");
+            const newAmount = parseFloat(amount || "0");
+            const prevDate = new Date(existingRecord.date);
+            const prevDiff = prevDate.getTime() - new Date(bill.createdAt).getTime();
+            let oldBucket;
+            if (prevDiff < 30 * 24 * 60 * 60 * 1000) {
+                oldBucket = "zeroToThirty";
+            }
+            else if (prevDiff < 60 * 24 * 60 * 60 * 1000) {
+                oldBucket = "thirtyToSixty";
+            }
+            else {
+                oldBucket = "sixtyPlus";
+            }
+            const oldOutStandingBalance = bill.pendingAmount;
+            const oldAmount = Number(bill[oldBucket] || 0);
+            const correctedOldAmount = oldAmount - prevAmount + newAmount;
+            const newOutstanding = oldOutStandingBalance + prevAmount - newAmount;
+            yield prisma.bill.update({
+                where: { id: bill.id },
+                data: {
+                    [oldBucket]: correctedOldAmount,
+                    pendingAmount: newOutstanding,
+                },
+            });
+            yield prisma.paymentRecord.update({
+                where: { id },
+                data: {
+                    IDNumber,
+                    date,
+                    customerName,
+                    amount,
+                    amountInWords,
+                    pendingAmount,
+                    transactionNumber,
+                    paymentMode,
+                    remarks,
+                },
+            });
+            const client = yield prisma.client.findUnique({
+                where: {
+                    id: (_a = bill.Client) === null || _a === void 0 ? void 0 : _a.id,
+                },
+            });
+            if (!client)
+                return;
+            yield prisma.client.update({
+                where: {
+                    id: client.id,
+                },
+                data: {
+                    pendingPayment: client.pendingPayment +
+                        parseFloat(existingRecord.amount) -
+                        parseFloat(amount || "0"),
+                },
+            });
+        }
+        yield (0, redis_1.clearDashboardCache)();
+        yield (0, redis_1.clearAllBillCache)();
+        yield (0, redis_1.clearGetAllRecordPaymentCache)();
+        yield (0, redis_1.clearRecentTransactionCache)();
+        yield (0, redis_1.clearClientCache)();
+        console.log(bill.billNumber);
+    }
+    catch (error) {
+        console.error("Error adding payment record:", error);
+    }
+});
+exports.updateBill = updateBill;

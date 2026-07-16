@@ -7,7 +7,7 @@ import parnterRouter from "./router/partner";
 import { sendFMEmail, sendLREmail } from "./controller/shipment";
 import shipmentRouter from "./router/shipment";
 import billingRouter from "./router/billing";
-import { sendBillEmail } from "./controller/billing";
+import { sendBillEmail, updateBill } from "./controller/billing";
 import settingsRouter from "./router/settings";
 import { lorryReceiptsFileUpload } from "./controller/fileUpload";
 import podRouter from "./router/pod";
