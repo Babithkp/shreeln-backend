@@ -871,9 +871,7 @@ const getFMByPageForBranch = (req, res) => __awaiter(void 0, void 0, void 0, fun
             where: {
                 branchId: branchId,
             },
-            orderBy: {
-                date: "desc",
-            },
+            orderBy: [{ date: "desc" }, { createdAt: "desc" }],
             include: {
                 PaymentRecords: true,
                 Vendors: true,
@@ -914,9 +912,7 @@ const filterFMDetails = (req, res) => __awaiter(void 0, void 0, void 0, function
                 PaymentRecords: true,
                 Vendors: true,
             },
-            orderBy: {
-                createdAt: "desc",
-            },
+            orderBy: [{ date: "desc" }, { createdAt: "desc" }],
         });
         if (fms) {
             res.status(200).json({
@@ -948,9 +944,7 @@ const filterFMDetailsForBranch = (req, res) => __awaiter(void 0, void 0, void 0,
                 PaymentRecords: true,
                 Vendors: true,
             },
-            orderBy: {
-                createdAt: "desc",
-            },
+            orderBy: [{ date: "desc" }, { createdAt: "desc" }],
         });
         if (fms) {
             res.status(200).json({

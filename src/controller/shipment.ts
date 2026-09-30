@@ -1038,9 +1038,7 @@ export const getFMByPageForBranch = async (req: Request, res: Response) => {
       where: {
         branchId: branchId,
       },
-      orderBy: {
-        date: "desc",
-      },
+      orderBy: [{ date: "desc" }, { createdAt: "desc" }],
       include: {
         PaymentRecords: true,
         Vendors:true,
@@ -1082,9 +1080,7 @@ export const filterFMDetails = async (req: Request, res: Response) => {
         PaymentRecords: true,
         Vendors:true,
       },
-      orderBy: {
-        createdAt: "desc",
-      },
+      orderBy: [{ date: "desc" }, { createdAt: "desc" }],
     });
     if (fms) {
       res.status(200).json({
@@ -1116,9 +1112,7 @@ export const filterFMDetailsForBranch = async (req: Request, res: Response) => {
         PaymentRecords: true,
         Vendors:true,
       },
-      orderBy: {
-        createdAt: "desc",
-      },
+      orderBy: [{ date: "desc" }, { createdAt: "desc" }],
     });
     if (fms) {
       res.status(200).json({
