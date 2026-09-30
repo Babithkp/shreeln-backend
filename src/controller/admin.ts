@@ -613,6 +613,9 @@ export const getDashboardData = async (req: Request, res: Response) => {
                 rtoCharges: true,
                 tds: true,
               },
+              orderBy: {
+                date: "desc",
+              },
             },
             bill: {
               select: {

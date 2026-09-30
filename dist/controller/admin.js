@@ -600,6 +600,9 @@ const getDashboardData = (req, res) => __awaiter(void 0, void 0, void 0, functio
                                 rtoCharges: true,
                                 tds: true,
                             },
+                            orderBy: {
+                                date: "desc",
+                            },
                         },
                         bill: {
                             select: {
