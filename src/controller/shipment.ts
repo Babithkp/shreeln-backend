@@ -950,7 +950,7 @@ export const getFMData = async (req: Request, res: Response) => {
         branch: true,
       },
       orderBy: {
-        createdAt: "desc",
+        date: "desc",
       },
     });
     res.status(200).json({ data: data });
@@ -1703,6 +1703,9 @@ export const getFMByBranchId = async (req: Request, res: Response) => {
       },
       include: {
         PaymentRecords: true,
+      },
+      orderBy: {
+        date: "desc",
       },
     });
     if (FMs) {

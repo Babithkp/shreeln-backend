@@ -1414,6 +1414,14 @@ const updateTdsOfBill = (req, res) => __awaiter(void 0, void 0, void 0, function
             });
             return;
         }
+        if ((bill === null || bill === void 0 ? void 0 : bill.tdsValueHasBeenUpdated) && !(bill === null || bill === void 0 ? void 0 : bill.tdsValueHasBeenUpdated)) {
+            yield prisma.bill.update({
+                where: { id },
+                data: {
+                    tdsValueHasBeenUpdated: true
+                },
+            });
+        }
         yield prisma.bill.update({
             where: { id },
             data: {

@@ -1657,6 +1657,14 @@ export const updateTdsOfBill = async (req: Request, res: Response) => {
       });
       return;
     }
+    if (bill?.tdsValueHasBeenUpdated && !bill?.tdsValueHasBeenUpdated){
+      await prisma.bill.update({
+        where: { id },
+        data: {
+          tdsValueHasBeenUpdated:true
+        },
+      });
+    }
     await prisma.bill.update({
       where: { id },
       data: {

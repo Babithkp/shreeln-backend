@@ -267,42 +267,43 @@ model FM {
 }
 
 model Bill {
-  id             String          @id @default(auto()) @map("_id") @db.ObjectId
-  billNumber     String          @unique
-  tds            Int?            @default(1)
-  date           String
-  dueDate        String?
-  hsnSacCode     String
-  placeOfSupply  String
-  state          String
-  statecode      String
-  PaymentRecords PaymentRecord[]
-  lrData         LR[]
-  igstRate       Float
-  cgstRate       Float
-  sgstRate       Float
-  subTotal       Float
-  total          Float
-  totalInWords   String
-  pendingAmount  Float
-  unloading      Json?
-  hamali         Json?
-  extraKmWeight  Json?
-  detention      Json?
-  weightment     Json?
-  others         Json?
-  otherCharges   Json?
-  zeroToThirty   Float?          @default(0)
-  thirtyToSixty  Float?          @default(0)
-  sixtyPlus      Float?          @default(0)
-  Client         Client?         @relation(fields: [clientId], references: [id])
-  clientId       String?         @db.ObjectId
-  createdAt      DateTime        @default(now())
-  Branches       Branches?       @relation(fields: [branchesId], references: [id], onDelete: Cascade)
-  branchesId     String?         @db.ObjectId
-  Admin          Admin?          @relation(fields: [adminId], references: [id])
-  adminId        String?         @db.ObjectId
-  WriteOff       WriteOff?
+  id                     String          @id @default(auto()) @map("_id") @db.ObjectId
+  billNumber             String          @unique
+  tds                    Int?            @default(1)
+  date                   String
+  dueDate                String?
+  hsnSacCode             String
+  placeOfSupply          String
+  state                  String
+  statecode              String
+  PaymentRecords         PaymentRecord[]
+  lrData                 LR[]
+  igstRate               Float
+  cgstRate               Float
+  sgstRate               Float
+  subTotal               Float
+  total                  Float
+  totalInWords           String
+  pendingAmount          Float
+  unloading              Json?
+  hamali                 Json?
+  extraKmWeight          Json?
+  detention              Json?
+  weightment             Json?
+  others                 Json?
+  otherCharges           Json?
+  zeroToThirty           Float?          @default(0)
+  thirtyToSixty          Float?          @default(0)
+  sixtyPlus              Float?          @default(0)
+  tdsValueHasBeenUpdated Boolean?        @default(false)
+  Client                 Client?         @relation(fields: [clientId], references: [id])
+  clientId               String?         @db.ObjectId
+  createdAt              DateTime        @default(now())
+  Branches               Branches?       @relation(fields: [branchesId], references: [id], onDelete: Cascade)
+  branchesId             String?         @db.ObjectId
+  Admin                  Admin?          @relation(fields: [adminId], references: [id])
+  adminId                String?         @db.ObjectId
+  WriteOff               WriteOff?
 }
 
 model CompanyProfile {
@@ -404,7 +405,7 @@ model Notification {
   admin         Admin?    @relation(fields: [adminId], references: [id])
   adminId       String?   @db.ObjectId
   branches      Branches? @relation(fields: [branchesId], references: [id])
-  branchesId      String?   @db.ObjectId
+  branchesId    String?   @db.ObjectId
 }
 
 model WriteOff {

@@ -786,7 +786,7 @@ const getFMData = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 branch: true,
             },
             orderBy: {
-                createdAt: "desc",
+                date: "desc",
             },
         });
         res.status(200).json({ data: data });
@@ -1440,6 +1440,9 @@ const getFMByBranchId = (req, res) => __awaiter(void 0, void 0, void 0, function
             },
             include: {
                 PaymentRecords: true,
+            },
+            orderBy: {
+                date: "desc",
             },
         });
         if (FMs) {
