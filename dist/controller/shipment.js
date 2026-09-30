@@ -871,6 +871,9 @@ const getFMByPageForBranch = (req, res) => __awaiter(void 0, void 0, void 0, fun
             where: {
                 branchId: branchId,
             },
+            orderBy: {
+                date: "desc",
+            },
             include: {
                 PaymentRecords: true,
                 Vendors: true,
