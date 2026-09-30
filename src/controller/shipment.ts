@@ -1038,6 +1038,9 @@ export const getFMByPageForBranch = async (req: Request, res: Response) => {
       where: {
         branchId: branchId,
       },
+      orderBy: {
+        date: "desc",
+      },
       include: {
         PaymentRecords: true,
         Vendors:true,
