@@ -376,7 +376,7 @@ export const getLRByPageForBranch = async (req: Request, res: Response) => {
 };
 
 export const getLRByLrNumber = async (req: Request, res: Response) => {
-  const { lrNumber } = req.params;
+  const { lrNumber } = req.params as { lrNumber: string };
   if (!lrNumber) {
     res.status(400).json({
       message: "Invalid LR Id",
@@ -404,7 +404,7 @@ export const getLRByLrNumber = async (req: Request, res: Response) => {
 };
 
 export const deleteLR = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const { id } = req.params as { id: string };
   if (!id) {
     res.status(400).json({
       message: "Invalid LR Id",
@@ -594,7 +594,7 @@ export const updateLR = async (req: Request, res: Response) => {
 };
 
 export const filterLRDetails = async (req: Request, res: Response) => {
-  const { text } = req.params;
+  const { text } = req.params as { text: string };
 
   try {
     const lrs = await prisma.lR.findMany({
@@ -658,7 +658,7 @@ export const filterLRDetails = async (req: Request, res: Response) => {
 };
 
 export const filterLRDetailsForBranch = async (req: Request, res: Response) => {
-  const { branchId, text } = req.params;
+  const { branchId, text } = req.params as { branchId: string; text: string };
 
   try {
     const lrs = await prisma.lR.findMany({
@@ -722,7 +722,7 @@ export const filterLRDetailsForBranch = async (req: Request, res: Response) => {
 };
 
 export const sendLREmail = async (req: Request, res: Response) => {
-  const { email } = req.params;
+  const { email } = req.params as { email: string };
   const LRData = JSON.parse(req.body.LrData);
 
   const subject = `Lorry Receipt for You Shipment - #${LRData.lrNumber}`;
@@ -1067,7 +1067,7 @@ export const getFMByPageForBranch = async (req: Request, res: Response) => {
 };
 
 export const filterFMDetails = async (req: Request, res: Response) => {
-  const { text } = req.params;
+  const { text } = req.params as { text: string };
   try {
     const fms = await prisma.fM.findMany({
       where: {
@@ -1097,7 +1097,7 @@ export const filterFMDetails = async (req: Request, res: Response) => {
 };
 
 export const filterFMDetailsForBranch = async (req: Request, res: Response) => {
-  const { branchId, text } = req.params;
+  const { branchId, text } = req.params as { branchId: string; text: string };
 
   try {
     const fms = await prisma.fM.findMany({
@@ -1129,7 +1129,7 @@ export const filterFMDetailsForBranch = async (req: Request, res: Response) => {
 };
 
 export const deleteFM = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const { id } = req.params as { id: string };
   if (!id) {
     res.status(400).json({
       message: "Invalid FM Id",
@@ -1342,7 +1342,7 @@ export const updateFM = async (req: Request, res: Response) => {
 };
 
 export const sendFMEmail = async (req: Request, res: Response) => {
-  const { email } = req.params;
+  const { email } = req.params as { email: string };
   const FMData = JSON.parse(req.body.FmData);
 
   const subject = `Freight Memo details for - #${FMData.fmNumber}`;
@@ -1405,7 +1405,7 @@ export const addPaymentRecordToFM = async (req: Request, res: Response) => {
     adminId,
     id,
   } = req.body;
-  const { IDNumber } = req.params;
+  const { IDNumber } = req.params as { IDNumber: string };
 
   if (
     !IDNumber ||
@@ -1552,7 +1552,7 @@ export const deletePaymentRecordFromFM = async (
   req: Request,
   res: Response
 ) => {
-  const { id, IDNumber } = req.params;
+  const { id, IDNumber } = req.params as { id: string; IDNumber: string };
 
   if (!id && !IDNumber) {
     res.status(400).json({ message: "Invalid Payment Record Id" });
@@ -1652,7 +1652,7 @@ export const filterFMBymonth = async (req: Request, res: Response) => {
   }
 };
 export const filterFMBymonthForBranch = async (req: Request, res: Response) => {
-  const { branchId } = req.params;
+  const { branchId } = req.params as { branchId: string };
   const { startDate, endDate } = req.body;
   if (!startDate || !endDate) {
     res.status(400).json({ message: "Invalid Date Range" });
@@ -1686,7 +1686,7 @@ export const filterFMBymonthForBranch = async (req: Request, res: Response) => {
 };
 
 export const getFMByBranchId = async (req: Request, res: Response) => {
-  const { branchId } = req.params;
+  const { branchId } = req.params as { branchId: string };
   if (!branchId) {
     res.status(400).json({
       message: "Invalid Branch Id",
@@ -1720,7 +1720,7 @@ export const getFMByBranchId = async (req: Request, res: Response) => {
 };
 
 export const getLRByBranchId = async (req: Request, res: Response) => {
-  const { branchId } = req.params;
+  const { branchId } = req.params as { branchId: string };
   if (!branchId) {
     res.status(400).json({
       message: "Invalid Branch Id",
@@ -1838,7 +1838,7 @@ export const updateLRByNotification = async (req: Request, res: Response) => {
 };
 
 export const updateFMByNotification = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const { id } = req.params as { id: string };
   const {
     date,
     from,
@@ -2017,7 +2017,7 @@ export const updateFMByNotification = async (req: Request, res: Response) => {
 };
 
 export const deleteFMByNotification = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const { id } = req.params as { id: string };
 
   try {
     const fm = await prisma.fM.findUnique({
@@ -2111,7 +2111,7 @@ export const updateRecordPaymentByNotification = async (
   req: Request,
   res: Response
 ) => {
-  const { id, LRnumber } = req.params;
+  const { id, LRnumber } = req.params as { id: string; LRnumber: string };
   const { data } = req.body;
   
 
@@ -2211,7 +2211,7 @@ export const deleteFMRecordByNotification = async (
   req: Request,
   res: Response
 ) => {
-  const { id, IDNumber } = req.params;
+  const { id, IDNumber } = req.params as { id: string; IDNumber: string };
 
   if (!id && !IDNumber) {
     res.status(400).json({ message: "Invalid Payment Record Id" });

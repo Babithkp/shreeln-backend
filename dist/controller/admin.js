@@ -599,6 +599,7 @@ const getDashboardData = (req, res) => __awaiter(void 0, void 0, void 0, functio
                                 detentionCharges: true,
                                 rtoCharges: true,
                                 tds: true,
+                                date: true,
                             },
                             orderBy: {
                                 date: "desc",
@@ -607,6 +608,7 @@ const getDashboardData = (req, res) => __awaiter(void 0, void 0, void 0, functio
                         bill: {
                             select: {
                                 subTotal: true,
+                                date: true,
                             },
                         },
                     },
@@ -658,6 +660,7 @@ const getDashboardData = (req, res) => __awaiter(void 0, void 0, void 0, functio
                         bill: {
                             select: {
                                 subTotal: true,
+                                date: true,
                             },
                         },
                     },

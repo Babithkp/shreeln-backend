@@ -77,7 +77,7 @@ export const updateCompanyProfile = async (req: Request, res: Response) => {
     websiteURL,
     address,
   } = req.body;
-  const id = req.params.id;
+  const id = req.params.id as string;
 
   if (
     !email ||
@@ -177,7 +177,7 @@ export const updateGeneralSettings = async (req: Request, res: Response) => {
     expenseTypes,
     vehicleTypes,
   } = req.body;
-  const id = req.params.id;
+  const id = req.params.id as string;
 
   if (
     !expenseTypes ||
@@ -270,7 +270,7 @@ export const updateBankDetails = async (req: Request, res: Response) => {
     accountNumber,
     ifscCode,
   } = req.body;
-  const id = req.params.id;
+  const id = req.params.id as string;
 
   if (
     !name ||

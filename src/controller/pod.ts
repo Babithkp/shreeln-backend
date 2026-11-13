@@ -131,7 +131,7 @@ export const getAllPODs = async (req: Request, res: Response) => {
 };
 
 export const deletePOD = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const { id } = req.params as { id: string };
   if (!id) {
     res.status(400).json({
       message: "Invalid POD Id",
@@ -206,7 +206,7 @@ export const deletePOD = async (req: Request, res: Response) => {
 };
 
 export const updatePODDetails = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const { id } = req.params as { id: string };
   const {
     date,
     from,
@@ -314,7 +314,7 @@ export const checkPaymentForStatusChange = async () => {
 };
 
 export const updatePODByNotification = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const { id } = req.params as { id: string };
   const { data } = req.body;
   if (!id) {
     res.status(400).json({
@@ -364,7 +364,7 @@ export const updatePODByNotification = async (req: Request, res: Response) => {
 };
 
 export const deletePODByNotification = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const { id } = req.params as { id: string };
   if (!id) {
     res.status(400).json({
       message: "Invalid POD Id",
@@ -471,7 +471,7 @@ export const getPodByPage = async (req: Request, res: Response) => {
 };
 
 export const filterPODByText = async (req: Request, res: Response) => {
-  const { text, branchId } = req.params;
+  const { text, branchId } = req.params as { text: string; branchId: string };
 
   try {
     const whereClause: any = {

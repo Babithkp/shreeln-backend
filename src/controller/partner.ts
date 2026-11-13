@@ -121,7 +121,7 @@ export const updateVendorDetails = async (req: Request, res: Response) => {
     pan,
     outstandingLimit,
   } = req.body;
-  const { id } = req.params;
+  const { id } = req.params as { id: string };
 
   if (
     !id ||
@@ -194,7 +194,7 @@ export const updateVendorDetails = async (req: Request, res: Response) => {
 };
 
 export const deleteVendor = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const { id } = req.params as { id: string };
   if (!id) {
     res.status(400).json({
       message: "Invalid Vendor Id",
@@ -309,7 +309,7 @@ export const getAllVehicles = async (req: Request, res: Response) => {
 };
 
 export const getVehicleById = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const { id } = req.params as { id: string };
 
   if (!id) {
     res.status(400).json({
@@ -353,7 +353,7 @@ export const updateVehicleDetails = async (req: Request, res: Response) => {
     insurance,
     RC,
   } = req.body;
-  const { id } = req.params;
+  const { id } = req.params as { id: string };
   if (
     !id ||
     !vendorName ||
@@ -407,7 +407,7 @@ export const updateVehicleDetails = async (req: Request, res: Response) => {
 };
 
 export const deleteVehicle = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const { id } = req.params as { id: string };
   if (!id) {
     res.status(400).json({
       message: "Invalid Vehicle Id",
@@ -505,7 +505,7 @@ export const filterFMLRByVendorForBranch = async (
   res: Response
 ) => {
   const { name, from, to } = req.body;
-  const { branchId } = req.params;
+  const { branchId } = req.params as { branchId: string };
 
   try {
     const FMs = await prisma.fM.findMany({
@@ -701,7 +701,7 @@ export const getVendorForPage = async (req: Request, res: Response) => {
 };
 
 export const filterVendorByName = async (req: Request, res: Response) => {
-  const { name } = req.params;
+  const { name } = req.params as { name: string };
   try {
     const vendor = await prisma.vendors.findMany({
       where: {
@@ -812,7 +812,7 @@ export const getClientForPage = async (req: Request, res: Response) => {
 };
 
 export const filterClientByName = async (req: Request, res: Response) => {
-  const { name } = req.params;
+  const { name } = req.params as { name: string };
   try {
     const client = await prisma.client.findMany({
       where: {
@@ -930,7 +930,7 @@ export const filterBillLRByClientForBranch = async (
   res: Response
 ) => {
   const { name, from, to } = req.body;
-  const { branchId } = req.params;
+  const { branchId } = req.params as { branchId: string };
   try {
     const bills = await prisma.bill.findMany({
       where: {
@@ -1051,7 +1051,7 @@ export const filterLRForClientForBranch = async (
   res: Response
 ) => {
   const { from, to, name } = req.body;
-  const { branchId } = req.params;
+  const { branchId } = req.params as { branchId: string };
 
   try {
     const LRs = await prisma.lR.findMany({

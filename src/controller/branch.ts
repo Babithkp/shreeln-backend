@@ -131,7 +131,7 @@ export const updateBranchDetails = async (req: Request, res: Response) => {
 };
 
 export const deleteBranch = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const { id } = req.params as { id: string };
   if (!id) {
     res.status(400).json({
       message: "Invalid Branch Id",
@@ -176,7 +176,7 @@ export const updateclientDetails = async (req: Request, res: Response) => {
     panNumber,
     creditLimit,
   } = req.body;
-  const { id } = req.params;
+  const { id } = req.params as { id: string };
   if (
     !id ||
     !name ||
@@ -249,7 +249,7 @@ export const updateclientDetails = async (req: Request, res: Response) => {
 };
 
 export const deleteClient = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const { id } = req.params as { id: string };
   if (!id) {
     res.status(400).json({
       message: "Invalid Client Id",
@@ -438,7 +438,7 @@ export const filterBranchBymonth = async (req: Request, res: Response) => {
 };
 
 export const getBranchNotifications = async (req: Request, res: Response) => {
-  const { branchId } = req.params;
+  const { branchId } = req.params as { branchId: string };
   if (!branchId) {
     res.status(400).json({
       message: "Invalid Branch Id",
@@ -630,7 +630,7 @@ export const filterRecordPaymentByName = async (
   req: Request,
   res: Response
 ) => {
-  const { name } = req.params;
+  const { name } = req.params as { name: string };
   try {
     const paymentRecord = await prisma.paymentRecord.findMany({
       where: {
@@ -651,7 +651,7 @@ export const filterRecordPaymentByNameForBranch = async (
   req: Request,
   res: Response
 ) => {
-  const { name, branchId } = req.params;
+  const { name, branchId } = req.params as { name: string; branchId: string };
   try {
     const paymentRecord = await prisma.paymentRecord.findMany({
       where: {
@@ -669,7 +669,7 @@ export const filterRecordPaymentByNameForBranch = async (
 };
 
 export const getAllStatements = async (req: Request, res: Response) => {
-  const { date } = req.params;
+  const { date } = req.params as { date: string };
   try {
     const payments = await prisma.paymentRecord.findMany({
       where: {

@@ -129,7 +129,7 @@ export const getAllExpenses = async (req: Request, res: Response) => {
 };
 
 export const deleteExpense = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const { id } = req.params as { id: string };
   if (!id) {
     res.status(400).json({
       message: "Invalid Expense Id",
@@ -178,7 +178,7 @@ export const updateExpenseDetails = async (req: Request, res: Response) => {
     transactionNumber,
     title,
   } = req.body;
-  const { id } = req.params;
+  const { id } = req.params as { id: string };
   if (
     !id ||
     !expenseId ||
@@ -234,7 +234,7 @@ export const updateExpenseByNotification = async (
   req: Request,
   res: Response
 ) => {
-  const { id } = req.params;
+  const { id } = req.params as { id: string };
   const { data } = req.body;
 
   if (!id) {
@@ -293,7 +293,7 @@ export const deleteExpenseByNotification = async (
   req: Request,
   res: Response
 ) => {
-  const { id } = req.params;
+  const { id } = req.params as { id: string };
 
   if (!id) {
     res.status(400).json({
@@ -408,7 +408,7 @@ export const getExpenseByPage = async (req: Request, res: Response) => {
 };
 
 export const filterExpensesByTitle = async (req: Request, res: Response) => {
-  const { text, branchId } = req.params;
+  const { text, branchId } = req.params as { text: string; branchId: string };
 
   try {
     const whereClause: any = {
@@ -628,7 +628,7 @@ export const updateCreditDetails = async (req: Request, res: Response) => {
     transactionNumber,
     title,
   } = req.body;
-  const { id } = req.params;
+  const { id } = req.params as { id: string };
 
   if (
     !id ||
@@ -681,7 +681,7 @@ export const updateCreditDetails = async (req: Request, res: Response) => {
 };
 
 export const deleteCredit = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const { id } = req.params as { id: string };
   if (!id) {
     res.status(400).json({
       message: "Invalid Expense Id",
@@ -714,7 +714,7 @@ export const deleteCredit = async (req: Request, res: Response) => {
 };
 
 export const filterCreditsByTitle = async (req: Request, res: Response) => {
-  const { text, branchId } = req.params;
+  const { text, branchId } = req.params as { text: string; branchId: string };
 
   try {
     const whereClause: any = {
@@ -764,7 +764,7 @@ export const deleteCreditByNotification = async (
   req: Request,
   res: Response
 ) => {
-  const { id } = req.params;
+  const { id } = req.params as { id: string };
   if (!id) {
     res.status(400).json({
       message: "Invalid Expense Id",
@@ -815,7 +815,7 @@ export const updateCreditByNotification = async (
   req: Request,
   res: Response
 ) => {
-  const { id } = req.params;
+  const { id } = req.params as { id: string };
   const { data } = req.body;
 
   if (!id) {
@@ -944,7 +944,7 @@ export const filterExpensesByDateForBranch = async (
   res: Response
 ) => {
   const { from, to } = req.body;
-  const { branchId } = req.params;
+  const { branchId } = req.params as { branchId: string };
 
   try {
     const expenses = await prisma.expense.findMany({
@@ -1023,7 +1023,7 @@ export const filterCreditByDateForBranch = async (
   res: Response
 ) => {
   const { from, to } = req.body;
-  const { branchId } = req.params;
+  const { branchId } = req.params as { branchId: string };
 
   try {
     const credit = await prisma.credit.findMany({

@@ -420,7 +420,7 @@ export const getAllAdminNotifications = async (req: Request, res: Response) => {
 };
 
 export const deleteNotification = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const { id } = req.params as { id: string };
   if (!id) {
     res.status(400).json({
       message: "Invalid Notification Id",
@@ -452,7 +452,7 @@ export const deleteNotification = async (req: Request, res: Response) => {
 };
 
 export const updateNotification = async (req: Request, res: Response) => {
-  const { id, status } = req.params;
+  const { id, status } = req.params as { id: string; status: string };
   if (!id || !status) {
     res.status(400).json({
       message: "Invalid Notification Id",
@@ -612,6 +612,7 @@ export const getDashboardData = async (req: Request, res: Response) => {
                 detentionCharges: true,
                 rtoCharges: true,
                 tds: true,
+                date: true,
               },
               orderBy: {
                 date: "desc",
@@ -620,6 +621,7 @@ export const getDashboardData = async (req: Request, res: Response) => {
             bill: {
               select: {
                 subTotal: true,
+                date: true,
               },
             },
           },
@@ -675,6 +677,7 @@ export const getDashboardData = async (req: Request, res: Response) => {
             bill: {
               select: {
                 subTotal: true,
+                date: true,
               },
             },
           },
@@ -706,7 +709,7 @@ export const getDashboardDataForBranch = async (
   req: Request,
   res: Response
 ) => {
-  const branchId = req.params.id;
+  const branchId = req.params.id as string;
   try {
     const data = await redisGetOrSetFunctions({
       key: `dashboard-branch-${branchId}`,

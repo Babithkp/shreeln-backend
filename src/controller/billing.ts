@@ -201,7 +201,7 @@ export const createBill = async (req: Request, res: Response) => {
 };
 
 export const updateBillDetails = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const { id } = req.params as { id: string };
   const {
     billNumber,
     date,
@@ -552,7 +552,7 @@ export const getBillDetails = async (req: Request, res: Response) => {
 };
 
 export const deleteBill = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const { id } = req.params as { id: string };
   if (!id) {
     res.status(400).json({
       message: "Invalid Bill Id",
@@ -619,7 +619,7 @@ export const deleteBill = async (req: Request, res: Response) => {
 };
 
 export const sendBillEmail = async (req: Request, res: Response) => {
-  const { email } = req.params;
+  const { email } = req.params as { email: string };
   const billData = JSON.parse(req.body.billData);
 
   const subject = ` Billing summary for Shipment  - ${billData.billNumber}`;
@@ -701,7 +701,7 @@ export const filterBillBymonthForBranch = async (
   req: Request,
   res: Response
 ) => {
-  const { branchId } = req.params;
+  const { branchId } = req.params as { branchId: string };
   const { startDate, endDate } = req.body;
   if (!startDate || !endDate || !branchId) {
     res.status(400).json({ message: "Invalid Date Range" });
@@ -735,7 +735,7 @@ export const filterBillBymonthForBranch = async (
 };
 
 export const getBillByBranchId = async (req: Request, res: Response) => {
-  const { branchId } = req.params;
+  const { branchId } = req.params as { branchId: string };
   if (!branchId) {
     res.status(400).json({
       message: "Invalid Branch Id",
@@ -896,7 +896,7 @@ export const getBillByPageForBranch = async (req: Request, res: Response) => {
 };
 
 export const filterBillData = async (req: Request, res: Response) => {
-  const { text } = req.params;
+  const { text } = req.params as { text: string };
   try {
     const bills = await prisma.bill.findMany({
       where: {
@@ -943,7 +943,7 @@ export const filterBillDetailsForBranch = async (
   req: Request,
   res: Response
 ) => {
-  const { branchId, text } = req.params;
+  const { branchId, text } = req.params as { branchId: string; text: string };
 
   try {
     const bills = await prisma.bill.findMany({
@@ -1166,7 +1166,7 @@ export const deletePaymentRecordFromBill = async (
   req: Request,
   res: Response
 ) => {
-  const { id } = req.params;
+  const { id } = req.params as { id: string };
 
   if (!id) {
     res.status(400).json({ message: "Invalid Payment Record Id" });
@@ -1552,7 +1552,7 @@ export const deleteBillRecordByNotification = async (
   req: Request,
   res: Response
 ) => {
-  const { id } = req.params;
+  const { id } = req.params as { id: string };
 
   if (!id) {
     res.status(400).json({ message: "Invalid Payment Record Id" });
@@ -1639,7 +1639,7 @@ export const deleteBillRecordByNotification = async (
 };
 
 export const updateTdsOfBill = async (req: Request, res: Response) => {
-  const { id, tds } = req.params;
+  const { id, tds } = req.params as { id: string; tds: string };
   if (!id || !tds) {
     res.status(400).json({
       message: "Invalid Bill Id",

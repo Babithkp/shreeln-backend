@@ -137,7 +137,7 @@ export const getAllWriteOff = async (req: Request, res: Response) => {
 };
 
 export const deleteFmWriteOff = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const { id } = req.params as { id: string };
   if (!id) {
     res.status(400).json({
       message: "Invalid Write Off Id",
