@@ -37,9 +37,7 @@ const createFMWriteOff = (req, res) => __awaiter(void 0, void 0, void 0, functio
         const writeOff = yield prisma.writeOff.create({
             data: Object.assign({ vendorName,
                 date,
-                IDNumber,
-                amount,
-                reason,
+                IDNumber, amount: String(amount), reason,
                 checked }, (branchId && { branchId })),
         });
         yield prisma.fM.update({
@@ -82,16 +80,14 @@ const createBillWriteOff = (req, res) => __awaiter(void 0, void 0, void 0, funct
         });
         if (!bill) {
             res.status(400).json({
-                message: "Invalid FM Number",
+                message: "Invalid Bill Number",
             });
             return;
         }
         const writeOff = yield prisma.writeOff.create({
             data: Object.assign({ vendorName,
                 date,
-                IDNumber,
-                amount,
-                reason,
+                IDNumber, amount: String(amount), reason,
                 checked }, (branchId && { branchId })),
         });
         yield prisma.bill.update({
