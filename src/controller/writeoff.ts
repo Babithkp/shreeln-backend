@@ -36,7 +36,7 @@ export const createFMWriteOff = async (req: Request, res: Response) => {
         vendorName,
         date,
         IDNumber,
-        amount,
+        amount: String(amount),
         reason,
         checked,
         ...(branchId && { branchId }),
@@ -85,7 +85,7 @@ export const createBillWriteOff = async (req: Request, res: Response) => {
     });
     if (!bill) {
       res.status(400).json({
-        message: "Invalid FM Number",
+        message: "Invalid Bill Number",
       });
       return;
     }
@@ -94,7 +94,7 @@ export const createBillWriteOff = async (req: Request, res: Response) => {
         vendorName,
         date,
         IDNumber,
-        amount,
+        amount: String(amount),
         reason,
         checked,
         ...(branchId && { branchId }),
