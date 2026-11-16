@@ -502,6 +502,8 @@ const filterLRDetails = (req, res) => __awaiter(void 0, void 0, void 0, function
                 OR: [
                     { lrNumber: { contains: text, mode: "insensitive" } },
                     { client: { name: { contains: text, mode: "insensitive" } } },
+                    { consignorName: { contains: text, mode: "insensitive" } },
+                    { consigneeName: { contains: text, mode: "insensitive" } },
                     { from: { contains: text, mode: "insensitive" } },
                     { to: { contains: text, mode: "insensitive" } },
                 ],
@@ -566,8 +568,11 @@ const filterLRDetailsForBranch = (req, res) => __awaiter(void 0, void 0, void 0,
                 branchId: branchId,
                 OR: [
                     { lrNumber: { contains: text, mode: "insensitive" } },
+                    { client: { name: { contains: text, mode: "insensitive" } } },
                     { consignorName: { contains: text, mode: "insensitive" } },
                     { consigneeName: { contains: text, mode: "insensitive" } },
+                    { from: { contains: text, mode: "insensitive" } },
+                    { to: { contains: text, mode: "insensitive" } },
                 ],
             },
             include: {

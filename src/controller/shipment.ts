@@ -602,6 +602,8 @@ export const filterLRDetails = async (req: Request, res: Response) => {
         OR: [
           { lrNumber: { contains: text, mode: "insensitive" } },
           { client: { name: { contains: text, mode: "insensitive" } } },
+          { consignorName: { contains: text, mode: "insensitive" } },
+          { consigneeName: { contains: text, mode: "insensitive" } },
           { from: { contains: text, mode: "insensitive" } },
           { to: { contains: text, mode: "insensitive" } },
         ],
@@ -666,8 +668,11 @@ export const filterLRDetailsForBranch = async (req: Request, res: Response) => {
         branchId: branchId,
         OR: [
           { lrNumber: { contains: text, mode: "insensitive" } },
+          { client: { name: { contains: text, mode: "insensitive" } } },
           { consignorName: { contains: text, mode: "insensitive" } },
           { consigneeName: { contains: text, mode: "insensitive" } },
+          { from: { contains: text, mode: "insensitive" } },
+          { to: { contains: text, mode: "insensitive" } },
         ],
       },
       include: {

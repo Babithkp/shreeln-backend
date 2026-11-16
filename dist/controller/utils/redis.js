@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.clearGetVehicleCache = exports.clearGetRecentTransactionCache = exports.clearPODCache = exports.clearExpenseCache = exports.clearCreditCache = exports.clearClientCache = exports.clearVendorCache = exports.clearRecentTransactionCache = exports.clearGetAllRecordPaymentCache = exports.clearAllExpenseCache = exports.clearLRCache = exports.clearFMCache = exports.clearAllBillCache = exports.clearDashboardCache = exports.redisGetOrSetFunctions = void 0;
+exports.clearGetVehicleCache = exports.clearGetRecentTransactionCache = exports.clearPODCache = exports.clearExpenseCache = exports.clearCreditCache = exports.clearClientCache = exports.clearVendorCache = exports.clearRecentTransactionCache = exports.clearGetAllRecordPaymentCache = exports.clearAllExpenseCache = exports.clearLRCache = exports.clearFMCache = exports.clearAllBillCache = exports.clearDashboardCache = exports.invalidateDashboardOnSuccess = exports.redisGetOrSetFunctions = void 0;
 const ioredis_1 = __importDefault(require("ioredis"));
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
@@ -31,6 +31,17 @@ const redisGetOrSetFunctions = (_a) => __awaiter(void 0, [_a], void 0, function*
     return response;
 });
 exports.redisGetOrSetFunctions = redisGetOrSetFunctions;
+// Route middleware: once a write succeeds, drop the cached dashboard payloads
+// so totals (LR, FM, expenses, write-offs) are recomputed on the next load.
+const invalidateDashboardOnSuccess = (_req, res, next) => {
+    res.on("finish", () => {
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+            (0, exports.clearDashboardCache)().catch((err) => console.log(err));
+        }
+    });
+    next();
+};
+exports.invalidateDashboardOnSuccess = invalidateDashboardOnSuccess;
 const clearDashboardCache = () => __awaiter(void 0, void 0, void 0, function* () {
     const pattern = "dashboard*";
     const keys = yield redisClient.keys(pattern);

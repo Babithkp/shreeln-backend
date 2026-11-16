@@ -22,6 +22,21 @@ export const redisGetOrSetFunctions = async <T>({
   return response;
 };
 
+// Route middleware: once a write succeeds, drop the cached dashboard payloads
+// so totals (LR, FM, expenses, write-offs) are recomputed on the next load.
+export const invalidateDashboardOnSuccess = (
+  _req: unknown,
+  res: { statusCode: number; on: (event: "finish", cb: () => void) => unknown },
+  next: () => void
+) => {
+  res.on("finish", () => {
+    if (res.statusCode >= 200 && res.statusCode < 300) {
+      clearDashboardCache().catch((err) => console.log(err));
+    }
+  });
+  next();
+};
+
 export const clearDashboardCache = async () => {
   const pattern = "dashboard*";
   const keys = await redisClient.keys(pattern);

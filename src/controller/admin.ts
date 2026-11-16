@@ -597,10 +597,39 @@ export const updateOtherSettings = async (req: Request, res: Response) => {
   }
 };
 
+// Expense categories that count as running costs for the dashboard's net
+// margin. The Expenses section also records loan repayments, EMIs, owner
+// withdrawals, broker/vendor payments, asset purchases and transfers; those
+// are cash outflows, not costs, so they are deliberately left out. Add any
+// new running-cost category here so it is included.
+export const OPERATING_EXPENSE_CATEGORIES = [
+  "Salary Expense",
+  "Interest Charges",
+  "Business Promotion",
+  "Office Expense",
+  "Car expense",
+  "Office rent",
+  "Travel expense",
+  "Mobile expense",
+  "CA and Audit Charged",
+  "Motorcycle Expense",
+  "Petrol Expense",
+  "Telephone expense",
+  "Convenience Expense",
+  "Loading expense",
+  "Unloading expense",
+  "Fund Transfer Charged by Bank.",
+  "State Professional Tax",
+  "Car Insurance",
+  "Stationery Expenses",
+  "Electricity",
+  "General expense",
+];
+
 export const getDashboardData = async (req: Request, res: Response) => {
   try {
     const data = await redisGetOrSetFunctions({
-      key: "dashboard",
+      key: "dashboard-v3",
       fetchFunction: async () => {
         const branchData = await prisma.branches.findMany({
           select: {
@@ -671,6 +700,13 @@ export const getDashboardData = async (req: Request, res: Response) => {
           },
         });
 
+        const LRData = await prisma.lR.findMany({
+          select: {
+            totalAmt: true,
+            date: true,
+          },
+        });
+
         const clientData = await prisma.client.findMany({
           select: {
             name: true,
@@ -685,11 +721,25 @@ export const getDashboardData = async (req: Request, res: Response) => {
 
         const vendorCount = await prisma.vendors.count();
 
+        const operatingExpenseData = await prisma.expense.findMany({
+          where: { category: { in: OPERATING_EXPENSE_CATEGORIES } },
+          select: { amount: true, date: true },
+        });
+
+        // Only customer-bill write-offs are a loss (bad debt).
+        const billWriteOffData = await prisma.writeOff.findMany({
+          where: { billId: { not: null } },
+          select: { amount: true, date: true },
+        });
+
         return {
           clientData,
           vendorCount,
           overAllBranchData: [admin, ...branchData],
           FMData,
+          LRData,
+          operatingExpenseData,
+          billWriteOffData,
           billData,
           branchData,
         };
@@ -712,7 +762,7 @@ export const getDashboardDataForBranch = async (
   const branchId = req.params.id as string;
   try {
     const data = await redisGetOrSetFunctions({
-      key: `dashboard-branch-${branchId}`,
+      key: `dashboard-v3-branch-${branchId}`,
       fetchFunction: async () => {
         const billData = await prisma.bill.findMany({
           where: {
@@ -757,12 +807,23 @@ export const getDashboardDataForBranch = async (
             },
           },
         });
+        const LRData = await prisma.lR.findMany({
+          where: {
+            branchId,
+          },
+          select: {
+            totalAmt: true,
+            date: true,
+          },
+        });
+
         const vendorCount = await prisma.vendors.count();
         return {
           clientData,
           vendorCount,
           overAllBranchData: [],
           FMData,
+          LRData,
           billData,
           branchData: [],
         };

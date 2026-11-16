@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getDashboardDataForBranch = exports.getDashboardData = exports.updateOtherSettings = exports.getOtherSettings = exports.getBillId = exports.getCreditId = exports.getExpenseId = exports.updateNotification = exports.deleteNotification = exports.getAllAdminNotifications = exports.changeAdminPassword = exports.fectchAdminData = exports.getAllClients = exports.createClient = exports.changeBranchPassword = exports.getBrachersNames = exports.createBranch = exports.adminLogin = exports.createAdmin = void 0;
+exports.getDashboardDataForBranch = exports.getDashboardData = exports.OPERATING_EXPENSE_CATEGORIES = exports.updateOtherSettings = exports.getOtherSettings = exports.getBillId = exports.getCreditId = exports.getExpenseId = exports.updateNotification = exports.deleteNotification = exports.getAllAdminNotifications = exports.changeAdminPassword = exports.fectchAdminData = exports.getAllClients = exports.createClient = exports.changeBranchPassword = exports.getBrachersNames = exports.createBranch = exports.adminLogin = exports.createAdmin = void 0;
 const client_1 = require("@prisma/client");
 const redis_1 = require("./utils/redis");
 const prisma = new client_1.PrismaClient();
@@ -584,10 +584,38 @@ const updateOtherSettings = (req, res) => __awaiter(void 0, void 0, void 0, func
     }
 });
 exports.updateOtherSettings = updateOtherSettings;
+// Expense categories that count as running costs for the dashboard's net
+// margin. The Expenses section also records loan repayments, EMIs, owner
+// withdrawals, broker/vendor payments, asset purchases and transfers; those
+// are cash outflows, not costs, so they are deliberately left out. Add any
+// new running-cost category here so it is included.
+exports.OPERATING_EXPENSE_CATEGORIES = [
+    "Salary Expense",
+    "Interest Charges",
+    "Business Promotion",
+    "Office Expense",
+    "Car expense",
+    "Office rent",
+    "Travel expense",
+    "Mobile expense",
+    "CA and Audit Charged",
+    "Motorcycle Expense",
+    "Petrol Expense",
+    "Telephone expense",
+    "Convenience Expense",
+    "Loading expense",
+    "Unloading expense",
+    "Fund Transfer Charged by Bank.",
+    "State Professional Tax",
+    "Car Insurance",
+    "Stationery Expenses",
+    "Electricity",
+    "General expense",
+];
 const getDashboardData = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const data = yield (0, redis_1.redisGetOrSetFunctions)({
-            key: "dashboard",
+            key: "dashboard-v3",
             fetchFunction: () => __awaiter(void 0, void 0, void 0, function* () {
                 const branchData = yield prisma.branches.findMany({
                     select: {
@@ -654,6 +682,12 @@ const getDashboardData = (req, res) => __awaiter(void 0, void 0, void 0, functio
                         date: true,
                     },
                 });
+                const LRData = yield prisma.lR.findMany({
+                    select: {
+                        totalAmt: true,
+                        date: true,
+                    },
+                });
                 const clientData = yield prisma.client.findMany({
                     select: {
                         name: true,
@@ -666,11 +700,23 @@ const getDashboardData = (req, res) => __awaiter(void 0, void 0, void 0, functio
                     },
                 });
                 const vendorCount = yield prisma.vendors.count();
+                const operatingExpenseData = yield prisma.expense.findMany({
+                    where: { category: { in: exports.OPERATING_EXPENSE_CATEGORIES } },
+                    select: { amount: true, date: true },
+                });
+                // Only customer-bill write-offs are a loss (bad debt).
+                const billWriteOffData = yield prisma.writeOff.findMany({
+                    where: { billId: { not: null } },
+                    select: { amount: true, date: true },
+                });
                 return {
                     clientData,
                     vendorCount,
                     overAllBranchData: [admin, ...branchData],
                     FMData,
+                    LRData,
+                    operatingExpenseData,
+                    billWriteOffData,
                     billData,
                     branchData,
                 };
@@ -690,7 +736,7 @@ const getDashboardDataForBranch = (req, res) => __awaiter(void 0, void 0, void 0
     const branchId = req.params.id;
     try {
         const data = yield (0, redis_1.redisGetOrSetFunctions)({
-            key: `dashboard-branch-${branchId}`,
+            key: `dashboard-v3-branch-${branchId}`,
             fetchFunction: () => __awaiter(void 0, void 0, void 0, function* () {
                 const billData = yield prisma.bill.findMany({
                     where: {
@@ -732,12 +778,22 @@ const getDashboardDataForBranch = (req, res) => __awaiter(void 0, void 0, void 0
                         },
                     },
                 });
+                const LRData = yield prisma.lR.findMany({
+                    where: {
+                        branchId,
+                    },
+                    select: {
+                        totalAmt: true,
+                        date: true,
+                    },
+                });
                 const vendorCount = yield prisma.vendors.count();
                 return {
                     clientData,
                     vendorCount,
                     overAllBranchData: [],
                     FMData,
+                    LRData,
                     billData,
                     branchData: [],
                 };
